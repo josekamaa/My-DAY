@@ -1,4 +1,38 @@
-/* -------- GLOBAL STYLE -------- */
+.dashboard-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.user-list ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.user-list li {
+    background: #f3f3f3;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    background: royalblue;
+    color: white;
+    cursor: pointer;
+}
+
+.btn.danger {
+    background: crimson;
+}/* -------- GLOBAL STYLE -------- */
 body {
     margin: 0;
     font-family: "Poppins", sans-serif;
