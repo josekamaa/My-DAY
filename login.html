@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login | Graduation App</title>
+    <title>Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -9,18 +9,19 @@
     <div class="container">
         <h2>Login</h2>
 
-        <form action="auth.php" method="POST">
-            <input type="hidden" name="action" value="login">
-
-            <input type="email" name="email" placeholder="Email Address" required>
-            <input type="password" name="password" placeholder="Enter Password" required>
+        <form onsubmit="loginUser(event)">
+            <input type="email" id="email" placeholder="Email Address" required>
+            <input type="password" id="password" placeholder="Enter Password" required>
 
             <button type="submit">Login</button>
         </form>
 
-        <p style="margin-top:18px;">New here?
+        <p style="margin-top: 15px;">New here?
             <a href="register.html">Create an Account</a>
         </p>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
