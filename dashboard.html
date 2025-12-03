@@ -3,895 +3,440 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kest's Dashboard</title>
+    <title>Dashboard - Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #6c5ce7;
-            --secondary-color: #a29bfe;
-            --accent-color: #00cec9;
-            --light-color: #f8f9fa;
-            --dark-color: #2d3436;
-            --gray-color: #636e72;
-            --success-color: #00b894;
-            --warning-color: #fdcb6e;
-            --danger-color: #e17055;
-            --shadow: 0 10px 20px rgba(0,0,0,0.1);
-            --transition: all 0.3s ease;
-            --border-radius: 12px;
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
         }
-
+        
         body {
-            background-color: #f5f7fa;
-            color: var(--dark-color);
-            transition: var(--transition);
+            background: #f5f7fb;
+            color: #333;
             min-height: 100vh;
-            overflow-x: hidden;
         }
-
-        body.dark-mode {
-            background-color: #121212;
-            color: #e0e0e0;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Header */
-        header {
+        
+        .navbar {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
-            margin-bottom: 30px;
-            border-bottom: 2px solid rgba(0,0,0,0.05);
         }
-
-        .dark-mode header {
-            border-bottom-color: rgba(255,255,255,0.05);
-        }
-
+        
         .logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo h1 {
-            font-size: 2.2rem;
-            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(to right, #667eea, #764ba2);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            font-weight: 800;
         }
-
-        .logo-icon {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-        }
-
-        .theme-toggle {
-            background: var(--light-color);
-            border: none;
-            width: 60px;
-            height: 30px;
-            border-radius: 50px;
-            cursor: pointer;
-            position: relative;
+        
+        .user-info {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 6px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
+            gap: 15px;
         }
-
-        .dark-mode .theme-toggle {
-            background: #333;
-        }
-
-        .theme-toggle i {
-            font-size: 14px;
-            color: var(--warning-color);
-        }
-
-        .theme-toggle::after {
-            content: '';
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            background: var(--primary-color);
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(to right, #667eea, #764ba2);
             border-radius: 50%;
-            left: 4px;
-            transition: var(--transition);
-        }
-
-        .dark-mode .theme-toggle::after {
-            left: 32px;
-            background: var(--accent-color);
-        }
-
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 25px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            animation: fadeIn 0.5s ease forwards;
-            opacity: 0;
-        }
-
-        .dark-mode .card {
-            background: #1e1e1e;
-            color: #e0e0e0;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-        }
-
-        .card-title {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(0,0,0,0.08);
-        }
-
-        .dark-mode .card-title {
-            border-bottom-color: rgba(255,255,255,0.08);
-        }
-
-        .card-title i {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-        }
-
-        .card-title h2 {
-            font-size: 1.4rem;
-            font-weight: 600;
-        }
-
-        /* Graduation Countdown */
-        .countdown-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .countdown-display {
-            display: flex;
             justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .countdown-item {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            border-radius: 10px;
-            padding: 15px 10px;
-            min-width: 80px;
-            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.2);
+            font-weight: bold;
         }
-
-        .countdown-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .countdown-label {
-            font-size: 0.85rem;
-            margin-top: 5px;
-            opacity: 0.9;
-        }
-
-        .graduation-date {
-            margin-top: 15px;
-            font-size: 1rem;
-            color: var(--gray-color);
-            font-weight: 500;
-        }
-
-        .dark-mode .graduation-date {
-            color: #aaa;
-        }
-
-        /* Message Wall */
-        .message-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group label {
-            font-weight: 500;
-            color: var(--gray-color);
-        }
-
-        .dark-mode .form-group label {
-            color: #aaa;
-        }
-
-        .form-input, .form-textarea {
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: #f8f9fa;
-        }
-
-        .dark-mode .form-input, .dark-mode .form-textarea {
-            background-color: #2a2a2a;
-            border-color: #444;
-            color: #e0e0e0;
-        }
-
-        .form-input:focus, .form-textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
-        }
-
-        .form-textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        
+        .logout-btn {
+            background: #ff4757;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
         }
-
-        .btn:hover {
+        
+        .logout-btn:hover {
+            background: #ff3838;
             transform: translateY(-2px);
-            box-shadow: 0 7px 15px rgba(108, 92, 231, 0.3);
         }
-
-        .messages-container {
-            max-height: 300px;
-            overflow-y: auto;
-            padding-right: 10px;
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
-
-        .message {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 4px solid var(--accent-color);
-            animation: slideIn 0.3s ease;
-        }
-
-        .dark-mode .message {
-            background: #2a2a2a;
-        }
-
-        .message-header {
+        
+        .dashboard-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .message-author {
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .message-time {
-            font-size: 0.85rem;
-            color: var(--gray-color);
-        }
-
-        .message-content {
-            line-height: 1.5;
-        }
-
-        /* Profile Photo Upload */
-        .profile-container {
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            text-align: center;
+            margin-bottom: 2rem;
         }
-
-        .profile-photo {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 5px solid var(--primary-color);
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
+        
+        .welcome-message h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
         }
-
-        .profile-photo:hover {
-            transform: scale(1.03);
+        
+        .welcome-message p {
+            color: #666;
         }
-
-        .upload-area {
-            border: 2px dashed var(--secondary-color);
-            border-radius: var(--border-radius);
-            padding: 30px;
-            text-align: center;
-            margin: 20px 0;
-            width: 100%;
-            cursor: pointer;
-            transition: var(--transition);
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
         }
-
-        .upload-area:hover {
-            background-color: rgba(108, 92, 231, 0.05);
-            border-color: var(--primary-color);
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-left: 4px solid #667eea;
         }
-
-        .dark-mode .upload-area:hover {
-            background-color: rgba(108, 92, 231, 0.1);
-        }
-
-        .upload-area i {
-            font-size: 3rem;
-            color: var(--secondary-color);
-            margin-bottom: 15px;
-        }
-
-        .upload-text {
-            font-weight: 500;
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-
-        .upload-hint {
-            font-size: 0.9rem;
-            color: var(--gray-color);
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
         }
-
-        /* Animations Section */
-        .animation-controls {
+        
+        .users-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 2rem;
+        }
+        
+        .section-header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
         }
-
-        .animation-btn {
-            background: linear-gradient(135deg, var(--accent-color), #00a8a8);
+        
+        .section-header h2 {
+            color: #333;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: var(--transition);
-            flex: 1;
-            min-width: 140px;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
         }
-
-        .animation-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 7px 15px rgba(0, 206, 201, 0.3);
+        
+        .refresh-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
         }
-
-        .demo-box {
+        
+        table {
             width: 100%;
-            height: 120px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border-radius: var(--border-radius);
-            margin-top: 25px;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f8f9fa;
+        }
+        
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #eee;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr:hover {
+            background: #f9f9ff;
+        }
+        
+        .user-avatar-small {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .user-cell {
+            display: flex;
+            align-items: center;
+        }
+        
+        .email-verified {
+            color: #2ed573;
             font-weight: 600;
-            font-size: 1.1rem;
-            transition: var(--transition);
         }
-
-        /* Footer */
-        footer {
+        
+        .email-not-verified {
+            color: #ffa502;
+            font-weight: 600;
+        }
+        
+        .loading {
             text-align: center;
-            padding: 25px 0;
-            margin-top: 30px;
-            border-top: 1px solid rgba(0,0,0,0.05);
-            color: var(--gray-color);
-            font-size: 0.9rem;
+            padding: 3rem;
+            color: #666;
         }
-
-        .dark-mode footer {
-            border-top-color: rgba(255,255,255,0.05);
+        
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #667eea;
         }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes bounce {
-            0%, 20%, 60%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-20px); }
-            80% { transform: translateY(-10px); }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .bounce { animation: bounce 1s; }
-        .pulse { animation: pulse 1.5s infinite; }
-        .shake { animation: shake 0.5s; }
-        .spin { animation: spin 1s linear; }
-
-        /* Responsive Design */
+        
         @media (max-width: 768px) {
-            .dashboard-grid {
+            .stats-cards {
                 grid-template-columns: 1fr;
             }
             
-            header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
+            table {
+                display: block;
+                overflow-x: auto;
             }
             
-            .countdown-display {
-                gap: 10px;
+            .navbar {
+                padding: 1rem;
             }
-            
-            .countdown-item {
-                min-width: 70px;
-                padding: 12px 8px;
-            }
-            
-            .countdown-value {
-                font-size: 1.8rem;
-            }
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .dark-mode ::-webkit-scrollbar-track {
-            background: #2a2a2a;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--secondary-color);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-color);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <div class="logo">
-                <div class="logo-icon">⚡</div>
-                <h1>Kest's Dashboard</h1>
-            </div>
-            <button class="theme-toggle" id="themeToggle">
-                <i class="fas fa-sun"></i>
-                <i class="fas fa-moon"></i>
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i> Admin Dashboard
+        </div>
+        <div class="user-info">
+            <div class="user-avatar" id="userAvatar">JD</div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
             </button>
-        </header>
-
-        <!-- Dashboard Grid -->
-        <div class="dashboard-grid">
-            <!-- Graduation Countdown Card -->
-            <div class="card" style="animation-delay: 0.1s;">
-                <div class="card-title">
-                    <i class="fas fa-graduation-cap"></i>
-                    <h2>Graduation Countdown</h2>
-                </div>
-                <div class="countdown-container">
-                    <p>Countdown to your big day!</p>
-                    <div class="countdown-display">
-                        <div class="countdown-item">
-                            <div class="countdown-value" id="days">0</div>
-                            <div class="countdown-label">Days</div>
-                        </div>
-                        <div class="countdown-item">
-                            <div class="countdown-value" id="hours">0</div>
-                            <div class="countdown-label">Hours</div>
-                        </div>
-                        <div class="countdown-item">
-                            <div class="countdown-value" id="minutes">0</div>
-                            <div class="countdown-label">Minutes</div>
-                        </div>
-                        <div class="countdown-item">
-                            <div class="countdown-value" id="seconds">0</div>
-                            <div class="countdown-label">Seconds</div>
-                        </div>
-                    </div>
-                    <div class="graduation-date">
-                        Graduation Date: <span id="gradDate">June 15, 2024</span>
-                    </div>
-                </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="dashboard-header">
+            <div class="welcome-message">
+                <h1>Welcome, <span id="username">Admin</span></h1>
+                <p>Manage your registered users and view statistics</p>
             </div>
-
-            <!-- Message Wall Card -->
-            <div class="card" style="animation-delay: 0.2s;">
-                <div class="card-title">
-                    <i class="fas fa-comments"></i>
-                    <h2>Message Wall</h2>
-                </div>
-                <form class="message-form" id="messageForm">
-                    <div class="form-group">
-                        <label for="authorName">Your Name</label>
-                        <input type="text" id="authorName" class="form-input" placeholder="Enter your name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="messageContent">Your Message</label>
-                        <textarea id="messageContent" class="form-textarea" placeholder="Write a message for Kest..." required></textarea>
-                    </div>
-                    <button type="submit" class="btn">
-                        <i class="fas fa-paper-plane"></i> Post Message
-                    </button>
-                </form>
-                <div class="messages-container" id="messagesContainer">
-                    <!-- Messages will appear here -->
-                    <div class="message">
-                        <div class="message-header">
-                            <span class="message-author">Storm</span>
-                            <span class="message-time">Just now</span>
-                        </div>
-                        <div class="message-content">
-                            Welcome to your interactive dashboard! Post your first message above!
-                        </div>
-                    </div>
-                </div>
+        </div>
+        
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="stat-number" id="totalUsers">0</div>
             </div>
-
-            <!-- Profile Photo Upload Card -->
-            <div class="card" style="animation-delay: 0.3s;">
-                <div class="card-title">
-                    <i class="fas fa-user-circle"></i>
-                    <h2>Profile Photo</h2>
-                </div>
-                <div class="profile-container">
-                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Profile" class="profile-photo" id="profilePhoto">
-                    <div class="upload-area" id="uploadArea">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <div class="upload-text">Click or drag to upload photo</div>
-                        <div class="upload-hint">Supports JPG, PNG, GIF (Max 5MB)</div>
-                    </div>
-                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
-                    <button class="btn" id="uploadBtn">
-                        <i class="fas fa-upload"></i> Upload Photo
-                    </button>
-                </div>
+            <div class="stat-card">
+                <h3>Active Today</h3>
+                <div class="stat-number" id="activeToday">0</div>
             </div>
-
-            <!-- Animations Card -->
-            <div class="card" style="animation-delay: 0.4s;">
-                <div class="card-title">
-                    <i class="fas fa-magic"></i>
-                    <h2>Beautiful Animations</h2>
-                </div>
-                <p style="margin-bottom: 20px; text-align: center;">Click buttons to see animations on the box below:</p>
-                <div class="animation-controls">
-                    <button class="animation-btn" data-animation="bounce">Bounce</button>
-                    <button class="animation-btn" data-animation="pulse">Pulse</button>
-                    <button class="animation-btn" data-animation="shake">Shake</button>
-                    <button class="animation-btn" data-animation="spin">Spin</button>
-                </div>
-                <div class="demo-box" id="animationBox">
-                    Animation Demo Box
+            <div class="stat-card">
+                <h3>Verified Users</h3>
+                <div class="stat-number" id="verifiedUsers">0</div>
+            </div>
+        </div>
+        
+        <div class="users-section">
+            <div class="section-header">
+                <h2><i class="fas fa-users"></i> Registered Users</h2>
+                <button class="refresh-btn" onclick="fetchUsers()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            
+            <div id="usersTable">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading users...</p>
                 </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <footer>
-            <p>Kest's Dashboard • Built with ❤️ by Storm • All features included: Countdown, Message Wall, Photo Upload, Animations & Dark Mode</p>
-            <p style="margin-top: 10px;">Refresh the page to see your messages and profile photo again!</p>
-        </footer>
     </div>
-
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
     <script>
-        // DOM Elements
-        const themeToggle = document.getElementById('themeToggle');
-        const daysElement = document.getElementById('days');
-        const hoursElement = document.getElementById('hours');
-        const minutesElement = document.getElementById('minutes');
-        const secondsElement = document.getElementById('seconds');
-        const gradDateElement = document.getElementById('gradDate');
-        const messageForm = document.getElementById('messageForm');
-        const messagesContainer = document.getElementById('messagesContainer');
-        const profilePhoto = document.getElementById('profilePhoto');
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const animationButtons = document.querySelectorAll('.animation-btn');
-        const animationBox = document.getElementById('animationBox');
-
-        // Set graduation date (3 months from now)
-        const graduationDate = new Date();
-        graduationDate.setMonth(graduationDate.getMonth() + 3);
-        gradDateElement.textContent = graduationDate.toLocaleDateString('en-US', { 
-            month: 'long', 
-            day: 'numeric', 
-            year: 'numeric' 
+        // Initialize Supabase
+        const SUPABASE_URL = "https://eqkwtqutcazxvdllorzl.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxa3d0cXV0Y2F6eHZkbGxvcnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3MzM0MTUsImV4cCI6MjA4MDMwOTQxNX0.al0gxBTCjQVBC-12Xv_4kFhstdPYFZWJBnpViy0WMR4";
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkAuth();
+            await fetchUsers();
         });
-
-        // Dark Mode Toggle
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-        });
-
-        // Check for saved dark mode preference
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark-mode');
-        }
-
-        // Graduation Countdown
-        function updateCountdown() {
-            const now = new Date().getTime();
-            const timeRemaining = graduationDate.getTime() - now;
-
-            if (timeRemaining > 0) {
-                const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-                daysElement.textContent = days.toString().padStart(2, '0');
-                hoursElement.textContent = hours.toString().padStart(2, '0');
-                minutesElement.textContent = minutes.toString().padStart(2, '0');
-                secondsElement.textContent = seconds.toString().padStart(2, '0');
-            } else {
-                daysElement.textContent = '00';
-                hoursElement.textContent = '00';
-                minutesElement.textContent = '00';
-                secondsElement.textContent = '00';
-            }
-        }
-
-        // Update countdown every second
-        setInterval(updateCountdown, 1000);
-        updateCountdown(); // Initial call
-
-        // Message Wall Functionality
-        function loadMessages() {
-            const messages = JSON.parse(localStorage.getItem('dashboardMessages')) || [];
-            messagesContainer.innerHTML = '';
+        
+        async function checkAuth() {
+            const { data: { user }, error } = await client.auth.getUser();
             
-            if (messages.length === 0) {
-                const defaultMessage = document.createElement('div');
-                defaultMessage.className = 'message';
-                defaultMessage.innerHTML = `
-                    <div class="message-header">
-                        <span class="message-author">Storm</span>
-                        <span class="message-time">Just now</span>
-                    </div>
-                    <div class="message-content">
-                        Welcome to your interactive dashboard! Post your first message above!
-                    </div>
-                `;
-                messagesContainer.appendChild(defaultMessage);
+            if (error || !user) {
+                window.location.href = "login.html";
                 return;
             }
             
-            messages.forEach(msg => {
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message';
-                messageElement.innerHTML = `
-                    <div class="message-header">
-                        <span class="message-author">${msg.author}</span>
-                        <span class="message-time">${msg.time}</span>
-                    </div>
-                    <div class="message-content">${msg.content}</div>
-                `;
-                messagesContainer.appendChild(messageElement);
-            });
+            // Display user info
+            document.getElementById('username').textContent = 
+                user.user_metadata?.full_name || user.email?.split('@')[0];
             
-            // Scroll to bottom of messages
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            // Set avatar initial
+            const avatar = document.getElementById('userAvatar');
+            const name = user.user_metadata?.full_name || user.email;
+            avatar.textContent = name.charAt(0).toUpperCase();
         }
-
-        messageForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+        
+        async function fetchUsers() {
+            const usersTable = document.getElementById('usersTable');
+            usersTable.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading users...</p>
+                </div>
+            `;
             
-            const author = document.getElementById('authorName').value.trim();
-            const content = document.getElementById('messageContent').value.trim();
-            
-            if (!author || !content) return;
-            
-            const messages = JSON.parse(localStorage.getItem('dashboardMessages')) || [];
-            const now = new Date();
-            const timeString = now.toLocaleString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
-            messages.unshift({
-                author,
-                content,
-                time: timeString
-            });
-            
-            // Keep only the last 20 messages
-            if (messages.length > 20) messages.length = 20;
-            
-            localStorage.setItem('dashboardMessages', JSON.stringify(messages));
-            
-            // Clear form
-            document.getElementById('authorName').value = '';
-            document.getElementById('messageContent').value = '';
-            
-            // Reload messages
-            loadMessages();
-        });
-
-        // Profile Photo Upload
-        uploadArea.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        uploadBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            // Check if file is an image
-            if (!file.type.match('image.*')) {
-                alert('Please select an image file (JPG, PNG, GIF).');
-                return;
-            }
-            
-            // Check file size (5MB limit)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('File size must be less than 5MB.');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                profilePhoto.src = event.target.result;
-                localStorage.setItem('dashboardProfilePhoto', event.target.result);
+            try {
+                // IMPORTANT: This requires proper RLS policies in Supabase
+                const { data: users, error } = await client.auth.admin.listUsers();
                 
-                // Show success message
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message';
-                messageElement.innerHTML = `
-                    <div class="message-header">
-                        <span class="message-author">System</span>
-                        <span class="message-time">Just now</span>
+                if (error) throw error;
+                
+                // Update statistics
+                const totalUsers = users.users.length;
+                const verifiedUsers = users.users.filter(u => u.email_confirmed_at).length;
+                const today = new Date().toISOString().split('T')[0];
+                const activeToday = users.users.filter(u => {
+                    return u.last_sign_in_at && u.last_sign_in_at.includes(today);
+                }).length;
+                
+                document.getElementById('totalUsers').textContent = totalUsers;
+                document.getElementById('verifiedUsers').textContent = verifiedUsers;
+                document.getElementById('activeToday').textContent = activeToday;
+                
+                // Display users table
+                renderUsersTable(users.users);
+                
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                usersTable.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #ff4757;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h3>Error Loading Users</h3>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                            Note: You need admin privileges to view all users. 
+                            Consider creating a 'profiles' table instead.
+                        </p>
                     </div>
-                    <div class="message-content">Profile photo updated successfully!</div>
                 `;
-                messagesContainer.prepend(messageElement);
-            };
-            reader.readAsDataURL(file);
-        });
-
-        // Load saved profile photo
-        const savedPhoto = localStorage.getItem('dashboardProfilePhoto');
-        if (savedPhoto) {
-            profilePhoto.src = savedPhoto;
-        }
-
-        // Animation Controls
-        animationButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const animation = button.getAttribute('data-animation');
-                
-                // Remove any existing animation classes
-                animationBox.classList.remove('bounce', 'pulse', 'shake', 'spin');
-                
-                // Force reflow to restart animation
-                void animationBox.offsetWidth;
-                
-                // Add the new animation class
-                animationBox.classList.add(animation);
-                
-                // For one-time animations, remove class after animation completes
-                if (animation !== 'pulse') {
-                    const animationDuration = animation === 'spin' ? 1000 : 
-                                            animation === 'bounce' ? 1000 : 500;
-                    
-                    setTimeout(() => {
-                        animationBox.classList.remove(animation);
-                    }, animationDuration);
-                }
-            });
-        });
-
-        // Initialize messages on page load
-        loadMessages();
-
-        // Add some initial messages if none exist
-        window.addEventListener('load', () => {
-            const messages = JSON.parse(localStorage.getItem('dashboardMessages')) || [];
-            if (messages.length === 0) {
-                const initialMessages = [
-                    { author: "Alex", content: "Hey Kest! Can't wait for your graduation party!", time: "May 12, 10:30 AM" },
-                    { author: "Jordan", content: "You're going to do amazing things after graduation!", time: "May 11, 3:45 PM" },
-                    { author: "Taylor", content: "So proud of all your hard work paying off!", time: "May 10, 8:15 PM" }
-                ];
-                localStorage.setItem('dashboardMessages', JSON.stringify(initialMessages));
-                loadMessages();
             }
-        });
+        }
+        
+        function renderUsersTable(users) {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Last Sign In</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            users.forEach(user => {
+                const name = user.user_metadata?.full_name || 'No Name';
+                const initial = name.charAt(0).toUpperCase();
+                const isVerified = user.email_confirmed_at ? 'Verified' : 'Not Verified';
+                const lastSignIn = user.last_sign_in_at ? 
+                    new Date(user.last_sign_in_at).toLocaleDateString() : 'Never';
+                const created = new Date(user.created_at).toLocaleDateString();
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar-small">${initial}</div>
+                                <div>
+                                    <strong>${name}</strong><br>
+                                    <small style="color: #666;">ID: ${user.id.substring(0, 8)}...</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${user.email}</td>
+                        <td>
+                            <span class="${isVerified === 'Verified' ? 'email-verified' : 'email-not-verified'}">
+                                <i class="fas ${isVerified === 'Verified' ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                ${isVerified}
+                            </span>
+                        </td>
+                        <td>${lastSignIn}</td>
+                        <td>${created}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('usersTable').innerHTML = html;
+        }
+        
+        // Logout function
+        async function logout() {
+            try {
+                await client.auth.signOut();
+                window.location.href = "login.html";
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Error logging out: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
