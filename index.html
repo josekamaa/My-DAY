@@ -1,17 +1,441 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Welcome | Joseph Graduation App</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 Joseph Kamau Graduation Celebration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 20px;
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        .graduation-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #d1d8ff;
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        .student-info {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+            border-left: 5px solid #ffd700;
+        }
+        
+        .student-info h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .student-info h2 i {
+            font-size: 1.5rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+        }
+        
+        .info-item i {
+            color: #ffd700;
+            font-size: 1.3rem;
+            width: 30px;
+        }
+        
+        .countdown {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .countdown h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+        
+        .countdown-timer {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .time-unit {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px 15px;
+            min-width: 100px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .time-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffd700;
+        }
+        
+        .time-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #d1d8ff;
+            margin-top: 5px;
+        }
+        
+        .button-container {
+            margin-top: 30px;
+        }
+        
+        .action-button {
+            background: linear-gradient(to right, #ffd700, #ffed4e);
+            color: #0c2461;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin: 10px;
+        }
+        
+        .action-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.6);
+        }
+        
+        .action-button:active {
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #a5b1ff;
+            text-align: center;
+        }
+        
+        .accent-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .shape-1 {
+            width: 150px;
+            height: 150px;
+            top: -50px;
+            right: -50px;
+        }
+        
+        .shape-2 {
+            width: 100px;
+            height: 100px;
+            bottom: -30px;
+            left: -30px;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .countdown-timer {
+                gap: 10px;
+            }
+            
+            .time-unit {
+                min-width: 80px;
+                padding: 15px 10px;
+            }
+            
+            .time-value {
+                font-size: 2rem;
+            }
+            
+            .action-button {
+                padding: 15px 30px;
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-unit {
+                min-width: 70px;
+                padding: 10px 5px;
+            }
+            
+            .time-value {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
 </head>
-
 <body>
-    <section class="welcome">
-        <h1>🎓 Joseph’s Graduation App</h1>
-        <p>I’m Joseph Kamau Muthike, graduating on December 17, 2025.<br>
-        Thank you for being part of my amazing journey.</p>
+    <div class="container">
+        <div class="accent-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+        </div>
+        
+        <div class="header">
+            <div class="graduation-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <h1>Joseph Kamau Graduation Celebration</h1>
+            <p class="subtitle">Celebrating a Milestone in Information Science</p>
+        </div>
+        
+        <div class="student-info">
+            <h2><i class="fas fa-user-graduate"></i> About the Graduate</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <i class="fas fa-user"></i>
+                    <div>
+                        <strong>Full Name:</strong><br>
+                        Joseph Kamau Muthike
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-book"></i>
+                    <div>
+                        <strong>Field of Study:</strong><br>
+                        Information Science
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div>
+                        <strong>Graduation Date:</strong><br>
+                        December 17, 2025
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-university"></i>
+                    <div>
+                        <strong>Status:</strong><br>
+                        Final Year Student
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="countdown">
+            <h2><i class="fas fa-clock"></i> Countdown to Graduation</h2>
+            <div class="countdown-timer">
+                <div class="time-unit">
+                    <div class="time-value" id="days">00</div>
+                    <div class="time-label">Days</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="hours">00</div>
+                    <div class="time-label">Hours</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="minutes">00</div>
+                    <div class="time-label">Minutes</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-value" id="seconds">00</div>
+                    <div class="time-label">Seconds</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="message">
+            <p style="font-size: 1.2rem; line-height: 1.6; max-width: 700px; margin: 0 auto;">
+                "Thank you for being part of my incredible academic journey. 
+                This milestone marks not just the end of my studies, but the beginning 
+                of a new chapter where I can apply my knowledge in Information Science 
+                to make meaningful contributions to the world of technology."
+            </p>
+        </div>
+        
+        <div class="button-container">
+            <button class="action-button" onclick="window.location.href='register.html'">
+                <i class="fas fa-rocket"></i> Join the Celebration
+            </button>
+            <button class="action-button" onclick="shareCelebration()" style="background: linear-gradient(to right, #4a69bd, #6a89cc); color: white; box-shadow: 0 5px 20px rgba(74, 105, 189, 0.4);">
+                <i class="fas fa-share-alt"></i> Share the News
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 Joseph Kamau Muthike | Information Science Graduate</p>
+            <p style="margin-top: 5px;"><i class="fas fa-envelope"></i> Contact: joseph.kamau@example.edu</p>
+        </div>
+    </div>
 
-        <button onclick="window.location.href='register.html'">Get Started</button>
-    </section>
+    <script>
+        // Countdown to graduation date
+        function updateCountdown() {
+            const graduationDate = new Date('December 17, 2025 10:00:00').getTime();
+            const now = new Date().getTime();
+            const timeRemaining = graduationDate - now;
+            
+            if (timeRemaining > 0) {
+                const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+                
+                document.getElementById('days').textContent = days.toString().padStart(2, '0');
+                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+                document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+            } else {
+                document.querySelector('.countdown-timer').innerHTML = 
+                    '<div style="font-size: 1.5rem; padding: 20px;">🎉 Congratulations! The graduation day is here! 🎉</div>';
+            }
+        }
+        
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+        updateCountdown(); // Initial call
+        
+        // Share functionality
+        function shareCelebration() {
+            const shareText = "Join me in celebrating Joseph Kamau's graduation in Information Science on December 17, 2025!";
+            const shareUrl = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: "Joseph Kamau Graduation",
+                    text: shareText,
+                    url: shareUrl
+                })
+                .catch(console.error);
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                navigator.clipboard.writeText(`${shareText} ${shareUrl}`)
+                    .then(() => {
+                        alert("Celebration message copied to clipboard! Share it with your friends.");
+                    })
+                    .catch(err => {
+                        console.error('Could not copy text: ', err);
+                        prompt("Copy this link to share:", shareUrl);
+                    });
+            }
+        }
+        
+        // Add floating animation to graduation cap
+        document.querySelector('.graduation-icon').addEventListener('mouseover', function() {
+            this.style.animation = 'float 1.5s ease-in-out infinite';
+        });
+        
+        document.querySelector('.graduation-icon').addEventListener('mouseout', function() {
+            this.style.animation = 'float 3s ease-in-out infinite';
+        });
+    </script>
 </body>
-</html>
+                    </html>
