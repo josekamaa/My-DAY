@@ -1,28 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Graduation Media Feed</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #4a90e2;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 900px;
+            margin: auto;
+            margin-top: 20px;
+        }
+
+        .post-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .post-box textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            resize: none;
+        }
+
+        .post-box input {
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .post {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .post img, .post video {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .actions {
+            margin-top: 10px;
+        }
+
+        .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #4a90e2;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .comments-section {
+            margin-top: 10px;
+            padding-left: 15px;
+        }
+
+        .comment-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .comment-box input {
+            flex: 1;
+            padding: 8px;
+        }
+
+        .reply {
+            margin-left: 20px;
+            color: #4a90e2;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .comment {
+            margin: 5px 0;
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="dashboard-container">
+<header>
+    🎓 Welcome to Joseph’s Graduation Media Dashboard 🎓  
+    Share your moments. Celebrate the journey.
+</header>
 
-    <h1>Welcome to the Dashboard 🎓</h1>
-    <p>Below is a list of all registered users.</p>
+<div class="container">
 
-    <button id="logoutBtn" class="btn danger">Logout</button>
+    <!-- Post creator -->
+    <div class="post-box">
+        <h3>Create a Post</h3>
+        <textarea id="caption" placeholder="Write something..."></textarea><br>
 
-    <div class="user-list">
-      <h2>Registered Users</h2>
-      <ul id="usersUl"></ul>
+        <input type="file" id="mediaFile" accept="image/*,video/*"><br>
+
+        <button class="btn" onclick="createPost()">Post</button>
     </div>
 
-  </div>
+    <h2>Latest Posts</h2>
 
-  <script src="appwrite.js"></script>
-  <script src="dashboard.js"></script>
+    <div id="posts"></div>
+
+</div>
+
+<script src="dashboard.js"></script>
+
 </body>
 </html>
