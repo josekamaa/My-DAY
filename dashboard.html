@@ -5,146 +5,708 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Graduation Media Feed</title>
 
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f6fa;
+        :root {
+            --primary: #6C63FF;
+            --primary-light: #8A84FF;
+            --secondary: #FFD166;
+            --accent: #FF6B8B;
+            --success: #4ECDC4;
+            --dark: #2D3047;
+            --light: #F8F9FA;
+            --gray: #E9ECEF;
+            --shadow: 0 10px 30px rgba(108, 99, 255, 0.15);
+            --radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
-        header {
-            background: #4a90e2;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 22px;
-            font-weight: bold;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 40px;
         }
 
+        /* Header with graduation style */
+        header {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        header::before {
+            content: "🎓 🎉 🎓";
+            position: absolute;
+            font-size: 40px;
+            opacity: 0.2;
+            top: 10px;
+            left: 10px;
+            transform: rotate(-10deg);
+        }
+
+        header::after {
+            content: "🎓 🎉 🎓";
+            position: absolute;
+            font-size: 40px;
+            opacity: 0.2;
+            bottom: 10px;
+            right: 10px;
+            transform: rotate(10deg);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Main container */
         .container {
             width: 95%;
             max-width: 900px;
-            margin: auto;
-            margin-top: 20px;
+            margin: 30px auto;
+            padding: 0 15px;
         }
 
+        /* Post creation box */
         .post-box {
             background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            padding: 25px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border: 2px dashed var(--primary-light);
+            transition: var(--transition);
+        }
+
+        .post-box:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .post-box h3 {
+            color: var(--primary);
             margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .post-box h3 i {
+            color: var(--secondary);
         }
 
         .post-box textarea {
             width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid var(--gray);
             resize: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: var(--transition);
+            margin-bottom: 15px;
         }
 
-        .post-box input {
-            margin-top: 10px;
+        .post-box textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
         }
 
+        .post-box textarea::placeholder {
+            color: #aaa;
+        }
+
+        /* File input styling */
+        .file-input-container {
+            position: relative;
+            margin: 15px 0 20px;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--light);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px dashed var(--primary-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-input-label:hover {
+            background: rgba(108, 99, 255, 0.05);
+            border-color: var(--primary);
+        }
+
+        .file-input-label i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .file-input-label span {
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        #mediaFile {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        /* Buttons */
         .btn {
-            background: #4a90e2;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
             cursor: pointer;
-            margin-top: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
         }
 
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Posts section title */
+        .section-title {
+            font-size: 1.8rem;
+            color: var(--dark);
+            margin: 40px 0 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Individual post styling */
         .post {
             background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            padding: 25px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .post:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(108, 99, 255, 0.15);
+        }
+
+        .post::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
             margin-bottom: 20px;
         }
 
-        .post img, .post video {
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 15px;
+        }
+
+        .post-info h4 {
+            font-size: 1.2rem;
+            color: var(--dark);
+        }
+
+        .post-info p {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 3px;
+        }
+
+        .post-caption {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        /* Media content */
+        .post-media {
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            max-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .post-media img, .post-media video {
             width: 100%;
-            border-radius: 10px;
-            margin-top: 10px;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 12px;
+            display: block;
         }
 
+        /* Actions */
         .actions {
-            margin-top: 10px;
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray);
         }
 
-        .actions button {
+        .action-btn {
             background: none;
             border: none;
             cursor: pointer;
-            color: #4a90e2;
-            font-weight: bold;
-            margin-right: 10px;
+            color: var(--dark);
+            font-weight: 500;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            padding: 8px 12px;
+            border-radius: 8px;
         }
 
+        .action-btn:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .action-btn i {
+            font-size: 1.1rem;
+        }
+
+        .like-btn.active {
+            color: var(--accent);
+        }
+
+        /* Comments section */
         .comments-section {
-            margin-top: 10px;
-            padding-left: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--light);
+            border-radius: 12px;
+            display: none;
+        }
+
+        .comments-section.show {
+            display: block;
         }
 
         .comment-box {
             display: flex;
             gap: 10px;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
         .comment-box input {
             flex: 1;
-            padding: 8px;
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 2px solid var(--gray);
+            font-family: 'Poppins', sans-serif;
+            transition: var(--transition);
+        }
+
+        .comment-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .comment {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid var(--success);
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .comment-time {
+            font-size: 0.85rem;
+            color: #888;
         }
 
         .reply {
             margin-left: 20px;
-            color: #4a90e2;
+            color: var(--primary-light);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
         }
 
-        .comment {
-            margin: 5px 0;
-            background: #f0f0f0;
-            padding: 8px;
-            border-radius: 8px;
+        /* Empty state */
+        #posts.empty::after {
+            content: "📭 No posts yet. Be the first to share a graduation moment!";
+            display: block;
+            text-align: center;
+            padding: 60px 20px;
+            color: #aaa;
+            font-size: 1.2rem;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .container {
+                width: 100%;
+                padding: 0 20px;
+            }
+            
+            .post-box, .post {
+                padding: 20px;
+            }
+            
+            .actions {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .action-btn {
+                flex: 1;
+                min-width: 120px;
+                justify-content: center;
+            }
+            
+            .comment-box {
+                flex-direction: column;
+            }
+            
+            .post-media img, .post-media video {
+                max-height: 350px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 20px 15px;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .post-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .avatar {
+                margin-bottom: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 16px;
+            }
+        }
+
+        /* Animation for new posts */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .post {
+            animation: fadeInUp 0.5s ease-out;
         }
     </style>
 </head>
 <body>
 
 <header>
-    🎓 Welcome to Joseph’s Graduation Media Dashboard 🎓  
-    Share your moments. Celebrate the journey.
+    <h1>🎓 Joseph's Graduation Media Dashboard</h1>
+    <p>Share your special moments. Celebrate the incredible journey together! 🎉✨</p>
 </header>
 
 <div class="container">
 
     <!-- Post creator -->
     <div class="post-box">
-        <h3>Create a Post</h3>
-        <textarea id="caption" placeholder="Write something..."></textarea><br>
+        <h3><i class="fas fa-pen-alt"></i> Create a Graduation Post</h3>
+        <textarea id="caption" placeholder="Share your graduation moment... ✍️🎓 Add emojis to express your joy! 🎉🥳" rows="4"></textarea>
+        
+        <div class="file-input-container">
+            <label for="mediaFile" class="file-input-label">
+                <i class="fas fa-camera"></i>
+                <span id="fileLabel">Add photo or video 📸🎥</span>
+            </label>
+            <input type="file" id="mediaFile" accept="image/*,video/*">
+        </div>
 
-        <input type="file" id="mediaFile" accept="image/*,video/*"><br>
-
-        <button class="btn" onclick="createPost()">Post</button>
+        <button class="btn" onclick="createPost()">
+            <i class="fas fa-paper-plane"></i> Post to Feed
+        </button>
     </div>
 
-    <h2>Latest Posts</h2>
+    <h2 class="section-title"><i class="fas fa-graduation-cap"></i> Latest Graduation Posts</h2>
 
-    <div id="posts"></div>
+    <div id="posts" class="empty">
+        <!-- Posts will be dynamically inserted here -->
+    </div>
 
 </div>
+
+<!-- Template for a post -->
+<template id="postTemplate">
+    <div class="post">
+        <div class="post-header">
+            <div class="avatar">J</div> <!-- 🎓 First letter of user name -->
+            <div class="post-info">
+                <h4>Joseph's Friend</h4>
+                <p><i class="far fa-clock"></i> Just now</p>
+            </div>
+        </div>
+        <div class="post-caption">
+            <!-- Caption will be inserted here -->
+        </div>
+        <div class="post-media">
+            <!-- Media will be inserted here -->
+        </div>
+        <div class="actions">
+            <button class="action-btn like-btn" onclick="toggleLike(this)">
+                <i class="far fa-heart"></i> <span class="like-count">0</span> Likes
+            </button>
+            <button class="action-btn comment-btn" onclick="toggleComments(this)">
+                <i class="far fa-comment"></i> Comment
+            </button>
+            <button class="action-btn share-btn">
+                <i class="fas fa-share"></i> Share
+            </button>
+        </div>
+        <div class="comments-section">
+            <div class="comment">
+                <div class="comment-header">
+                    <span class="comment-author">Classmate 👨‍🎓</span>
+                    <span class="comment-time">2 min ago</span>
+                </div>
+                <p>Congrats Joseph! So proud of you! 🎉🎓</p>
+                <span class="reply"><i class="fas fa-reply"></i> Reply</span>
+            </div>
+            <div class="comment-box">
+                <input type="text" placeholder="Add a comment... 💬">
+                <button class="btn" style="padding: 10px 20px;">Post</button>
+            </div>
+        </div>
+    </div>
+</template>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="dashboard.js"></script>
 
+<script>
+    // Enhanced UI functionality (to complement dashboard.js)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update file label when a file is selected
+        const fileInput = document.getElementById('mediaFile');
+        const fileLabel = document.getElementById('fileLabel');
+        
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                fileLabel.textContent = this.files[0].name + ' 📁';
+            } else {
+                fileLabel.textContent = 'Add photo or video 📸🎥';
+            }
+        });
+        
+        // Add some example posts if the feed is empty
+        const postsContainer = document.getElementById('posts');
+        if (postsContainer.children.length === 0) {
+            // This would be replaced by actual posts from your dashboard.js
+            // For now, we'll keep the empty state message
+        }
+    });
+
+    // UI interaction functions
+    function toggleLike(button) {
+        const likeCount = button.querySelector('.like-count');
+        const icon = button.querySelector('i');
+        
+        if (button.classList.contains('active')) {
+            // Unlike
+            button.classList.remove('active');
+            likeCount.textContent = parseInt(likeCount.textContent) - 1;
+            icon.classList.remove('fas');
+            icon.classList.add('far');
+        } else {
+            // Like
+            button.classList.add('active');
+            likeCount.textContent = parseInt(likeCount.textContent) + 1;
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+        }
+    }
+
+    function toggleComments(button) {
+        const post = button.closest('.post');
+        const commentsSection = post.querySelector('.comments-section');
+        commentsSection.classList.toggle('show');
+        
+        // Scroll to comments if opening
+        if (commentsSection.classList.contains('show')) {
+            commentsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    // This function would be called from your dashboard.js
+    function createPost() {
+        const caption = document.getElementById('caption').value;
+        const mediaFile = document.getElementById('mediaFile').files[0];
+        
+        if (!caption.trim() && !mediaFile) {
+            alert("Please add a caption or media to your post! 📝🎓");
+            return;
+        }
+        
+        // In a real app, this would call your Supabase function from dashboard.js
+        alert("🎉 Post created! (In a real app, this would save to the database)");
+        
+        // Clear the form
+        document.getElementById('caption').value = '';
+        document.getElementById('mediaFile').value = '';
+        document.getElementById('fileLabel').textContent = 'Add photo or video 📸🎥';
+        
+        // Remove empty state if it exists
+        const postsContainer = document.getElementById('posts');
+        postsContainer.classList.remove('empty');
+        
+        // Add a sample post (in real app, this would come from the database)
+        addSamplePost(caption, mediaFile);
+    }
+    
+    // Sample function to add a post (for demo purposes)
+    function addSamplePost(caption, mediaFile) {
+        const template = document.getElementById('postTemplate');
+        const clone = template.content.cloneNode(true);
+        
+        // Set caption
+        const captionElement = clone.querySelector('.post-caption');
+        captionElement.textContent = caption || "Check out my graduation moment! 🎓✨";
+        
+        // Add media preview if a file was selected
+        const mediaElement = clone.querySelector('.post-media');
+        if (mediaFile) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (mediaFile.type.startsWith('image/')) {
+                    mediaElement.innerHTML = `<img src="${e.target.result}" alt="Graduation media">`;
+                } else if (mediaFile.type.startsWith('video/')) {
+                    mediaElement.innerHTML = `<video controls><source src="${e.target.result}" type="${mediaFile.type}"></video>`;
+                }
+            };
+            reader.readAsDataURL(mediaFile);
+        } else {
+            mediaElement.innerHTML = ''; // No media for this post
+        }
+        
+        // Add to the top of the posts container
+        const postsContainer = document.getElementById('posts');
+        postsContainer.prepend(clone);
+    }
+</script>
 
 </body>
 </html>
