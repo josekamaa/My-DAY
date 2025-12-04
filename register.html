@@ -1,124 +1,278 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Debug Registration</title>
+    <title>Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial; padding: 20px; }
-        button { margin: 10px; padding: 10px 20px; }
-        #output { background: #f0f0f0; padding: 15px; margin-top: 20px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            padding: 40px 35px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+        }
+
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .tagline {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px 20px 16px 50px;
+            border: 2px solid #eaeaea;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input::placeholder {
+            color: #999;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.35);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        .login-prompt {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .login-prompt a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .login-prompt a:hover {
+            color: #764ba2;
+        }
+
+        .login-prompt a::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background: #667eea;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .login-prompt a:hover::after {
+            transform: scaleX(1);
+        }
+
+        .password-strength {
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .strength-meter {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .logo i {
+            font-size: 40px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 25px;
+            }
+            
+            h2 {
+                font-size: 28px;
+            }
+            
+            input {
+                padding: 14px 20px 14px 50px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <h1>Debug Supabase Registration</h1>
-    
-    <div>
-        <input type="email" id="testEmail" placeholder="test@example.com">
-        <input type="password" id="testPassword" placeholder="password123">
-        <input type="text" id="testName" placeholder="Test User">
-        <button onclick="testRegister()">Test Register</button>
-        <button onclick="testLogin()">Test Login</button>
-        <button onclick="testSession()">Check Session</button>
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        <h2>Create Account</h2>
+        <p class="tagline">Join our community today</p>
+
+        <form onsubmit="registerUser(event)">
+            <div class="input-wrapper">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="name" placeholder="Full Name" required>
+            </div>
+            
+            <div class="input-wrapper">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            
+            <div class="input-wrapper">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="password" placeholder="Create Password" required oninput="updatePasswordStrength()">
+                <div class="password-strength">
+                    <div class="strength-meter" id="passwordStrength"></div>
+                </div>
+            </div>
+
+            <button type="submit">Register</button>
+        </form>
+
+        <p class="login-prompt">Already have an account?
+            <a href="login.html">Login</a>
+        </p>
     </div>
-    
-    <div id="output">Results will appear here...</div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
     <script>
-        const SUPABASE_URL = "https://eqkwtqutcazxvdllorzl.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxa3d0cXV0Y2F6eHZkbGxvcnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3MzM0MTUsImV4cCI6MjA4MDMwOTQxNX0.al0gxBTCjQVBC0Xv_4kFhstdPYFZWJBnpViy0WMR4";
-        
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        function log(message) {
-            const output = document.getElementById('output');
-            output.innerHTML = `<div>${new Date().toLocaleTimeString()}: ${message}</div>` + output.innerHTML;
-            console.log(message);
-        }
-        
-        async function testRegister() {
-            const email = document.getElementById('testEmail').value || 'test' + Date.now() + '@example.com';
-            const password = document.getElementById('testPassword').value || 'password123';
-            const name = document.getElementById('testName').value || 'Test User';
+        // Password strength indicator (optional enhancement)
+        function updatePasswordStrength() {
+            const password = document.getElementById('password').value;
+            const strengthMeter = document.getElementById('passwordStrength');
             
-            log(`Registering: ${email}`);
+            let strength = 0;
             
-            try {
-                const { data, error } = await client.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: {
-                        data: { full_name: name }
-                    }
-                });
-                
-                if (error) {
-                    log(`❌ ERROR: ${error.message}`);
-                } else {
-                    log(`✅ SUCCESS: User created!`);
-                    log(`User ID: ${data.user?.id}`);
-                    log(`Email confirmed: ${data.user?.email_confirmed_at ? 'Yes' : 'No'}`);
-                    
-                    // Try to auto-login
-                    if (!data.user?.email_confirmed_at) {
-                        log("⚠️ Email not confirmed, trying auto-login...");
-                        const { data: loginData, error: loginError } = await client.auth.signInWithPassword({
-                            email: email,
-                            password: password
-                        });
-                        
-                        if (loginError) {
-                            log(`❌ Auto-login failed: ${loginError.message}`);
-                        } else {
-                            log(`✅ Auto-login successful!`);
-                        }
-                    }
-                }
-            } catch (err) {
-                log(`❌ Exception: ${err.message}`);
+            // Length check
+            if (password.length >= 8) strength += 25;
+            // Contains uppercase
+            if (/[A-Z]/.test(password)) strength += 25;
+            // Contains numbers
+            if (/[0-9]/.test(password)) strength += 25;
+            // Contains special characters
+            if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+            
+            // Update meter
+            strengthMeter.style.width = strength + '%';
+            
+            // Update color
+            if (strength < 50) {
+                strengthMeter.style.background = '#ff4757';
+            } else if (strength < 75) {
+                strengthMeter.style.background = '#ffa502';
+            } else {
+                strengthMeter.style.background = '#2ed573';
             }
         }
         
-        async function testLogin() {
-            const email = document.getElementById('testEmail').value || 'test@example.com';
-            const password = document.getElementById('testPassword').value || 'password123';
-            
-            log(`Logging in: ${email}`);
-            
-            try {
-                const { data, error } = await client.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-                
-                if (error) {
-                    log(`❌ Login error: ${error.message}`);
-                } else {
-                    log(`✅ Login successful!`);
-                    log(`Session: ${data.session ? 'Active' : 'None'}`);
-                }
-            } catch (err) {
-                log(`❌ Exception: ${err.message}`);
-            }
-        }
-        
-        async function testSession() {
-            log("Checking session...");
-            
-            try {
-                const { data, error } = await client.auth.getSession();
-                
-                if (error) {
-                    log(`❌ Session error: ${error.message}`);
-                } else {
-                    log(`Session: ${data.session ? 'Active' : 'None'}`);
-                    if (data.session) {
-                        log(`User: ${data.session.user.email}`);
-                    }
-                }
-            } catch (err) {
-                log(`❌ Exception: ${err.message}`);
-            }
-        }
+        // Initialize password strength on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePasswordStrength();
+        });
     </script>
 </body>
-</html>
+</html>.
