@@ -1,38 +1,122 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Test Supabase</title>
+    <title>Debug Registration</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { margin: 10px; padding: 10px 20px; }
+        #output { background: #f0f0f0; padding: 15px; margin-top: 20px; }
+    </style>
 </head>
 <body>
-    <h1>Test Supabase Connection</h1>
-    <button onclick="testConnection()">Test Connection</button>
-    <div id="result"></div>
+    <h1>Debug Supabase Registration</h1>
+    
+    <div>
+        <input type="email" id="testEmail" placeholder="test@example.com">
+        <input type="password" id="testPassword" placeholder="password123">
+        <input type="text" id="testName" placeholder="Test User">
+        <button onclick="testRegister()">Test Register</button>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testSession()">Check Session</button>
+    </div>
+    
+    <div id="output">Results will appear here...</div>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Use your actual keys here
         const SUPABASE_URL = "https://eqkwtqutcazxvdllorzl.supabase.co";
-        const SUPABASE_ANON_KEY = "YOUR_CORRECT_ANON_KEY_HERE";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxa3d0cXV0Y2F6eHZkbGxvcnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3MzM0MTUsImV4cCI6MjA4MDMwOTQxNX0.al0gxBTCjQVBC0Xv_4kFhstdPYFZWJBnpViy0WMR4";
         
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        async function testConnection() {
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML = `<div>${new Date().toLocaleTimeString()}: ${message}</div>` + output.innerHTML;
+            console.log(message);
+        }
+        
+        async function testRegister() {
+            const email = document.getElementById('testEmail').value || 'test' + Date.now() + '@example.com';
+            const password = document.getElementById('testPassword').value || 'password123';
+            const name = document.getElementById('testName').value || 'Test User';
+            
+            log(`Registering: ${email}`);
+            
             try {
-                const result = document.getElementById('result');
-                result.innerHTML = 'Testing...';
+                const { data, error } = await client.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: { full_name: name }
+                    }
+                });
                 
-                // Test 1: Basic connection
+                if (error) {
+                    log(`❌ ERROR: ${error.message}`);
+                } else {
+                    log(`✅ SUCCESS: User created!`);
+                    log(`User ID: ${data.user?.id}`);
+                    log(`Email confirmed: ${data.user?.email_confirmed_at ? 'Yes' : 'No'}`);
+                    
+                    // Try to auto-login
+                    if (!data.user?.email_confirmed_at) {
+                        log("⚠️ Email not confirmed, trying auto-login...");
+                        const { data: loginData, error: loginError } = await client.auth.signInWithPassword({
+                            email: email,
+                            password: password
+                        });
+                        
+                        if (loginError) {
+                            log(`❌ Auto-login failed: ${loginError.message}`);
+                        } else {
+                            log(`✅ Auto-login successful!`);
+                        }
+                    }
+                }
+            } catch (err) {
+                log(`❌ Exception: ${err.message}`);
+            }
+        }
+        
+        async function testLogin() {
+            const email = document.getElementById('testEmail').value || 'test@example.com';
+            const password = document.getElementById('testPassword').value || 'password123';
+            
+            log(`Logging in: ${email}`);
+            
+            try {
+                const { data, error } = await client.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) {
+                    log(`❌ Login error: ${error.message}`);
+                } else {
+                    log(`✅ Login successful!`);
+                    log(`Session: ${data.session ? 'Active' : 'None'}`);
+                }
+            } catch (err) {
+                log(`❌ Exception: ${err.message}`);
+            }
+        }
+        
+        async function testSession() {
+            log("Checking session...");
+            
+            try {
                 const { data, error } = await client.auth.getSession();
                 
                 if (error) {
-                    result.innerHTML = 'Error: ' + error.message;
-                    return;
+                    log(`❌ Session error: ${error.message}`);
+                } else {
+                    log(`Session: ${data.session ? 'Active' : 'None'}`);
+                    if (data.session) {
+                        log(`User: ${data.session.user.email}`);
+                    }
                 }
-                
-                result.innerHTML = '✅ Connection successful!';
-                
-            } catch (error) {
-                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            } catch (err) {
+                log(`❌ Exception: ${err.message}`);
             }
         }
     </script>
