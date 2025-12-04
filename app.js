@@ -15,7 +15,7 @@ const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 })();
 
 
-// REGISTER FUNCTION
+// REGISTER FUNCTION - Just creates account, doesn't auto-login
 async function registerUser(event) {
     event.preventDefault();
 
@@ -24,20 +24,22 @@ async function registerUser(event) {
     let name = document.getElementById("name").value;
 
     try {
-        // Disable email confirmation in Supabase Dashboard first:
-        // Go to Authentication → Settings → Disable "Enable email confirmations"
-        
+        // Show loading state
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+        submitBtn.disabled = true;
+
+        // 1. Sign up the user
         const { data, error } = await client.auth.signUp({
             email: email,
             password: password,
             options: {
                 data: {
                     full_name: name,
-                    // Add profile picture placeholder
                     avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=667eea&color=fff`
-                },
-                // If you want to auto-confirm without email verification
-                emailRedirectTo: window.location.origin
+                }
+                // Note: emailRedirectTo is removed since we're not auto-confirming
             }
         });
 
@@ -46,45 +48,41 @@ async function registerUser(event) {
         }
 
         if (data.user) {
-            // Create a user profile in the public.users table (if it exists)
-            try {
-                const { error: profileError } = await client
-                    .from('users') // Make sure this table exists in your Supabase
-                    .insert({
-                        id: data.user.id,
-                        email: data.user.email,
-                        full_name: name,
-                        created_at: new Date().toISOString()
-                    });
-
-                if (profileError && !profileError.message.includes('duplicate key')) {
-                    console.warn('Could not create user profile:', profileError);
-                }
-            } catch (profileErr) {
-                console.warn('Profile creation failed:', profileErr);
-            }
-
-            // Auto login after registration (if email confirmation is disabled)
-            const { data: loginData, error: loginError } = await client.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
-
-            if (loginError) {
-                throw loginError;
-            }
-
-            alert("Account created successfully! 🎉");
-            window.location.href = "dashboard.html";
+            // Show success message with options
+            alert(`✅ Account created successfully!\n\nPlease check your email to verify your account.\n\nOnce verified, you can login with your credentials.`);
+            
+            // Clear form
+            document.getElementById("email").value = '';
+            document.getElementById("password").value = '';
+            document.getElementById("name").value = '';
+            
+            // Redirect to login page after a delay
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 2000);
         }
     } catch (error) {
         console.error('Registration error:', error);
-        alert(`Registration failed: ${error.message}`);
+        
+        // Check specific error types
+        if (error.message.includes('already registered')) {
+            alert('❌ This email is already registered. Please login instead.');
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 1500);
+        } else {
+            alert(`❌ Registration failed: ${error.message}`);
+        }
+        
+        // Reset button
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
 }
 
 
-// LOGIN FUNCTION
+// LOGIN FUNCTION - Separate login flow
 async function loginUser(event) {
     event.preventDefault();
 
@@ -92,6 +90,12 @@ async function loginUser(event) {
     let password = document.getElementById("password").value;
 
     try {
+        // Show loading state
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+        submitBtn.disabled = true;
+
         const { data, error } = await client.auth.signInWithPassword({
             email: email,
             password: password,
@@ -102,22 +106,27 @@ async function loginUser(event) {
         }
 
         if (data.session) {
-            // Update user profile last login time (if users table exists)
-            try {
-                await client
-                    .from('users')
-                    .update({ last_login: new Date().toISOString() })
-                    .eq('id', data.user.id);
-            } catch (profileErr) {
-                console.warn('Could not update last login:', profileErr);
-            }
-
-            // Redirect to dashboard
+            // Success! Redirect to dashboard
+            alert('✅ Login successful!');
             window.location.href = "dashboard.html";
         }
     } catch (error) {
         console.error('Login error:', error);
-        alert(`Login failed: ${error.message}`);
+        
+        // Specific error messages
+        let errorMessage = error.message;
+        if (error.message.includes('Invalid login credentials')) {
+            errorMessage = 'Invalid email or password. Please try again.';
+        } else if (error.message.includes('Email not confirmed')) {
+            errorMessage = 'Please verify your email address before logging in. Check your inbox.';
+        }
+        
+        alert(`❌ Login failed: ${errorMessage}`);
+        
+        // Reset button
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
 }
 
@@ -125,20 +134,20 @@ async function loginUser(event) {
 // CHECK LOGIN STATUS ON DASHBOARD
 async function checkUser() {
     try {
-        // First check current session
         const { data, error } = await client.auth.getUser();
         
         if (error || !data.user) {
-            // Try to restore session from storage
+            // Check session as fallback
             const { data: sessionData } = await client.auth.getSession();
             
             if (!sessionData.session) {
+                // No valid session, redirect to login
                 window.location.href = "login.html";
                 return null;
             }
         }
 
-        // Display user info
+        // User is authenticated
         if (data.user) {
             const displayName = data.user.user_metadata?.full_name || 
                               data.user.email?.split('@')[0] || 
@@ -163,6 +172,7 @@ async function checkUser() {
 async function logout() {
     try {
         await client.auth.signOut();
+        alert('👋 Logged out successfully!');
         window.location.href = "login.html";
     } catch (error) {
         console.error('Logout error:', error);
@@ -175,4 +185,23 @@ async function logout() {
 async function getCurrentUser() {
     const { data } = await client.auth.getUser();
     return data.user;
+}
+
+
+// Reset password function (if needed)
+async function resetPassword(email) {
+    try {
+        const { error } = await client.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password.html`,
+        });
+        
+        if (error) throw error;
+        
+        alert('📧 Password reset email sent! Check your inbox.');
+        return true;
+    } catch (error) {
+        console.error('Reset password error:', error);
+        alert(`❌ Failed to send reset email: ${error.message}`);
+        return false;
+    }
 }
