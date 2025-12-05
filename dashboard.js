@@ -443,11 +443,10 @@ function setupSignalingChannel() {
     handleSignalMessage(msg);
   });
 
-  callChannel.subscribe()
-    .then(() => console.log("Signaling channel subscribed"))
-    .catch(err => console.error("channel subscribe error", err));
-}
+ const status = callChannel.subscribe();
+console.log("Signaling channel subscribed:", status);
 
+ 
 async function sendSignal(toUserId, type, data) {
   if (!callChannel) {
     console.warn("Signaling channel not ready.");
