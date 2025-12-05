@@ -9,17 +9,15 @@ const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function registerUser(event) {
     event.preventDefault();
 
-    let name = document.getElementById("name").value;
-    let email = document.getElementById("email").value;
-    let password = document.getElementById("password").value;
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-    // 1️⃣ Create Auth User
+    // 1️⃣ Create auth account
     const { data: signUpData, error: signUpError } = await client.auth.signUp({
         email: email,
         password: password,
-        options: {
-            data: { full_name: name }
-        }
+        options: { data: { full_name: name } }
     });
 
     if (signUpError) {
@@ -27,27 +25,27 @@ async function registerUser(event) {
         return;
     }
 
-    let userId = signUpData.user.id;
+    const userId = signUpData.user.id;
 
-    // 2️⃣ Force-refresh session (VERY IMPORTANT)
+    // 2️⃣ Ensure session exists
     await client.auth.getSession();
 
-    // 3️⃣ Insert into users table (RLS now passes)
+    // 3️⃣ Insert into users table
     const { error: insertError } = await client
-        .from('users')
+        .from("users")
         .insert({
             id: userId,
             full_name: name,
-            email: email,
+            email: email
         });
 
     if (insertError) {
         console.log(insertError);
-        alert("Profile insert failed: " + insertError.message);
+        alert("Insert failed: " + insertError.message);
         return;
     }
 
-    alert("Registration successful! Check your email.");
+    alert("Registration successful!");
     window.location.href = "login.html";
 }
 
