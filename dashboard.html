@@ -1,201 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Graduation Media Feed</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My-Day Dashboard</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f6fa;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background: #4a90e2;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .container {
-            width: 95%;
-            max-width: 900px;
-            margin: auto;
-            margin-top: 20px;
-        }
-
-        .post-box {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .post-box textarea {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            resize: none;
-        }
-
-        .post-box input {
-            margin-top: 10px;
-        }
-
-        .btn {
-            background: #4a90e2;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .post {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .post img, .post video {
-            width: 100%;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-
-        .actions {
-            margin-top: 10px;
-        }
-
-        .actions button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #4a90e2;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        /* ====== COMMENTS MODAL ======= */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .modal-content {
-            background: #fff;
-            width: 90%;
-            max-width: 500px;
-            padding: 20px;
-            border-radius: 12px;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 26px;
-            cursor: pointer;
-        }
-
-        .comment-item {
-            background: #f4f4f4;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .reply-item {
-            background: #e8e8e8;
-            margin-left: 20px;
-            padding: 8px;
-            border-radius: 8px;
-            margin-top: 5px;
-        }
-
-        .reply-link {
-            font-size: 14px;
-            color: #4a90e2;
-            cursor: pointer;
-        }
-
-        .add-comment-box {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .add-comment-box input {
-            flex: 1;
-            padding: 10px;
-        }
-    </style>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin:0; background:#f5f6fa; }
+    header { background:#4a90e2; color:white; padding:18px 20px; text-align:center; font-size:22px; font-weight:700; position:sticky; top:0; z-index:50; }
+    #toggleNavBtn { position:fixed; left:18px; top:18px; background:#1b6ed0; color:white; padding:8px 12px; border-radius:8px; border:none; cursor:pointer; z-index:60; }
+    #navPanel { width:260px; background:#2c3e50; color:white; height:100vh; position:fixed; left:-260px; top:0; transition:left .25s ease; padding:20px; z-index:55; box-sizing:border-box; }
+    #navPanel h3 { margin-top:0; }
+    #navPanel button { width:100%; padding:12px; margin-top:10px; border:none; border-radius:8px; background:#4a90e2; color:white; font-weight:600; cursor:pointer; }
+    .container { width:95%; max-width:920px; margin:24px auto; margin-top:40px; }
+    .post-box, .post { background:white; padding:16px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:18px; }
+    .post .meta { display:flex; gap:10px; align-items:center; }
+    .avatar { width:44px; height:44px; border-radius:50%; background:#ddd; object-fit:cover; }
+    .username { font-weight:700; }
+    .timestamp { color:#666; font-size:13px; margin-left:auto; }
+    .post img, .post video { width:100%; border-radius:8px; margin-top:12px; max-height:480px; object-fit:cover; }
+    textarea { width:100%; min-height:70px; border-radius:8px; padding:10px; border:1px solid #ddd; box-sizing:border-box; resize:vertical; }
+    input[type=file] { margin-top:10px; }
+    .btn { background:#4a90e2; color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; margin-top:10px; }
+    .actions { margin-top:12px; display:flex; gap:10px; align-items:center; }
+    .actions button { background:none; border:none; cursor:pointer; color:#4a90e2; font-weight:700; }
+    .comments-section { background:#f8f9fb; border-radius:8px; padding:10px; margin-top:12px; }
+    .comment-item { padding:8px; border-radius:8px; background:#fff; margin-bottom:8px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+    .user-list { max-height:220px; overflow:auto; margin-top:10px; }
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:9999; }
+    .modal .modal-content { background:white; width:90%; max-width:700px; border-radius:12px; padding:18px; max-height:90vh; overflow:auto; position:relative; }
+    .close-btn { position:absolute; right:12px; top:8px; font-size:22px; cursor:pointer; }
+    .small { font-size:13px; color:#666; }
+    .inline { display:inline-flex; gap:8px; align-items:center; }
+    select { padding:8px; border-radius:8px; border:1px solid #ddd; }
+    #cameraPreviewVideo { width:100%; border-radius:8px; background:#000; }
+  </style>
 </head>
 <body>
 
-<header>
-    🎓 Welcome to Joseph’s Graduation Media Dashboard 🎓  
-    Share your moments. Celebrate the journey.
-</header>
+  <div id="toggleNavBtn" onclick="toggleNav()">☰ Menu</div>
 
-<div class="container">
+  <header>
+    My-Day 🎓 — Welcome to your Graduation Media Feed
+    <div style="font-weight:400; font-size:13px; margin-top:6px;">Share photos & videos, call classmates, and celebrate together.</div>
+  </header>
 
-    <!-- Post creator -->
-    <div class="post-box">
-        <h3>Create a Post</h3>
-        <textarea id="caption" placeholder="Write something..."></textarea><br>
+  <aside id="navPanel" aria-hidden="true">
+    <h3>Navigation</h3>
+    <button onclick="toggleCreatePost()">Create Post</button>
+    <button onclick="openCameraModal()">📷 Open Camera</button>
+    <button onclick="openCallModal('voice')">📞 Voice Call</button>
+    <button onclick="openCallModal('video')">🎥 Video Call</button>
 
-        <input type="file" id="mediaFile" accept="image/*,video/*"><br>
+    <hr style="border:none; height:1px; background:#3a5063; margin:16px 0;">
+    <div style="font-size:13px; color:#cfdbe8;">Call a registered user</div>
+    <div id="navUsers" class="user-list"></div>
+  </aside>
 
+  <main class="container">
+    <!-- Create Post (hidden by default) -->
+    <div id="createPostBox" class="post-box" style="display:none;">
+      <h3>Create a Post</h3>
+      <textarea id="caption" placeholder="Write something about your moment..."></textarea>
+      <input type="file" id="mediaFile" accept="image/*,video/*">
+      <div style="margin-top:8px;">
         <button class="btn" onclick="createPost()">Post</button>
+        <button class="btn" style="background:#6c757d;" onclick="clearCreateForm()">Clear</button>
+      </div>
+      <div id="capturePreview" style="margin-top:12px; display:none;">
+        <div style="font-weight:700;">Captured Image Preview</div>
+        <img id="capturedImage" style="width:100%; border-radius:8px; margin-top:8px;" />
+      </div>
     </div>
 
     <h2>Latest Posts</h2>
+    <div id="posts">Loading posts…</div>
+  </main>
 
-    <div id="posts"></div>
-
-</div>
-
-
-<!-- ===== COMMENTS MODAL ===== -->
-<div id="commentsModal" class="modal">
+  <!-- Camera Modal -->
+  <div id="cameraModal" class="modal">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeComments()">&times;</span>
-
-        <h3>Comments</h3>
-
-        <div id="commentsList"></div>
-
-        <div class="add-comment-box">
-            <input type="text" id="newCommentText" placeholder="Write a comment...">
-            <button onclick="submitComment()">Send</button>
-        </div>
+      <span class="close-btn" onclick="closeCameraModal()">&times;</span>
+      <h3>Camera — Capture Photo</h3>
+      <video id="cameraPreviewVideo" autoplay playsinline></video>
+      <div style="margin-top:10px;">
+        <button class="btn" onclick="takePhoto()">Capture</button>
+        <button class="btn" style="background:#6c757d;" onclick="closeCameraModal()">Close</button>
+      </div>
+      <p class="small">Captured photos will be attached to the Create Post form for upload.</p>
     </div>
-</div>
+  </div>
 
+  <!-- Call Modal (pick user then start call) -->
+  <div id="callModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeCallModal()">&times;</span>
+      <h3 id="callModalTitle">Start Call</h3>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="dashboard.js"></script>
+      <div style="margin-top:8px;">
+        <label class="small">Select user to call:</label>
+        <select id="callTargetSelect"></select>
+      </div>
+
+      <div style="margin-top:10px;">
+        <button class="btn" onclick="startCallFromModal()">Start Call</button>
+        <button class="btn" style="background:#6c757d;" onclick="closeCallModal()">Cancel</button>
+      </div>
+
+      <div id="localCallPreview" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- Live call area (hidden) -->
+  <div id="liveCallArea" style="display:none; position:fixed; right:18px; bottom:18px; width:320px; z-index:1001;">
+    <div class="post-box">
+      <div style="display:flex; gap:10px; align-items:center;">
+        <div id="callWithLabel" style="font-weight:700;"></div>
+        <div style="margin-left:auto;">
+          <button class="btn" onclick="endCall()">End</button>
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <video id="remoteVideo" autoplay playsinline style="width:100%; border-radius:8px; background:#000;"></video>
+        <video id="localVideo" autoplay muted playsinline style="width:100%; max-height:160px; border-radius:8px; margin-top:8px; display:none;"></video>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="dashboard.js"></script>
 
 </body>
 </html>
