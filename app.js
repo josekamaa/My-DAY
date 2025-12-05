@@ -9,12 +9,12 @@ const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function registerUser(event) {
     event.preventDefault();
 
+    let name = document.getElementById("name").value;
     let email = document.getElementById("email").value;
     let password = document.getElementById("password").value;
-    let name = document.getElementById("name").value;
 
-    // STEP 1: Create Auth User
-    const { data: authData, error: authError } = await client.auth.signUp({
+    // 1️⃣ Create Auth User
+    const { data: signUpData, error: signUpError } = await client.auth.signUp({
         email: email,
         password: password,
         options: {
@@ -22,30 +22,32 @@ async function registerUser(event) {
         }
     });
 
-    if (authError) {
-        alert(authError.message);
+    if (signUpError) {
+        alert(signUpError.message);
         return;
     }
 
-    let userId = authData.user.id;
+    let userId = signUpData.user.id;
 
-    // STEP 2: Insert into your custom "users" table
+    // 2️⃣ Force-refresh session (VERY IMPORTANT)
+    await client.auth.getSession();
+
+    // 3️⃣ Insert into users table (RLS now passes)
     const { error: insertError } = await client
-        .from("users")
+        .from('users')
         .insert({
             id: userId,
             full_name: name,
             email: email,
-            created_at: new Date()
         });
 
     if (insertError) {
         console.log(insertError);
-        alert("Auth created but failed to save profile!");
+        alert("Profile insert failed: " + insertError.message);
         return;
     }
 
-    alert("Account created successfully! Please verify your email.");
+    alert("Registration successful! Check your email.");
     window.location.href = "login.html";
 }
 
