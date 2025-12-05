@@ -1,5 +1,5 @@
 // Initialize Supabase Client
-const SUPABASE_URL = "https://eqkwtqutcazxvdllorzl.supabase.co";
+const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";
 
 // Correct: create 'client' so no conflict
