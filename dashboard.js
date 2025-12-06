@@ -1,31 +1,37 @@
-// dashboard.js
-// --------------- Supabase config ---------------
+/* ===========================================================
+   SUPABASE CLIENT (NO NAME CONFLICTS)
+=========================================================== */
 const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";  // put your actual key
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// IMPORTANT: sb = client  (no conflict)
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// state
+/* ===========================================================
+   GLOBAL STATE
+=========================================================== */
 let currentUser = null;
 let userLikes = new Set();
-let messageSubscription = null;
-let activeChatUser = null; // { id, username, avatar_url }
 
-// ---------- Utilities ----------
+let activeChatUser = null;
+let msgSub = null;
+
+/* ===========================================================
+   SHORTCUT
+=========================================================== */
 function el(id){ return document.getElementById(id); }
-function formatTime(ts){
-  try { return new Date(ts).toLocaleString(); } catch(e){ return ""; }
-}
 
-// ---------- Load session & profile ----------
+/* ===========================================================
+   LOAD USER + PROFILE
+=========================================================== */
 async function loadUser(){
-  const { data, error } = await supabase.auth.getUser();
-  if (error) { console.error(error); }
-  if (!data?.user) {
-    alert("You must be logged in!");
+  const { data } = await sb.auth.getUser();
+
+  if(!data?.user){
     window.location.href = "login.html";
     return;
   }
+
   currentUser = data.user;
   await ensureProfileExists();
   await loadProfilePanel();
@@ -34,377 +40,393 @@ async function loadUser(){
 }
 
 async function ensureProfileExists(){
-  // If profiles row doesn't exist, create one with default username (email prefix)
-  const { data } = await supabase
+  const { data } = await sb
     .from("profiles")
     .select("id")
     .eq("id", currentUser.id)
     .maybeSingle();
 
-  if (!data) {
-    const username = currentUser.email ? currentUser.email.split("@")[0] : "user";
-    await supabase.from("profiles").insert({ id: currentUser.id, username });
+  if(!data){
+    const username = currentUser.email.split("@")[0];
+    await sb.from("profiles").insert({ id: currentUser.id, username });
   }
 }
 
 async function loadProfilePanel(){
-  const { data } = await supabase
+  const { data } = await sb
     .from("profiles")
-    .select("username, avatar_url")
+    .select("*")
     .eq("id", currentUser.id)
     .single();
 
-  const username = data?.username || (currentUser.email ? currentUser.email.split("@")[0] : "User");
-  const avatarUrl = data?.avatar_url || null;
+  const name = data?.username || "User";
+  const url = data?.avatar_url || null;
 
-  el("profileUsername").textContent = username;
-  el("avatarInitial").textContent = username.charAt(0).toUpperCase();
+  el("profileUsername").textContent = name;
+  el("avatarInitial").textContent = name.charAt(0).toUpperCase();
 
-  if (avatarUrl) {
+  if(url){
     const img = document.createElement("img");
-    img.src = avatarUrl;
-    img.alt = "avatar";
-    const container = el("profileAvatar");
-    container.innerHTML = "";
-    container.appendChild(img);
+    img.src = url;
+    el("profileAvatar").innerHTML = "";
+    el("profileAvatar").appendChild(img);
   }
 }
 
-// avatar input handler
-el("avatarInput").addEventListener("change", async (e) => {
+/* ===========================================================
+   AVATAR UPLOAD
+=========================================================== */
+el("avatarInput").addEventListener("change", async (e)=>{
   const file = e.target.files[0];
-  if (!file) return;
-  const fileName = `${currentUser.id}_${Date.now()}_${file.name}`;
-  const { data, error } = await supabase.storage.from("avatars").upload(fileName, file, { cacheControl: "3600", upsert: false });
-  if (error) {
-    console.error("Avatar upload error", error);
-    alert("Failed to upload avatar");
-    return;
-  }
-  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${encodeURIComponent(data.path)}`;
-  // update profile
-  const { error: up } = await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", currentUser.id);
-  if (up) {
-    console.error(up);
-    alert("Failed to save avatar URL");
-    return;
-  }
-  await loadProfilePanel();
-  loadPosts(); // refresh feed to show avatar
+  if(!file) return;
+
+  const path = `${currentUser.id}_${Date.now()}_${file.name}`;
+
+  const { data, error } = await sb
+    .storage.from("avatars")
+    .upload(path, file);
+
+  if(error) return alert("Avatar upload failed");
+
+  const url = `${SUPABASE_URL}/storage/v1/object/public/avatars/${encodeURIComponent(data.path)}`;
+
+  await sb.from("profiles")
+    .update({ avatar_url: url })
+    .eq("id", currentUser.id);
+
+  loadProfilePanel();
+  loadPosts();
 });
 
-// ---------- Posts (create, load) ----------
+/* ===========================================================
+   CREATE POST
+=========================================================== */
 async function createPost(){
   const caption = el("caption").value.trim();
   const media = el("mediaFile").files[0];
-  if (!caption && !media) { alert("Write something or upload media"); return; }
 
-  let mediaUrl = null, mediaType = null;
-  if (media) {
-    const fileName = `${Date.now()}_${media.name}`;
-    const { data, error } = await supabase.storage.from("posts").upload(fileName, media);
-    if (error) { console.error(error); alert("Media upload failed"); return; }
+  if(!caption && !media){
+    return alert("Write something or upload media");
+  }
+
+  let mediaUrl = null;
+  let mediaType = null;
+
+  if(media){
+    const path = `${Date.now()}_${media.name}`;
+
+    const { data, error } = await sb
+      .storage.from("posts")
+      .upload(path, media);
+
+    if(error) return alert("Upload failed");
+
     mediaUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${encodeURIComponent(data.path)}`;
     mediaType = media.type.startsWith("video") ? "video" : "image";
   }
 
-  const userName = (currentUser.email ? currentUser.email.split("@")[0] : "user");
-  const { error } = await supabase.from("posts").insert([{
-    user_id: currentUser.id, user_name: userName, caption, media_url: mediaUrl, media_type: mediaType, likes: 0
-  }]);
-  if (error) { console.error(error); alert("Failed to create post"); return; }
+  await sb.from("posts").insert({
+    user_id: currentUser.id,
+    user_name: currentUser.email.split("@")[0],
+    caption,
+    media_url: mediaUrl,
+    media_type: mediaType,
+    likes: 0
+  });
 
   el("caption").value = "";
   el("mediaFile").value = "";
   el("createPostBox").classList.add("hidden");
+
   loadPosts();
 }
 
+/* ===========================================================
+   LOAD POSTS
+=========================================================== */
 async function loadUserLikes(){
-  if (!currentUser) return;
-  const { data } = await supabase.from("post_likes").select("post_id").eq("user_id", currentUser.id);
-  userLikes = new Set((data || []).map(d => d.post_id));
+  const { data } = await sb.from("post_likes")
+    .select("post_id")
+    .eq("user_id", currentUser.id);
+
+  userLikes = new Set(data?.map(x=>x.post_id) || []);
 }
 
 async function loadPosts(){
   const postsDiv = el("posts");
-  postsDiv.innerHTML = "<div class='post-box'>Loading posts...</div>";
+  postsDiv.innerHTML = "<p>Loading...</p>";
 
-  const { data: posts, error } = await supabase.from("posts").select("*").order("created_at", { ascending:false });
-  if (error) { postsDiv.innerHTML = "<div class='post-box'>Failed to load posts</div>"; console.error(error); return; }
+  const { data: posts } = await sb
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
   postsDiv.innerHTML = "";
 
-  for (const post of posts) {
-    let userName = post.user_name || "User";
-    let avatarHTML = `<div class="user-avatar">${userName.charAt(0).toUpperCase()}</div>`;
+  for(const post of posts){
+    const prof = await sb
+      .from("profiles")
+      .select("*")
+      .eq("id", post.user_id)
+      .maybeSingle();
 
-    // try to fetch profile avatar if exists
-    if (post.user_id) {
-      const { data: profile } = await supabase.from("profiles").select("avatar_url,username").eq("id", post.user_id).maybeSingle();
-      if (profile?.avatar_url) {
-        avatarHTML = `<div class="user-avatar"><img src="${profile.avatar_url}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"></div>`;
-        userName = profile.username || userName;
-      } else if (profile?.username) {
-        userName = profile.username;
-      }
-    }
+    const avatar = prof.data?.avatar_url || null;
+    const username = prof.data?.username || post.user_name;
+
+    const div = document.createElement("div");
+    div.className = "post";
+
+    const avatarHTML = avatar
+      ? `<div class="user-avatar"><img src="${avatar}"></div>`
+      : `<div class="user-avatar"><img src=""></div>`;
 
     let mediaHTML = "";
-    if (post.media_type === "image" && post.media_url) mediaHTML = `<img src="${post.media_url}" alt="post image" style="width:100%;border-radius:8px;margin-top:8px;max-height:500px;object-fit:cover;">`;
-    if (post.media_type === "video" && post.media_url) mediaHTML = `<video src="${post.media_url}" controls style="width:100%;border-radius:8px;margin-top:8px;max-height:400px;"></video>`;
+    if(post.media_type === "image")
+      mediaHTML = `<img src="${post.media_url}" style="width:100%;border-radius:8px;margin-top:8px;">`;
+    if(post.media_type === "video")
+      mediaHTML = `<video src="${post.media_url}" controls style="width:100%;border-radius:8px;margin-top:8px;"></video>`;
 
-    const hasLiked = userLikes.has(post.id);
-    const likeBtn = `<button class="${hasLiked ? 'liked' : ''}" onclick="likePost(${post.id}, ${post.likes})">${hasLiked ? '❤️' : '🤍'} Like (${post.likes})</button>`;
-
-    const postHtml = document.createElement("div");
-    postHtml.className = "post";
-    postHtml.id = `post-${post.id}`;
-    postHtml.innerHTML = `
+    div.innerHTML = `
       <div class="post-header">
         ${avatarHTML}
-        <div style="display:flex;flex-direction:column;">
-          <div style="font-weight:600;">${userName}</div>
-          <div style="font-size:12px;color:#666;">${formatTime(post.created_at)}</div>
-        </div>
+        <strong>${username}</strong>
       </div>
-      <p style="margin-top:10px;">${post.caption || ""}</p>
+      <p>${post.caption || ""}</p>
       ${mediaHTML}
-      <div class="actions">
-        ${likeBtn}
+      <div class="actions" style="margin-top:10px;">
+        <button onclick="likePost(${post.id}, ${post.likes})">
+          ${userLikes.has(post.id) ? "❤️" : "🤍"} Like (${post.likes})
+        </button>
         <button onclick="toggleComments(${post.id})">💬 Comments</button>
       </div>
-      <div class="comments-section" id="comments-${post.id}" style="display:none;">
+
+      <div class="comments-section" id="comments-${post.id}">
         <h4>Comments</h4>
         <div id="comments-list-${post.id}"></div>
-        <div class="comment-box" style="display:flex;gap:8px;margin-top:8px;">
-          <input type="text" id="comment-input-${post.id}" placeholder="Write a comment..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #ddd;">
+
+        <div class="comment-box">
+          <input id="comment-input-${post.id}" placeholder="Write a comment...">
           <button onclick="addComment(${post.id})">Send</button>
         </div>
       </div>
     `;
-    postsDiv.appendChild(postHtml);
+
+    postsDiv.appendChild(div);
     loadComments(post.id);
   }
 }
 
-// like post
-async function likePost(postId, currentLikes){
-  if (!currentUser) { alert("Please login"); return; }
-  if (userLikes.has(postId)) { alert("You already liked this post"); return; }
+/* ===========================================================
+   LIKE POST
+=========================================================== */
+async function likePost(postId, likes){
+  if(userLikes.has(postId)) return alert("Already liked");
 
-  const { error: likeError } = await supabase.from("post_likes").insert([{ post_id: postId, user_id: currentUser.id }]);
-  if (likeError) { console.error(likeError); return; }
+  await sb.from("post_likes").insert({ post_id: postId, user_id: currentUser.id });
 
-  const { error } = await supabase.from("posts").update({ likes: currentLikes + 1 }).eq("id", postId);
-  if (!error) {
-    userLikes.add(postId);
-    loadPosts();
+  await sb.from("posts").update({ likes: likes + 1 }).eq("id", postId);
+
+  loadPosts();
+}
+
+/* ===========================================================
+   COMMENTS
+=========================================================== */
+async function addComment(postId){
+  const box = el(`comment-input-${postId}`);
+  const text = box.value.trim();
+  if(!text) return;
+
+  await sb.from("comments").insert({
+    post_id: postId,
+    user_id: currentUser.id,
+    user_name: currentUser.email.split("@")[0],
+    comment: text
+  });
+
+  box.value = "";
+  loadComments(postId);
+}
+
+async function loadComments(postId){
+  const { data } = await sb
+    .from("comments")
+    .select("*")
+    .eq("post_id", postId)
+    .order("created_at");
+
+  const container = el(`comments-list-${postId}`);
+  container.innerHTML = "";
+
+  for(const c of data){
+    const div = document.createElement("div");
+    div.className = "comment";
+    div.innerHTML = `<strong>${c.user_name}</strong><p>${c.comment}</p>`;
+    container.appendChild(div);
   }
 }
 
-// comments (same as before)
-async function addComment(postId){ /* keep original implementation */
-  const inp = el(`comment-input-${postId}`);
-  if (!inp) return;
-  const commentText = inp.value.trim();
-  if (!commentText) return;
-  const userName = (currentUser.email ? currentUser.email.split("@")[0] : "user");
-  const { error } = await supabase.from("comments").insert([{ post_id: postId, user_id: currentUser.id, user_name: userName, comment: commentText }]);
-  if (error) { console.error(error); alert("Failed to add comment"); return; }
-  inp.value = "";
-  loadComments(postId);
-}
-async function loadComments(postId){
-  const commentList = el(`comments-list-${postId}`);
-  if (!commentList) return;
-  const { data: comments } = await supabase.from("comments").select("*").eq("post_id", postId).order("created_at", { ascending:true });
-  commentList.innerHTML = "";
-  if (!comments || comments.length === 0) return;
-  comments.forEach(c => {
-    const userName = c.user_name || (c.user_id ? c.user_id.slice(0,8) : "User");
-    const div = document.createElement("div");
-    div.className = "comment";
-    div.style.marginBottom = "8px";
-    div.innerHTML = `<div style="font-weight:600;">${userName}</div><div>${c.comment}</div>`;
-    commentList.appendChild(div);
-  });
-}
-
-// toggle comments
-function toggleComments(postId){
-  const section = el(`comments-${postId}`);
-  if (!section) return;
+function toggleComments(id){
+  const section = el(`comments-${id}`);
   section.style.display = section.style.display === "none" ? "block" : "none";
 }
 
-// ---------- Camera (same) ----------
+/* ===========================================================
+   CAMERA
+=========================================================== */
 let cameraStream = null;
+
 async function openCamera(){
-  try {
-    el("cameraPreview").style.display = "flex";
-    const video = el("cameraVideo");
-    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio:false });
-    video.srcObject = cameraStream;
-  } catch (err) { alert("Could not access camera: " + err.message); }
+  el("cameraPreview").style.display = "flex";
+  const video = el("cameraVideo");
+
+  cameraStream = await navigator.mediaDevices.getUserMedia({
+    video:{ facingMode:"user" }, audio:false
+  });
+
+  video.srcObject = cameraStream;
 }
+
 function closeCamera(){
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(t => t.stop());
-    cameraStream = null;
+  if(cameraStream){
+    cameraStream.getTracks().forEach(t=>t.stop());
   }
   el("cameraPreview").style.display = "none";
 }
+
 function capturePhoto(){
   const video = el("cameraVideo");
   const canvas = el("photoCanvas");
+  const ctx = canvas.getContext("2d");
+
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(video,0,0,canvas.width,canvas.height);
-  canvas.toBlob(blob => {
-    const file = new File([blob], `photo_${Date.now()}.png`, { type: "image/png" });
+  ctx.drawImage(video,0,0);
+
+  canvas.toBlob(blob=>{
+    const file = new File([blob], `photo_${Date.now()}.png`, { type:"image/png" });
+
     const dt = new DataTransfer();
     dt.items.add(file);
     el("mediaFile").files = dt.files;
-    el("createPostBox").classList.remove("hidden");
-    el("createPostBox").scrollIntoView({ behavior:"smooth" });
+
     closeCamera();
-  }, "image/png");
+    el("createPostBox").classList.remove("hidden");
+  });
 }
 
-// ---------- Messenger (full-screen) ----------
+/* ===========================================================
+   MESSENGER SYSTEM
+=========================================================== */
+
 el("inboxBtn").addEventListener("click", openMessenger);
 
-async function openMessenger(){
+function openMessenger(){
   el("messenger").style.display = "flex";
-  el("messengerUserName").textContent = (currentUser?.email ? currentUser.email.split("@")[0] : "");
-  await loadUserList();
-  subscribeToMessages();
+  loadUserList();
+  subscribeMessages();
 }
 
 function closeMessenger(){
   el("messenger").style.display = "none";
-  // unsubscribe from real-time channel if desired
-  if (messageSubscription && typeof messageSubscription.unsubscribe === "function"){
-    messageSubscription.unsubscribe();
-    messageSubscription = null;
-  }
   activeChatUser = null;
-  el("messagesList").innerHTML = "";
+
+  if(msgSub){
+    msgSub.unsubscribe();
+    msgSub = null;
+  }
 }
 
-// load list of registered users (excluding the currentUser)
 async function loadUserList(){
-  const { data: users, error } = await supabase.from("profiles").select("id, username, avatar_url").neq("id", currentUser.id);
-  if (error) { console.error(error); return; }
+  const { data } = await sb.from("profiles").select("*").neq("id", currentUser.id);
+
   const list = el("userList");
   list.innerHTML = "";
-  (users || []).forEach(u => {
+
+  data.forEach(u=>{
     const row = document.createElement("div");
-    row.style.display = "flex"; row.style.gap = "10px"; row.style.alignItems = "center"; row.style.padding = "8px"; row.style.cursor = "pointer";
-    row.onmouseover = () => row.style.background = "#f7f7f7";
-    row.onmouseout = () => row.style.background = "transparent";
-    row.onclick = () => openChatWith(u);
+    row.style.padding = "8px";
+    row.style.cursor = "pointer";
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "8px";
+
     row.innerHTML = `
-      <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:#4a90e2;">
-        ${u.avatar_url ? `<img src="${u.avatar_url}" style="width:42px;height:42px;object-fit:cover;">` : `<div style="width:42px;height:42px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">${(u.username||'U').charAt(0).toUpperCase()}</div>`}
+      <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:#4a90e2;color:#fff;display:flex;align-items:center;justify-content:center;">
+        ${u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%;height:100%;object-fit:cover;">`
+                        : u.username.charAt(0).toUpperCase()}
       </div>
-      <div>
-        <div style="font-weight:600;">${u.username || u.id.slice(0,8)}</div>
-        <div style="font-size:12px;color:#666;">Tap to chat</div>
-      </div>
+      <strong>${u.username}</strong>
     `;
+
+    row.onclick = ()=> openChat(u);
     list.appendChild(row);
   });
 }
 
-// open chat with selected user
-async function openChatWith(user){
+async function openChat(user){
   activeChatUser = user;
   el("messagesList").innerHTML = "";
-  // load last 100 messages between currentUser and selected user
-  const { data: msgs, error } = await supabase
+
+  const { data } = await sb
     .from("messages")
     .select("*")
     .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${user.id}),and(sender_id.eq.${user.id},receiver_id.eq.${currentUser.id})`)
-    .order("created_at", { ascending: true })
-    .limit(500);
-  if (error) { console.error(error); return; }
-  (msgs || []).forEach(renderMessage);
-  // scroll to bottom
-  const mlist = el("messagesList");
-  setTimeout(()=> mlist.scrollTop = mlist.scrollHeight, 50);
+    .order("created_at", { ascending:true });
+
+  data.forEach(renderMessage);
 }
 
-// render single message object
 function renderMessage(msg){
-  const container = el("messagesList");
-  const wrapper = document.createElement("div");
-  wrapper.className = "msg-row";
-  const isMe = msg.sender_id === currentUser.id;
-  const box = document.createElement("div");
-  box.className = "msg" + (isMe ? " me" : "");
-  box.innerHTML = `<div style="font-size:12px;color:inherit">${msg.message}</div><div style="font-size:10px;color:rgba(0,0,0,0.45);margin-top:6px;">${formatTime(msg.created_at)}</div>`;
-  wrapper.appendChild(box);
-  container.appendChild(wrapper);
-  container.scrollTop = container.scrollHeight;
+  const div = document.createElement("div");
+  div.className = "msg" + (msg.sender_id === currentUser.id ? " me" : "");
+  div.textContent = msg.message;
+
+  el("messagesList").appendChild(div);
+  el("messagesList").scrollTop = el("messagesList").scrollHeight;
 }
 
-// send message
 async function sendMessage(){
-  const text = el("messageInput").value.trim();
-  if (!text || !activeChatUser) return;
-  const payload = { sender_id: currentUser.id, receiver_id: activeChatUser.id, message: text };
-  const { error } = await supabase.from("messages").insert([payload]);
-  if (error) { console.error(error); alert("Failed to send message"); return; }
-  el("messageInput").value = "";
-  // Note: the realtime subscription will render the incoming message (including this user's new message)
+  const input = el("messageInput");
+  const text = input.value.trim();
+  if(!text || !activeChatUser) return;
+
+  await sb.from("messages").insert({
+    sender_id: currentUser.id,
+    receiver_id: activeChatUser.id,
+    message: text
+  });
+
+  input.value = "";
 }
 
-// subscribe to messages table (realtime)
-function subscribeToMessages(){
-  // If already subscribed, skip
-  if (messageSubscription) return;
+function subscribeMessages(){
+  if(msgSub) return;
 
-  // create a channel that listens to INSERTs on messages
-  // supabase-js v2 channel API:
-  messageSubscription = supabase.channel('public:messages')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-      const msg = payload.new;
-      // If the message belongs to the current open chat, render it
-      const otherId = activeChatUser?.id;
-      if (!otherId) return; // no active chat
-      const isBetween = (msg.sender_id === currentUser.id && msg.receiver_id === otherId) ||
-                        (msg.sender_id === otherId && msg.receiver_id === currentUser.id);
-      if (isBetween) renderMessage(msg);
-      // optionally highlight new message in user list if needed
-    })
-    .subscribe(status => {
-      // subscription acknowledged
-      console.log('messages subscription status:', status);
-    });
+  msgSub = sb.channel("messages")
+    .on("postgres_changes",
+      { event:"INSERT", schema:"public", table:"messages" },
+      payload=>{
+        const msg = payload.new;
+
+        if(!activeChatUser) return;
+        const isBetween =
+          (msg.sender_id === currentUser.id && msg.receiver_id === activeChatUser.id) ||
+          (msg.sender_id === activeChatUser.id && msg.receiver_id === currentUser.id);
+
+        if(isBetween) renderMessage(msg);
+      })
+    .subscribe();
 }
 
-// ---------- Initialization ----------
+/* ===========================================================
+   TOGGLE CREATE POST
+=========================================================== */
+function toggleCreatePost(){
+  el("createPostBox").classList.toggle("hidden");
+}
+
+/* ===========================================================
+   INIT
+=========================================================== */
 loadUser();
-
-// expose some functions to the window so inline onclick in HTML works
-window.toggleCreatePost = function(){
-  const box = el("createPostBox");
-  box.classList.toggle("hidden");
-  if (!box.classList.contains("hidden")) box.scrollIntoView({ behavior:"smooth" });
-};
-window.openCamera = openCamera;
-window.closeCamera = closeCamera;
-window.capturePhoto = capturePhoto;
-window.startVoiceCall = function(){ alert("Voice call placeholder"); };
-window.startVideoCall = function(){ alert("Video call placeholder"); };
-window.createPost = createPost;
-window.addComment = addComment;
-window.toggleComments = toggleComments;
-window.likePost = likePost;
-
-// make sendMessage available globally
-window.sendMessage = sendMessage;
-window.openMessenger = openMessenger;
-window.closeMessenger = closeMessenger;
