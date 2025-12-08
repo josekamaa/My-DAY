@@ -2,7 +2,7 @@
    SUPABASE INITIALIZATION
 ========================================================== */
 const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A"; // IMPORTANT: USE ANON KEY ONLY
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -10,23 +10,16 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
    GLOBAL STATE
 ========================================================== */
 let currentUser = null;
-
-// Posts
 let userLikes = new Set();
 
-// Messenger
-let activeConversation = null; 
+let activeConversation = null;
 let allUsersCache = [];
 let allGroupsCache = [];
 let dmRealtime = null;
 let groupRealtime = null;
 
-// Camera
 let cameraStream = null;
 
-/* ==========================================================
-   DOM SHORTCUTS
-========================================================== */
 const el = id => document.getElementById(id);
 const $ = q => document.querySelector(q);
 
@@ -68,13 +61,13 @@ function wireUI() {
   el("captureBtn").onclick = capturePhoto;
   el("closeCameraBtn").onclick = closeCamera;
 
+  // Search
+  el("contactsSearch").oninput = filterContacts;
+
   // Mobile bottom tabs
   el("tabChats").onclick = () => { openMessenger(); scrollToUsers(); };
   el("tabGroups").onclick = () => { openMessenger(); scrollToGroups(); };
   el("tabProfile").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
-
-  // Search
-  el("contactsSearch").oninput = filterContacts;
 }
 
 /* ==========================================================
@@ -95,32 +88,30 @@ async function loadAuthUser() {
   await loadPosts();
 }
 
-/* Create default profile for new users */
 async function ensureProfileExists() {
   const p = await sb.from("profiles").select("id").eq("id", currentUser.id).maybeSingle();
   if (!p.data) {
     await sb.from("profiles").insert({
       id: currentUser.id,
-      username: currentUser.email.split("@")[0]
+      username: currentUser.email.split("@")[0],
     });
   }
 }
 
-/* Load profile panel */
 async function loadProfileInfo() {
-  const { data } = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
+  const { data } = await sb.from("profiles")
+    .select("*")
+    .eq("id", currentUser.id)
+    .single();
 
-  const username = data.username;
-  const avatar = data.avatar_url;
-
-  el("profileUsername").textContent = username;
+  el("profileUsername").textContent = data.username;
   el("profileEmail").textContent = currentUser.email;
 
-  el("avatarInitial").textContent = username.charAt(0).toUpperCase();
+  el("avatarInitial").textContent = data.username.charAt(0).toUpperCase();
 
-  if (avatar) {
+  if (data.avatar_url) {
     el("profileAvatar").innerHTML =
-      `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover">`;
+      `<img src="${data.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
   }
 }
 
@@ -148,7 +139,7 @@ async function uploadAvatar(ev) {
    CREATE POST
 ========================================================== */
 async function createPost() {
-  const caption = el("postCaption").value.trim();
+  const caption = el("caption").value.trim();
   const file = el("mediaFile").files[0];
 
   let media_url = null;
@@ -157,7 +148,6 @@ async function createPost() {
   if (file) {
     const path = `${currentUser.id}_${Date.now()}_${file.name}`;
     const upload = await sb.storage.from("posts").upload(path, file);
-
     if (upload.error) return alert("Media upload failed.");
 
     media_url = `${SUPABASE_URL}/storage/v1/object/public/posts/${upload.data.path}`;
@@ -172,11 +162,10 @@ async function createPost() {
     media_type
   });
 
-  el("postCaption").value = "";
+  el("caption").value = "";
   el("mediaFile").value = "";
 
   el("createPostBox").classList.add("hidden");
-
   loadPosts();
 }
 
@@ -184,7 +173,10 @@ async function createPost() {
    LOAD POSTS
 ========================================================== */
 async function loadUserLikes() {
-  const { data } = await sb.from("post_likes").select("post_id").eq("user_id", currentUser.id);
+  const { data } = await sb.from("post_likes")
+    .select("post_id")
+    .eq("user_id", currentUser.id);
+
   userLikes = new Set(data?.map(x => x.post_id) || []);
 }
 
@@ -192,7 +184,9 @@ async function loadPosts() {
   const postArea = el("posts");
   postArea.innerHTML = "Loading...";
 
-  const { data } = await sb.from("posts").select("*").order("created_at", { ascending: false });
+  const { data } = await sb.from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   postArea.innerHTML = "";
 
@@ -203,25 +197,15 @@ async function loadPosts() {
       .maybeSingle();
 
     const username = prof.data?.username ?? p.user_name;
-    const avatar = prof.data?.avatar_url;
 
     const div = document.createElement("div");
     div.className = "post";
 
-    let avatarHtml = avatar
-      ? `<img src="${avatar}" style="width:42px;height:42px;border-radius:50%;">`
-      : `<div class="avatar-circle">${username.charAt(0).toUpperCase()}</div>`;
-
-    let mediaHtml = "";
-    if (p.media_type === "image") {
-      mediaHtml = `<img src="${p.media_url}" class="post-media">`;
-    } else if (p.media_type === "video") {
-      mediaHtml = `<video controls class="post-media"><source src="${p.media_url}"></video>`;
-    }
+    const avatar = prof.data?.avatar_url;
 
     div.innerHTML = `
       <div class="post-header">
-        ${avatarHtml}
+        <img src="${avatar || ""}" class="avatar48" onerror="this.style.display='none'">
         <div>
           <strong>${username}</strong><br>
           <span class="muted small">${new Date(p.created_at).toLocaleString()}</span>
@@ -229,7 +213,14 @@ async function loadPosts() {
       </div>
 
       <p>${p.caption}</p>
-      ${mediaHtml}
+
+      ${
+        p.media_type === "image"
+          ? `<img src="${p.media_url}" class="post-media">`
+          : p.media_type === "video"
+            ? `<video controls class="post-media"><source src="${p.media_url}"></video>`
+            : ""
+      }
 
       <div class="post-actions">
         <button onclick="likePost(${p.id}, ${p.likes})">
@@ -281,7 +272,10 @@ async function addComment(id) {
 }
 
 async function loadComments(id) {
-  const { data } = await sb.from("comments").select("*").eq("post_id", id).order("created_at");
+  const { data } = await sb.from("comments")
+    .select("*")
+    .eq("post_id", id)
+    .order("created_at");
 
   const box = el(`comments-list-${id}`);
   box.innerHTML = "";
@@ -331,7 +325,7 @@ function capturePhoto() {
 }
 
 /* ==========================================================
-   MESSENGER PAGE
+   MESSENGER
 ========================================================== */
 function openMessenger() {
   el("messenger").style.display = "flex";
@@ -373,10 +367,7 @@ function renderUsersList() {
 
     row.innerHTML = `
       <div class="avatar48">
-        ${u.avatar_url 
-          ? `<img src="${u.avatar_url}">` 
-          : u.username.charAt(0).toUpperCase()
-        }
+        ${u.avatar_url ? `<img src="${u.avatar_url}">` : u.username.charAt(0)}
       </div>
       <div class="list-name">${u.username}</div>
     `;
@@ -416,7 +407,10 @@ function filterContacts() {
   users.forEach(u => {
     const r = document.createElement("div");
     r.className = "list-row";
-    r.innerHTML = `<div class="avatar48">${u.username.charAt(0)}</div><div>${u.username}</div>`;
+    r.innerHTML = `
+      <div class="avatar48">${u.avatar_url ? `<img src="${u.avatar_url}">` : u.username[0]}</div>
+      <div>${u.username}</div>
+    `;
     r.onclick = () => openDM(u);
     el("usersList").appendChild(r);
   });
@@ -436,7 +430,7 @@ function scrollToUsers() { el("usersList").scrollIntoView({ behavior: "smooth" }
 function scrollToGroups() { el("groupsList").scrollIntoView({ behavior: "smooth" }); }
 
 /* ==========================================================
-   DIRECT MESSAGE (DM)
+   DIRECT MESSAGE
 ========================================================== */
 async function openDM(user) {
   activeConversation = { type: "dm", id: user.id, name: user.username };
@@ -501,7 +495,7 @@ async function loadGroupMembers(groupId) {
   populateAddMemberSelect();
 }
 
-/* Add member dropdown */
+/* ADD MEMBER SELECT */
 function populateAddMemberSelect() {
   const sel = el("addMemberSelect");
   if (!sel) return;
@@ -517,7 +511,7 @@ function populateAddMemberSelect() {
 
   el("addMemberBtn").onclick = async () => {
     const id = sel.value;
-    if (!id || !activeConversation || activeConversation.type !== "group")
+    if (!id || activeConversation?.type !== "group")
       return;
 
     await sb.from("group_members").insert({
@@ -600,7 +594,7 @@ function escapeHTML(str) {
 }
 
 /* ==========================================================
-   SEND MESSAGE (DM or GROUP)
+   SEND MESSAGE
 ========================================================== */
 async function sendChatMessage() {
   if (!activeConversation) return;
@@ -614,6 +608,7 @@ async function sendChatMessage() {
     const path = `${currentUser.id}_${Date.now()}_${file.name}`;
     const upload = await sb.storage.from("chat_images").upload(path, file);
     if (upload.error) return alert("Image upload failed.");
+
     image_url = `${SUPABASE_URL}/storage/v1/object/public/chat_images/${upload.data.path}`;
   }
 
