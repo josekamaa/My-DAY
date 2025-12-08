@@ -53,8 +53,12 @@ function wireUI() {
   el("sendBtn").onclick = sendChatMessage;
   el("chatImageInput").onchange = sendChatMessage;
 
-  // Groups
-  el("createGroupBtn").onclick = createGroup;
+  // Groups - with null check for missing button
+  const createGroupBtn = el("createGroupBtn");
+  if (createGroupBtn) {
+    createGroupBtn.onclick = createGroup;
+  }
+  
   el("leaveGroupBtn").onclick = leaveGroup;
 
   // Camera
