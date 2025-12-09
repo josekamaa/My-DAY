@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🎓 Joseph Kamau Graduation Celebration</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,11 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html {
+            scroll-behavior: smooth;
         }
         
         body {
@@ -23,66 +28,68 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
+            padding: 15px;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
         
         .container {
-            max-width: 900px;
             width: 100%;
+            max-width: 800px;
             background-color: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px 25px;
             text-align: center;
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            margin-top: 20px;
+            margin-top: 15px;
         }
         
         .header {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         
         .graduation-icon {
-            font-size: 4rem;
+            font-size: 3.5rem;
             margin-bottom: 15px;
             animation: float 3s ease-in-out infinite;
         }
         
         h1 {
             font-family: 'Playfair Display', serif;
-            font-size: 2.8rem;
+            font-size: 2.2rem;
             font-weight: 600;
             margin-bottom: 10px;
             background: linear-gradient(to right, #ffd700, #ffed4e);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            line-height: 1.3;
         }
         
         .subtitle {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #d1d8ff;
             margin-bottom: 20px;
             font-weight: 300;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
         }
         
         .student-info {
             background-color: rgba(255, 255, 255, 0.15);
             border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
+            padding: 25px 20px;
+            margin: 25px 0;
             text-align: left;
             border-left: 5px solid #ffd700;
         }
         
         .student-info h2 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             margin-bottom: 15px;
             color: #ffd700;
             display: flex;
@@ -91,106 +98,155 @@
         }
         
         .student-info h2 i {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
         }
         
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: 1fr;
             gap: 15px;
             margin-top: 15px;
         }
         
         .info-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
-            padding: 10px 0;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
         }
         
         .info-item i {
             color: #ffd700;
             font-size: 1.3rem;
-            width: 30px;
+            min-width: 30px;
+            padding-top: 3px;
         }
         
         .countdown {
             background-color: rgba(0, 0, 0, 0.2);
             border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
+            padding: 25px 20px;
+            margin: 25px 0;
         }
         
         .countdown h2 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             margin-bottom: 20px;
             color: #ffd700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         
         .countdown-timer {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
         }
         
         .time-unit {
             background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px 15px;
-            min-width: 100px;
+            border-radius: 12px;
+            padding: 20px 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         .time-value {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: #ffd700;
+            line-height: 1;
         }
         
         .time-label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #d1d8ff;
-            margin-top: 5px;
+            margin-top: 8px;
+        }
+        
+        .message {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px 20px;
+            margin: 25px 0;
+            border-top: 3px solid #ffd700;
+            border-bottom: 3px solid #ffd700;
+        }
+        
+        .message p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            font-style: italic;
+            color: #f0f2ff;
+            text-align: center;
         }
         
         .button-container {
-            margin-top: 30px;
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
         }
         
         .action-button {
             background: linear-gradient(to right, #ffd700, #ffed4e);
             color: #0c2461;
             border: none;
-            padding: 18px 40px;
-            font-size: 1.2rem;
+            padding: 20px 30px;
+            font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 50px;
+            border-radius: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
-            display: inline-flex;
+            display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
-            margin: 10px;
+            width: 100%;
+            min-height: 60px;
         }
         
-        .action-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.6);
+        .action-button:hover, .action-button:active {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
         }
         
         .action-button:active {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
+        }
+        
+        .action-button.share {
+            background: linear-gradient(to right, #4a69bd, #6a89cc);
+            color: white;
+            box-shadow: 0 5px 20px rgba(74, 105, 189, 0.4);
         }
         
         .footer {
-            margin-top: 40px;
+            margin-top: 30px;
             font-size: 0.9rem;
             color: #a5b1ff;
             text-align: center;
+            width: 100%;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer p {
+            margin-bottom: 8px;
+        }
+        
+        .footer i {
+            margin-right: 5px;
         }
         
         .accent-shapes {
@@ -211,17 +267,17 @@
         }
         
         .shape-1 {
-            width: 150px;
-            height: 150px;
-            top: -50px;
-            right: -50px;
+            width: 120px;
+            height: 120px;
+            top: -40px;
+            right: -40px;
         }
         
         .shape-2 {
-            width: 100px;
-            height: 100px;
-            bottom: -30px;
-            left: -30px;
+            width: 80px;
+            height: 80px;
+            bottom: -20px;
+            left: -20px;
         }
         
         @keyframes float {
@@ -229,55 +285,102 @@
                 transform: translateY(0);
             }
             50% {
-                transform: translateY(-15px);
+                transform: translateY(-10px);
             }
         }
         
-        @media (max-width: 768px) {
+        /* Tablet view */
+        @media (min-width: 600px) {
             .container {
-                padding: 25px;
+                padding: 35px 30px;
             }
             
             h1 {
-                font-size: 2.2rem;
-            }
-            
-            .countdown-timer {
-                gap: 10px;
-            }
-            
-            .time-unit {
-                min-width: 80px;
-                padding: 15px 10px;
-            }
-            
-            .time-value {
-                font-size: 2rem;
-            }
-            
-            .action-button {
-                padding: 15px 30px;
-                font-size: 1.1rem;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.8rem;
+                font-size: 2.5rem;
             }
             
             .info-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .countdown-timer {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .button-container {
+                flex-direction: row;
+                justify-content: center;
+            }
+            
+            .action-button {
+                width: auto;
+                min-width: 220px;
+            }
+        }
+        
+        /* Desktop view */
+        @media (min-width: 900px) {
+            .container {
+                padding: 40px;
+            }
+            
+            h1 {
+                font-size: 2.8rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Large mobile devices */
+        @media (min-width: 400px) and (max-width: 599px) {
+            .countdown-timer {
+                grid-template-columns: repeat(4, 1fr);
             }
             
             .time-unit {
-                min-width: 70px;
-                padding: 10px 5px;
+                padding: 15px 5px;
             }
             
             .time-value {
                 font-size: 1.8rem;
             }
+        }
+        
+        /* Very small devices */
+        @media (max-width: 360px) {
+            h1 {
+                font-size: 1.9rem;
+            }
+            
+            .graduation-icon {
+                font-size: 3rem;
+            }
+            
+            .time-value {
+                font-size: 1.8rem;
+            }
+        }
+        
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Touch-friendly improvements */
+        button, .action-button {
+            touch-action: manipulation;
+        }
+        
+        /* Better focus styles for accessibility */
+        .action-button:focus {
+            outline: 3px solid rgba(255, 215, 0, 0.6);
+            outline-offset: 3px;
         }
     </style>
 </head>
@@ -353,26 +456,21 @@
         </div>
         
         <div class="message">
-            <p style="font-size: 1.2rem; line-height: 1.6; max-width: 700px; margin: 0 auto;">
-                "Thank you for being part of my incredible academic journey. 
-                This milestone marks not just the end of my studies, but the beginning 
-                of a new chapter where I can apply my knowledge in Information Science 
-                to make meaningful contributions to the world of technology."
-            </p>
+            <p>"Thank you for being part of my incredible academic journey. This milestone marks not just the end of my studies, but the beginning of a new chapter where I can apply my knowledge in Information Science to make meaningful contributions to the world of technology."</p>
         </div>
         
         <div class="button-container">
             <button class="action-button" onclick="window.location.href='register.html'">
                 <i class="fas fa-rocket"></i> Join the Celebration
             </button>
-            <button class="action-button" onclick="shareCelebration()" style="background: linear-gradient(to right, #4a69bd, #6a89cc); color: white; box-shadow: 0 5px 20px rgba(74, 105, 189, 0.4);">
+            <button class="action-button share" onclick="shareCelebration()">
                 <i class="fas fa-share-alt"></i> Share the News
             </button>
         </div>
         
         <div class="footer">
-            <p>© 2025 Joseph Kamau Muthike | Information Science Graduate</p>
-            <p style="margin-top: 5px;"><i class="fas fa-envelope"></i> Contact: joseph.kamau@example.edu</p>
+            <p><i class="fas fa-copyright"></i>kamtech 2025| Joseph Kamau Muthike | Information Science Graduate</p>
+            <p><i class="fas fa-envelope"></i> Contact: jemuthike02@gmail.com</p>
         </div>
     </div>
 
@@ -395,7 +493,7 @@
                 document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
             } else {
                 document.querySelector('.countdown-timer').innerHTML = 
-                    '<div style="font-size: 1.5rem; padding: 20px;">🎉 Congratulations! The graduation day is here! 🎉</div>';
+                    '<div style="font-size: 1.3rem; padding: 20px; grid-column: 1 / -1;">🎉 Congratulations! The graduation day is here! 🎉</div>';
             }
         }
         
@@ -403,39 +501,78 @@
         setInterval(updateCountdown, 1000);
         updateCountdown(); // Initial call
         
-        // Share functionality
+        // Share functionality with better mobile support
         function shareCelebration() {
             const shareText = "Join me in celebrating Joseph Kamau's graduation in Information Science on December 17, 2025!";
             const shareUrl = window.location.href;
             
+            // Try Web Share API first (works on mobile devices)
             if (navigator.share) {
                 navigator.share({
                     title: "Joseph Kamau Graduation",
                     text: shareText,
                     url: shareUrl
                 })
-                .catch(console.error);
+                .then(() => console.log('Successful share'))
+                .catch((error) => {
+                    console.log('Error sharing:', error);
+                    fallbackShare(shareText, shareUrl);
+                });
             } else {
-                // Fallback for browsers that don't support Web Share API
-                navigator.clipboard.writeText(`${shareText} ${shareUrl}`)
-                    .then(() => {
-                        alert("Celebration message copied to clipboard! Share it with your friends.");
-                    })
-                    .catch(err => {
-                        console.error('Could not copy text: ', err);
-                        prompt("Copy this link to share:", shareUrl);
-                    });
+                fallbackShare(shareText, shareUrl);
             }
         }
         
-        // Add floating animation to graduation cap
-        document.querySelector('.graduation-icon').addEventListener('mouseover', function() {
-            this.style.animation = 'float 1.5s ease-in-out infinite';
+        function fallbackShare(shareText, shareUrl) {
+            // Create a temporary input element for copying
+            const tempInput = document.createElement('input');
+            tempInput.value = `${shareText} ${shareUrl}`;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            try {
+                const successful = document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                if (successful) {
+                    alert("Celebration message copied to clipboard! Share it with your friends.");
+                } else {
+                    prompt("Copy this link to share:", shareUrl);
+                }
+            } catch (err) {
+                document.body.removeChild(tempInput);
+                prompt("Copy this link to share:", shareUrl);
+            }
+        }
+        
+        // Add touch feedback to buttons
+        const buttons = document.querySelectorAll('.action-button');
+        buttons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.transform = 'translateY(-1px)';
+            });
+            
+            button.addEventListener('touchend', function() {
+                this.style.transform = 'translateY(0)';
+            });
         });
         
-        document.querySelector('.graduation-icon').addEventListener('mouseout', function() {
-            this.style.animation = 'float 3s ease-in-out infinite';
-        });
+        // Prevent zoom on double-tap for mobile
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Improve hover behavior for touch devices
+        if ('ontouchstart' in window || navigator.maxTouchPoints) {
+            // Remove hover effects that might cause issues on touch devices
+            document.body.classList.add('touch-device');
+        }
     </script>
 </body>
-                    </html>
+</html>
