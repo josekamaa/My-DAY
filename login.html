@@ -1,7 +1,10 @@
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -21,67 +24,118 @@
 
         .container {
             background: white;
-            border-radius: 16px;
-            padding: 40px;
+            border-radius: 25px;
+            padding: 50px 45px;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            min-height: 550px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
             transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(to right, #667eea, #764ba2);
         }
 
         .container:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo i {
+            font-size: 50px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         h2 {
             color: #333;
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 28px;
-            font-weight: 600;
+            margin-bottom: 35px;
+            font-size: 38px;
+            font-weight: 700;
             letter-spacing: -0.5px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         form {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 30px;
+        }
+
+        .input-wrapper {
+            position: relative;
         }
 
         input {
-            padding: 14px 16px;
+            padding: 20px 25px 20px 60px;
             border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 15px;
+            font-size: 18px;
             transition: all 0.3s ease;
             outline: none;
+            width: 100%;
+            height: 60px;
+            background: #f9f9f9;
         }
 
         input:focus {
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            background: white;
         }
 
         input::placeholder {
             color: #a0aec0;
+            font-size: 17px;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 22px;
         }
 
         button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 22px;
+            border-radius: 15px;
+            font-size: 20px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 10px;
+            margin-top: 20px;
+            height: 65px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            letter-spacing: 0.5px;
         }
 
         button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
         }
 
         button:active {
@@ -90,31 +144,205 @@
 
         p {
             text-align: center;
-            margin-top: 25px;
+            margin-top: 35px;
             color: #666;
-            font-size: 15px;
+            font-size: 18px;
+            line-height: 1.6;
         }
 
         a {
             color: #667eea;
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            font-size: 19px;
+            position: relative;
         }
 
         a:hover {
             color: #764ba2;
-            text-decoration: underline;
+        }
+
+        a::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background: #667eea;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        a:hover::after {
+            transform: scaleX(1);
+        }
+
+        /* Mobile-specific optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+                align-items: flex-start;
+            }
+            
+            .container {
+                max-width: 100%;
+                min-height: auto;
+                padding: 45px 35px;
+                margin: auto;
+                border-radius: 20px;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            }
+            
+            .logo i {
+                font-size: 45px;
+            }
+            
+            h2 {
+                font-size: 34px;
+                margin-bottom: 30px;
+            }
+            
+            form {
+                gap: 28px;
+            }
+            
+            input {
+                padding: 18px 22px 18px 55px;
+                font-size: 17px;
+                height: 58px;
+                border-radius: 12px;
+            }
+            
+            .input-icon {
+                left: 20px;
+                font-size: 20px;
+            }
+            
+            button {
+                padding: 20px;
+                font-size: 19px;
+                height: 62px;
+                border-radius: 12px;
+            }
+            
+            p {
+                font-size: 17px;
+                margin-top: 30px;
+            }
+            
+            a {
+                font-size: 18px;
+            }
         }
 
         @media (max-width: 480px) {
             .container {
-                padding: 30px 25px;
-                margin: 0 15px;
+                padding: 40px 30px;
+                border-radius: 18px;
+            }
+            
+            .logo i {
+                font-size: 42px;
             }
             
             h2 {
-                font-size: 24px;
+                font-size: 32px;
+                margin-bottom: 28px;
+            }
+            
+            input {
+                padding: 16px 20px 16px 50px;
+                font-size: 16px;
+                height: 56px;
+            }
+            
+            .input-icon {
+                left: 18px;
+                font-size: 18px;
+            }
+            
+            button {
+                padding: 18px;
+                font-size: 18px;
+                height: 58px;
+            }
+            
+            p {
+                font-size: 16px;
+            }
+            
+            a {
+                font-size: 17px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding: 35px 25px;
+            }
+            
+            h2 {
+                font-size: 28px;
+            }
+            
+            input {
+                padding: 15px 18px 15px 48px;
+                font-size: 16px;
+                height: 54px;
+            }
+            
+            button {
+                padding: 16px;
+                font-size: 17px;
+                height: 55px;
+            }
+        }
+
+        /* Orientation-specific adjustments */
+        @media (max-height: 700px) and (orientation: landscape) {
+            body {
+                align-items: flex-start;
+                padding: 10px;
+            }
+            
+            .container {
+                max-width: 90%;
+                padding: 30px;
+                margin: 20px auto;
+                min-height: auto;
+            }
+            
+            .logo {
+                margin-bottom: 20px;
+            }
+            
+            .logo i {
+                font-size: 40px;
+            }
+        }
+
+        /* Prevent zoom on input focus for iOS */
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Additional touch improvements */
+        @media (hover: none) {
+            .container:hover {
+                transform: none;
+            }
+            
+            button:hover {
+                transform: none;
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            }
+            
+            a:hover::after {
+                transform: scaleX(0);
             }
         }
     </style>
@@ -122,11 +350,22 @@
 
 <body>
     <div class="container">
+        <div class="logo">
+            <i class="fas fa-sign-in-alt"></i>
+        </div>
+        
         <h2>Welcome Back</h2>
 
         <form onsubmit="loginUser(event)">
-            <input type="email" id="email" placeholder="Email Address" required>
-            <input type="password" id="password" placeholder="Enter Password" required>
+            <div class="input-wrapper">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            
+            <div class="input-wrapper">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="password" placeholder="Enter Password" required>
+            </div>
 
             <button type="submit">Sign In</button>
         </form>
