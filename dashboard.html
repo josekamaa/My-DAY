@@ -930,16 +930,7 @@
         <i class="fas fa-users"></i> Groups
       </h4>
       <div id="groupsList" class="list">
-        <!-- Groups will be loaded here -->
-        <div class="list-row">
-          <div class="group-icon">
-            <i class="fas fa-users"></i>
-          </div>
-          <div class="list-info">
-            <h4>General Chat</h4>
-            <p>Last message: Welcome everyone!</p>
-          </div>
-        </div>
+        <!-- Groups will be loaded here by dashboard.js -->
       </div>
 
       <hr>
@@ -948,7 +939,7 @@
         <i class="fas fa-user-friends"></i> People
       </h4>
       <div id="usersList" class="list">
-        <!-- Users will be loaded here -->
+        <!-- Users will be loaded here by dashboard.js -->
       </div>
     </div>
 
@@ -968,22 +959,22 @@
       </div>
 
       <div class="messages" id="messagesList">
-        <!-- Messages will appear here -->
-        <div class="message received">
-          <div class="message-content">
-            Welcome to the chat! Select a conversation from the left panel to start messaging.
+        <!-- Messages will appear here by dashboard.js -->
+        <div class="message received" style="align-self:center;background:var(--surface);border:none;max-width:90%;">
+          <div class="message-content" style="text-align:center;color:var(--text-muted);">
+            <i class="fas fa-comments" style="font-size:24px;margin-bottom:8px;display:block;"></i>
+            Select a conversation from the left to start chatting
           </div>
-          <div class="message-time">12:00 PM</div>
         </div>
       </div>
 
       <div class="compose">
-        <input type="text" id="messageInput" placeholder="Type your message here...">
-        <label class="btn ghost" style="cursor:pointer;padding:12px 16px;">
+        <input type="text" id="messageInput" placeholder="Type your message here..." disabled>
+        <label class="btn ghost" style="cursor:pointer;padding:12px 16px;" title="Upload image">
           <i class="fas fa-image"></i>
           <input type="file" id="chatImageInput" accept="image/*" hidden>
         </label>
-        <button class="btn" id="sendBtn">
+        <button class="btn" id="sendBtn" disabled>
           <i class="fas fa-paper-plane"></i>
         </button>
       </div>
@@ -1003,7 +994,7 @@
         <div style="margin-bottom:20px;">
           <div class="small muted">Members</div>
           <div id="groupMembers" class="group-members">
-            <!-- Members will be loaded here -->
+            <!-- Members will be loaded here by dashboard.js -->
           </div>
         </div>
 
@@ -1080,8 +1071,39 @@
 <script src="dashboard.js"></script>
 
 <script>
+  // Minimal JS to handle basic UI interactions
   document.getElementById('backBtn').onclick = () => {
     document.getElementById('messenger').style.display = 'none';
+  };
+  
+  document.getElementById('openMessengerBtn').onclick = () => {
+    document.getElementById('messenger').style.display = 'flex';
+  };
+  
+  // Enable message input when chat is selected (this will be handled by dashboard.js)
+  function enableMessageInput() {
+    document.getElementById('messageInput').disabled = false;
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('messageInput').focus();
+  }
+  
+  // Handle message sending
+  document.getElementById('sendBtn').onclick = () => {
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (message && window.sendMessage) {
+      window.sendMessage(message);
+      messageInput.value = '';
+    }
+  };
+  
+  // Handle Enter key
+  document.getElementById('messageInput').onkeypress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('sendBtn').click();
+    }
   };
 </script>
 
