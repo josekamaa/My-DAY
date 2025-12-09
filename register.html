@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Register</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html {
-            font-size: 16px;
-            height: 100%;
+            font-family: 'Segoe UI', system-ui, sans-serif;
         }
 
         body {
@@ -24,18 +18,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 16px;
-            overflow-x: hidden;
+            padding: 20px;
         }
 
         .container {
             width: 100%;
             max-width: 500px;
-            min-width: 300px;
+            min-height: 550px;
             background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-            padding: 40px 30px;
+            border-radius: 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            padding: 45px 40px;
             position: relative;
             overflow: hidden;
         }
@@ -53,52 +46,43 @@
         h2 {
             color: #333;
             text-align: center;
-            margin-bottom: 12px;
-            font-size: 2.5rem;
+            margin-bottom: 15px;
+            font-size: 38px;
             font-weight: 700;
             background: linear-gradient(to right, #667eea, #764ba2);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            line-height: 1.2;
+            letter-spacing: -0.5px;
         }
 
         .tagline {
             text-align: center;
             color: #666;
-            margin-bottom: 36px;
-            font-size: 1.1rem;
-            line-height: 1.4;
+            margin-bottom: 35px;
+            font-size: 17px;
+            line-height: 1.5;
         }
 
         form {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 25px;
         }
 
         .input-wrapper {
             position: relative;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-            font-size: 1rem;
-            padding-left: 2px;
-        }
-
         input {
             width: 100%;
-            padding: 20px 20px 20px 60px;
-            border: 2px solid #e0e0e0;
-            border-radius: 16px;
-            font-size: 1.125rem;
+            padding: 20px 25px 20px 60px;
+            border: 2px solid #eaeaea;
+            border-radius: 15px;
+            font-size: 18px;
             transition: all 0.3s ease;
-            background: #f8f9fa;
-            color: #333;
+            background: #f9f9f9;
+            height: 60px;
         }
 
         input:focus {
@@ -106,12 +90,11 @@
             border-color: #667eea;
             background: white;
             box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
-            transform: translateY(-1px);
         }
 
         input::placeholder {
             color: #999;
-            font-size: 1rem;
+            font-size: 17px;
         }
 
         .input-icon {
@@ -120,8 +103,7 @@
             top: 50%;
             transform: translateY(-50%);
             color: #667eea;
-            font-size: 1.25rem;
-            z-index: 1;
+            font-size: 22px;
         }
 
         button[type="submit"] {
@@ -129,20 +111,18 @@
             color: white;
             border: none;
             padding: 22px;
-            border-radius: 16px;
-            font-size: 1.25rem;
+            border-radius: 15px;
+            font-size: 20px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 20px;
+            margin-top: 15px;
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-            letter-spacing: 0.5px;
-            min-height: 64px;
+            height: 65px;
         }
 
-        button[type="submit"]:hover,
-        button[type="submit"]:active {
-            transform: translateY(-2px);
+        button[type="submit"]:hover {
+            transform: translateY(-3px);
             box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
         }
 
@@ -152,10 +132,10 @@
 
         .login-prompt {
             text-align: center;
-            margin-top: 32px;
+            margin-top: 30px;
             color: #666;
-            font-size: 1.1rem;
-            line-height: 1.5;
+            font-size: 18px;
+            line-height: 1.6;
         }
 
         .login-prompt a {
@@ -164,22 +144,20 @@
             font-weight: 600;
             transition: all 0.3s;
             position: relative;
-            padding: 4px 8px;
-            border-radius: 8px;
+            font-size: 19px;
         }
 
         .login-prompt a:hover {
             color: #764ba2;
-            background: rgba(102, 126, 234, 0.1);
         }
 
         .login-prompt a::after {
             content: '';
             position: absolute;
-            width: calc(100% - 16px);
+            width: 100%;
             height: 2px;
             bottom: -2px;
-            left: 8px;
+            left: 0;
             background: #667eea;
             transform: scaleX(0);
             transition: transform 0.3s ease;
@@ -206,223 +184,158 @@
 
         .logo {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .logo i {
-            font-size: 48px;
+            font-size: 50px;
             background: linear-gradient(to right, #667eea, #764ba2);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
 
-        .form-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .success-message {
-            display: none;
-            background: linear-gradient(to right, #2ed573, #1dd1a1);
-            color: white;
-            padding: 20px;
-            border-radius: 16px;
-            text-align: center;
-            margin-bottom: 24px;
-            font-size: 1.1rem;
-            box-shadow: 0 6px 20px rgba(46, 213, 115, 0.3);
-        }
-
-        .error-message {
-            display: none;
-            background: linear-gradient(to right, #ff6b6b, #ff4757);
-            color: white;
-            padding: 20px;
-            border-radius: 16px;
-            text-align: center;
-            margin-bottom: 24px;
-            font-size: 1.1rem;
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
-        }
-
-        /* Large smartphones (576px and up) */
-        @media (max-width: 576px) {
+        /* Mobile-specific optimizations */
+        @media (max-width: 768px) {
             body {
-                padding: 12px;
+                padding: 15px;
                 align-items: flex-start;
                 min-height: 100vh;
-                padding-top: 20px;
+                display: flex;
             }
             
             .container {
-                padding: 35px 25px;
-                border-radius: 20px;
                 max-width: 100%;
-                margin: 0;
+                min-height: auto;
+                padding: 40px 30px;
+                margin: auto;
+                border-radius: 20px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
             }
             
             h2 {
-                font-size: 2.2rem;
-                margin-bottom: 10px;
+                font-size: 34px;
+                margin-bottom: 12px;
             }
             
             .tagline {
-                font-size: 1.05rem;
+                font-size: 16px;
                 margin-bottom: 30px;
-            }
-            
-            input {
-                padding: 22px 20px 22px 58px;
-                font-size: 1.1rem;
-                min-height: 64px;
-            }
-            
-            .input-icon {
-                left: 20px;
-                font-size: 1.3rem;
-            }
-            
-            button[type="submit"] {
-                padding: 24px;
-                font-size: 1.3rem;
-                min-height: 68px;
-                margin-top: 15px;
             }
             
             form {
                 gap: 22px;
             }
             
-            .logo i {
-                font-size: 44px;
-            }
-        }
-
-        /* Small smartphones (under 400px) */
-        @media (max-width: 400px) {
-            .container {
-                padding: 30px 22px;
-                border-radius: 18px;
-            }
-            
-            h2 {
-                font-size: 2rem;
-            }
-            
-            .tagline {
-                font-size: 1rem;
-                margin-bottom: 28px;
-            }
-            
             input {
-                padding: 20px 18px 20px 56px;
-                font-size: 1.05rem;
-                min-height: 60px;
+                padding: 18px 22px 18px 55px;
+                font-size: 17px;
+                height: 58px;
+                border-radius: 12px;
             }
             
-            button[type="submit"] {
-                padding: 22px;
-                font-size: 1.2rem;
-                min-height: 64px;
-            }
-            
-            .logo i {
-                font-size: 40px;
-            }
-            
-            .login-prompt {
-                font-size: 1rem;
-            }
-        }
-
-        /* Extra small devices (under 350px) */
-        @media (max-width: 350px) {
-            .container {
-                padding: 25px 20px;
-            }
-            
-            h2 {
-                font-size: 1.8rem;
-            }
-            
-            input {
-                padding: 18px 16px 18px 54px;
-                font-size: 1rem;
+            .input-icon {
+                left: 20px;
+                font-size: 20px;
             }
             
             button[type="submit"] {
                 padding: 20px;
-                font-size: 1.1rem;
-            }
-        }
-
-        /* Landscape orientation */
-        @media (max-height: 600px) and (orientation: landscape) {
-            body {
-                align-items: flex-start;
-                padding-top: 20px;
-                padding-bottom: 20px;
+                font-size: 19px;
+                height: 62px;
+                border-radius: 12px;
             }
             
-            .container {
-                max-height: 90vh;
-                overflow-y: auto;
+            .logo i {
+                font-size: 45px;
             }
         }
 
-        /* Tablet and larger screens */
-        @media (min-width: 768px) {
+        @media (max-width: 480px) {
             .container {
-                max-width: 500px;
-                padding: 45px 40px;
+                padding: 35px 25px;
+                border-radius: 18px;
             }
             
             h2 {
-                font-size: 2.8rem;
+                font-size: 32px;
+            }
+            
+            .tagline {
+                font-size: 16px;
+                margin-bottom: 28px;
             }
             
             input {
-                padding: 22px 20px 22px 60px;
-                font-size: 1.15rem;
+                padding: 16px 20px 16px 50px;
+                font-size: 16px;
+                height: 56px;
+            }
+            
+            .input-icon {
+                left: 18px;
+                font-size: 18px;
             }
             
             button[type="submit"] {
-                padding: 24px;
-                font-size: 1.3rem;
-            }
-        }
-
-        /* Accessibility improvements */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* Focus styles for accessibility */
-        input:focus-visible,
-        button:focus-visible,
-        a:focus-visible {
-            outline: 3px solid rgba(102, 126, 234, 0.5);
-            outline-offset: 2px;
-        }
-
-        /* Touch device optimizations */
-        @media (hover: none) and (pointer: coarse) {
-            input,
-            button {
-                font-size: 16px; /* Prevents iOS zoom on focus */
+                padding: 18px;
+                font-size: 18px;
+                height: 58px;
             }
             
-            button[type="submit"]:hover {
-                transform: none;
+            .login-prompt {
+                font-size: 16px;
             }
             
-            .login-prompt a:hover {
-                background: transparent;
+            .login-prompt a {
+                font-size: 17px;
+            }
+            
+            .logo i {
+                font-size: 42px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h2 {
+                font-size: 28px;
+            }
+            
+            input {
+                padding: 15px 18px 15px 48px;
+                font-size: 16px;
+                height: 54px;
+            }
+            
+            button[type="submit"] {
+                padding: 16px;
+                font-size: 17px;
+                height: 55px;
+            }
+        }
+
+        /* Orientation-specific adjustments */
+        @media (max-height: 700px) and (orientation: landscape) {
+            body {
+                align-items: flex-start;
+                padding: 10px;
+            }
+            
+            .container {
+                max-width: 90%;
+                padding: 30px;
+                margin: 20px auto;
+            }
+        }
+
+        /* Prevent zoom on input focus for iOS */
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
             }
         }
     </style>
@@ -430,59 +343,43 @@
 
 <body>
     <div class="container">
-        <div class="form-header">
-            <div class="logo">
-                <i class="fas fa-user-plus"></i>
-            </div>
-            <h2>Create Account</h2>
-            <p class="tagline">Join Joseph's graduation celebration community</p>
+        <div class="logo">
+            <i class="fas fa-user-plus"></i>
         </div>
-
-        <div class="success-message" id="successMessage">
-            <i class="fas fa-check-circle"></i> Registration successful! Redirecting...
-        </div>
-
-        <div class="error-message" id="errorMessage">
-            <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
-        </div>
+        <h2>Create Account</h2>
+        <p class="tagline">Join our community today</p>
 
         <form onsubmit="registerUser(event)">
             <div class="input-wrapper">
-                <label for="name">Full Name</label>
                 <i class="fas fa-user input-icon"></i>
-                <input type="text" id="name" placeholder="Enter your full name" required>
+                <input type="text" id="name" placeholder="Full Name" required>
             </div>
             
             <div class="input-wrapper">
-                <label for="email">Email Address</label>
                 <i class="fas fa-envelope input-icon"></i>
-                <input type="email" id="email" placeholder="Enter your email" required>
+                <input type="email" id="email" placeholder="Email Address" required>
             </div>
             
             <div class="input-wrapper">
-                <label for="password">Password</label>
                 <i class="fas fa-lock input-icon"></i>
-                <input type="password" id="password" placeholder="Create a strong password" required oninput="updatePasswordStrength()">
+                <input type="password" id="password" placeholder="Create Password" required oninput="updatePasswordStrength()">
                 <div class="password-strength">
                     <div class="strength-meter" id="passwordStrength"></div>
                 </div>
-                <div style="font-size: 0.9rem; color: #666; margin-top: 8px; padding-left: 2px;">
-                    Use 8+ characters with letters, numbers & symbols
-                </div>
             </div>
 
-            <button type="submit">
-                <i class="fas fa-user-plus"></i> Create Account
-            </button>
+            <button type="submit">Register</button>
         </form>
 
         <p class="login-prompt">Already have an account?
-            <a href="login.html">Login here</a>
+            <a href="login.html">Login</a>
         </p>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
     <script>
-        // Password strength indicator
+        // Password strength indicator (optional enhancement)
         function updatePasswordStrength() {
             const password = document.getElementById('password').value;
             const strengthMeter = document.getElementById('passwordStrength');
@@ -511,96 +408,10 @@
             }
         }
         
-        // Form submission handler with simulated response
-        function registerUser(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            // Validate password strength
-            const strengthMeter = document.getElementById('passwordStrength');
-            const strength = parseInt(strengthMeter.style.width) || 0;
-            
-            if (strength < 50) {
-                showError('Please use a stronger password with at least 8 characters, including uppercase, numbers, and symbols.');
-                return;
-            }
-            
-            // Show loading state
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
-            submitBtn.disabled = true;
-            
-            // Simulate API call with timeout
-            setTimeout(() => {
-                // For demo purposes - simulate successful registration
-                showSuccess();
-                
-                // Reset button
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                
-                // Redirect to celebration page after 2 seconds
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 2000);
-                
-            }, 1500);
-        }
-        
-        function showSuccess() {
-            const successMessage = document.getElementById('successMessage');
-            const errorMessage = document.getElementById('errorMessage');
-            
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'block';
-            
-            // Scroll to top to show message
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        
-        function showError(message) {
-            const successMessage = document.getElementById('successMessage');
-            const errorMessage = document.getElementById('errorMessage');
-            const errorText = document.getElementById('errorText');
-            
-            errorText.textContent = message;
-            successMessage.style.display = 'none';
-            errorMessage.style.display = 'block';
-            
-            // Scroll to top to show message
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        
         // Initialize password strength on page load
         document.addEventListener('DOMContentLoaded', function() {
             updatePasswordStrength();
-            
-            // Add touch feedback for mobile
-            const inputs = document.querySelectorAll('input');
-            inputs.forEach(input => {
-                input.addEventListener('touchstart', function() {
-                    this.style.transform = 'scale(0.99)';
-                });
-                
-                input.addEventListener('touchend', function() {
-                    this.style.transform = 'scale(1)';
-                });
-            });
-            
-            // Prevent zoom on double-tap for mobile
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', function(event) {
-                const now = Date.now();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
         });
     </script>
 </body>
-    </html>
+</html>
