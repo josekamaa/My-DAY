@@ -375,42 +375,58 @@ function closeMessenger() {
 }
 
 /* ==========================================================
-   INBOX FEATURE
+   INBOX FEATURE - FIXED
 ========================================================== */
 async function loadInboxConversations() {
-  const { data } = await sb.from("messages")
-    .select(`
-      *,
-      sender:profiles!messages_sender_id_fkey(username, avatar_url),
-      receiver:profiles!messages_receiver_id_fkey(username, avatar_url)
-    `)
-    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
-    .order("created_at", { ascending: false });
+  try {
+    // Use a simpler query approach to avoid the SQL error
+    const { data, error } = await sb.from("messages")
+      .select(`
+        *,
+        sender:profiles!messages_sender_id_fkey(username, avatar_url),
+        receiver:profiles!messages_receiver_id_fkey(username, avatar_url)
+      `)
+      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+      .order("created_at", { ascending: false });
 
-  // Group messages by conversation
-  const conversations = {};
-  
-  data?.forEach(msg => {
-    // Determine the other user in the conversation
-    const otherUserId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
-    const otherUser = msg.sender_id === currentUser.id ? msg.receiver : msg.sender;
-    
-    if (!conversations[otherUserId]) {
-      conversations[otherUserId] = {
-        user_id: otherUserId,
-        username: otherUser?.username || 'Unknown User',
-        avatar_url: otherUser?.avatar_url,
-        last_message: msg.message || (msg.image_url ? '📷 Image' : ''),
-        last_time: msg.created_at,
-        unread: false,
-        messages_count: 1
-      };
-    } else {
-      conversations[otherUserId].messages_count++;
+    if (error) {
+      console.error("Error loading conversations:", error);
+      return [];
     }
-  });
 
-  return Object.values(conversations);
+    // Group messages by conversation
+    const conversations = {};
+    
+    data?.forEach(msg => {
+      // Determine the other user in the conversation
+      const otherUserId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+      const otherUser = msg.sender_id === currentUser.id ? msg.receiver : msg.sender;
+      
+      // Only create if we haven't seen this user yet OR this message is newer
+      if (!conversations[otherUserId] || 
+          new Date(msg.created_at) > new Date(conversations[otherUserId].last_time)) {
+        conversations[otherUserId] = {
+          user_id: otherUserId,
+          username: otherUser?.username || 'Unknown User',
+          avatar_url: otherUser?.avatar_url,
+          last_message: msg.message || (msg.image_url ? '📷 Image' : ''),
+          last_time: msg.created_at,
+          unread: msg.receiver_id === currentUser.id && !msg.read,
+          messages_count: 1
+        };
+      } else {
+        conversations[otherUserId].messages_count++;
+      }
+    });
+
+    // Convert to array and sort by most recent
+    return Object.values(conversations).sort((a, b) => 
+      new Date(b.last_time) - new Date(a.last_time)
+    );
+  } catch (err) {
+    console.error("Failed to load conversations:", err);
+    return [];
+  }
 }
 
 async function renderInbox() {
@@ -634,7 +650,7 @@ function filterContacts() {
 }
 
 /* ==========================================================
-   DIRECT MESSAGE
+   DIRECT MESSAGE - FIXED
 ========================================================== */
 async function openDM(user) {
   activeConversation = { type: "dm", id: user.id, name: user.username };
@@ -649,15 +665,24 @@ async function openDM(user) {
     backToInboxBtn.style.display = window.innerWidth <= 768 ? "inline-flex" : "none";
   }
 
-  const { data } = await sb.from("messages")
+  // Fixed query - use proper Supabase syntax
+  const { data, error } = await sb.from("messages")
     .select("*")
-    .or(`
-      and(sender_id.eq.${currentUser.id}, receiver_id.eq.${user.id}),
-      and(sender_id.eq.${user.id}, receiver_id.eq.${currentUser.id})
-    `)
-    .order("created_at");
+    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+    .order("created_at", { ascending: true });
 
-  renderMessages(data || []);
+  if (error) {
+    console.error("Error loading messages:", error);
+    return;
+  }
+
+  // Filter messages to only show those between current user and selected user
+  const filteredMessages = data?.filter(msg => 
+    (msg.sender_id === currentUser.id && msg.receiver_id === user.id) ||
+    (msg.sender_id === user.id && msg.receiver_id === currentUser.id)
+  ) || [];
+
+  renderMessages(filteredMessages);
 }
 
 /* ==========================================================
