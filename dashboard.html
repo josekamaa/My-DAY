@@ -150,7 +150,7 @@
     }
 
     @media (max-width: 768px) {
-      .app {
+      body.mobile-view .app {
         grid-template-columns: 1fr;
         gap: 16px;
         margin-bottom: 80px;
@@ -299,15 +299,37 @@
       flex-shrink: 0;
     }
 
-    /* Messenger Modal - FIXED STYLING */
+    /* Messenger Modal - UPDATED FOR MOBILE */
     .messenger {
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: rgba(15, 23, 42, 0.8);
+      background: var(--bg);
       backdrop-filter: blur(8px);
       display: none;
       flex-direction: column;
+      overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      .messenger.chat-active .ms-left {
+        display: none;
+      }
+      .messenger.chat-active .ms-center {
+        display: flex;
+      }
+      .messenger:not(.chat-active) .ms-center {
+        display: none !important;
+      }
+      .messenger:not(.chat-active) .ms-left {
+        display: block;
+      }
+      .ms-inner {
+        grid-template-columns: 1fr !important;
+      }
+      .ms-right {
+        display: none !important;
+      }
     }
 
     .ms-topbar {
@@ -317,6 +339,7 @@
       display: flex;
       align-items: center;
       gap: 16px;
+      min-height: 64px;
     }
 
     .backBtn {
@@ -325,6 +348,11 @@
       padding: 8px;
       border-radius: var(--radius-sm);
       transition: background 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
     }
 
     .backBtn:hover {
@@ -333,11 +361,10 @@
 
     .ms-inner {
       flex: 1;
-      background: var(--card);
       display: grid;
-      grid-template-columns: 280px 1fr 320px;
+      grid-template-columns: 320px 1fr 320px;
       overflow: hidden;
-      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      background: var(--card);
     }
 
     @media (max-width: 1024px) {
@@ -352,18 +379,105 @@
     @media (max-width: 768px) {
       .ms-inner {
         grid-template-columns: 1fr;
-      }
-      .ms-left {
-        display: none;
+        height: 100%;
       }
     }
 
-    /* Left sidebar in messenger */
+    /* Left sidebar in messenger - UPDATED FOR INBOX */
     .ms-left {
       border-right: 1px solid var(--border);
-      padding: 20px;
-      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--card);
+    }
+
+    .ms-left-header {
+      padding: 20px 20px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .inbox-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .inbox-tab {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .inbox-tab:hover {
       background: var(--bg-alt);
+      color: var(--text);
+    }
+
+    .inbox-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .ms-left-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Inbox Conversation Items */
+    .conversation-info {
+      flex: 1;
+      min-width: 0;
+      margin-left: 12px;
+    }
+
+    .conversation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .conversation-header strong {
+      font-size: 0.9375rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .conversation-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .conversation-preview {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .unread-badge {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      margin-left: 8px;
     }
 
     .list {
@@ -383,7 +497,7 @@
     }
 
     .list-row:hover {
-      background: var(--card);
+      background: var(--bg-alt);
       transform: translateX(4px);
     }
 
@@ -392,7 +506,7 @@
       color: white;
     }
 
-    /* Chat Area - FIXED STYLING */
+    /* Chat Area */
     .ms-center {
       display: flex;
       flex-direction: column;
@@ -403,6 +517,30 @@
     .chat-head {
       font-weight: 600;
       font-size: 1.125rem;
+      flex: 1;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-to-inbox {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-alt);
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .back-to-inbox:hover {
+      background: var(--border);
     }
 
     .messages {
@@ -518,6 +656,7 @@
       gap: 8px;
       z-index: 100;
       backdrop-filter: blur(10px);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
     }
 
     .tab-btn {
@@ -573,6 +712,24 @@
     /* Hidden utility */
     .hidden {
       display: none !important;
+    }
+
+    /* Empty States */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
     }
 
     /* Animations */
@@ -717,7 +874,7 @@
   <!-- Right Panel -->
   <aside class="card" style="min-width:220px;">
     <h4 style="margin-bottom:12px;">Tips</h4>
-    <p class="text-muted small" style="margin-bottom:8px;">Tap Inbox to open full messenger.</p>
+    <p class="text-muted small" style="margin-bottom:8px;">Tap Inbox to see all conversations.</p>
     <p class="text-muted small" style="margin-bottom:8px;">On mobile, use bottom tabs.</p>
     <p class="text-muted small">Drag and drop images in chat.</p>
   </aside>
@@ -729,40 +886,69 @@
 
   <div class="ms-topbar">
     <div class="backBtn" id="backBtn">←</div>
-    <strong style="font-size:1.125rem;">Inbox</strong>
+    <strong style="font-size:1.125rem;" id="messengerTitle">Inbox</strong>
+    <button class="btn icon back-to-inbox hidden" id="backToInboxBtn" title="Back to inbox">
+      ←
+    </button>
   </div>
 
   <div class="ms-inner">
 
-    <!-- LEFT -->
+    <!-- LEFT - INBOX SIDEBAR -->
     <div class="ms-left">
-      <div style="font-weight:600;margin-bottom:12px;font-size:0.875rem;color:var(--text-muted);text-transform:uppercase;">
-        Sections
+      <div class="ms-left-header">
+        <input id="contactsSearch" placeholder="Search contacts..." 
+               style="width:100%;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:16px;background:var(--bg);">
+        
+        <div class="inbox-tabs">
+          <button class="inbox-tab active" id="inboxTab">Inbox</button>
+          <button class="inbox-tab" id="peopleTab">People</button>
+          <button class="inbox-tab" id="groupsTab">Groups</button>
+        </div>
       </div>
 
-      <input id="contactsSearch" placeholder="Search..." 
-             style="width:100%;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:16px;background:var(--card);">
+      <div class="ms-left-content">
+        <!-- INBOX VIEW (Conversations) -->
+        <div id="inboxView">
+          <h4 style="margin-bottom:16px;">Recent Conversations</h4>
+          <div id="inboxList" class="list">
+            <!-- Conversations will be loaded here -->
+          </div>
+        </div>
 
-      <h4 style="margin-bottom:12px;">Groups</h4>
-      <div id="groupsList" class="list"></div>
+        <!-- PEOPLE VIEW -->
+        <div id="peopleView" class="hidden">
+          <h4 style="margin-bottom:16px;">All Users</h4>
+          <div id="usersList" class="list"></div>
+        </div>
 
-      <hr style="margin:20px 0;border:none;border-top:1px solid var(--border);">
-
-      <h4 style="margin-bottom:12px;">People</h4>
-      <div id="usersList" class="list"></div>
+        <!-- GROUPS VIEW -->
+        <div id="groupsView" class="hidden">
+          <h4 style="margin-bottom:16px;">Groups</h4>
+          <div id="groupsList" class="list"></div>
+          <button class="btn" id="createGroupBtn" style="width:100%;margin-top:16px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Create Group
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- CENTER CHAT -->
+    <!-- CENTER - CHAT AREA -->
     <div class="ms-center">
       <div style="display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--card);">
-        <div class="chat-head" id="chatHead">Select a chat</div>
+        <div class="chat-header">
+          <div class="chat-head" id="chatHead">Select a chat</div>
+        </div>
         <button class="btn ghost" id="leaveGroupBtn" style="margin-left:auto;display:none;">Leave Group</button>
       </div>
 
       <div class="messages" id="messagesList">
         <!-- Messages will be inserted here -->
-        <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:16px;">
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
           <h4>Select a conversation</h4>
@@ -790,7 +976,7 @@
       </div>
     </div>
 
-    <!-- RIGHT INFO -->
+    <!-- RIGHT - INFO PANEL -->
     <div class="ms-right">
       <div id="groupDetails" class="hidden">
         <h4 id="groupTitle" style="margin-bottom:16px;">Group</h4>
@@ -894,8 +1080,20 @@
 <script src="dashboard.js"></script>
 
 <script>
-  document.getElementById('backBtn').onclick = () => {
-    document.getElementById('messenger').style.display = 'none';
+  // Add back to inbox functionality
+  document.getElementById('backToInboxBtn').onclick = () => {
+    document.getElementById('messenger').classList.remove('chat-active');
+    document.getElementById('backToInboxBtn').classList.add('hidden');
+    document.getElementById('messagesList').innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <h4>Select a conversation</h4>
+        <p class="text-muted">Choose a person or group to start chatting</p>
+      </div>
+    `;
+    document.getElementById('chatHead').textContent = 'Select a chat';
   };
 </script>
 
