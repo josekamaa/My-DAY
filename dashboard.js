@@ -31,6 +31,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadAuthUser();
   await loadUsersAndGroups();
   setupRealtimeListeners();
+  checkMobileView();
+  window.addEventListener('resize', checkMobileView);
 });
 
 /* ==========================================================
@@ -48,6 +50,7 @@ function wireUI() {
   // MESSENGER
   el("openMessengerBtn").onclick = openMessenger;
   el("showInboxBtn").onclick = openMessenger;
+  el("backBtn").onclick = closeMessenger;
 
   // Chat
   el("sendBtn").onclick = sendChatMessage;
@@ -69,9 +72,38 @@ function wireUI() {
   el("contactsSearch").oninput = filterContacts;
 
   // Mobile bottom tabs
-  el("tabChats").onclick = () => { openMessenger(); scrollToUsers(); };
-  el("tabGroups").onclick = () => { openMessenger(); scrollToGroups(); };
-  el("tabProfile").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  el("tabChats").onclick = () => { openMessenger(); showInboxView(); };
+  el("tabGroups").onclick = () => { openMessenger(); showGroupsView(); };
+  el("tabProfile").onclick = () => { 
+    closeMessenger(); 
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setActiveTab('profile');
+  };
+
+  // Inbox tabs
+  el("inboxTab").onclick = () => showInboxView();
+  el("peopleTab").onclick = () => showPeopleView();
+  el("groupsTab").onclick = () => showGroupsView();
+}
+
+/* ==========================================================
+   MOBILE VIEW HANDLING
+========================================================== */
+function checkMobileView() {
+  const isMobile = window.innerWidth <= 768;
+  document.body.classList.toggle('mobile-view', isMobile);
+  
+  // Close messenger when switching to mobile if we're in chat view
+  if (isMobile && el("messenger").classList.contains('chat-active')) {
+    // Don't close, just update the view
+  }
+}
+
+function setActiveTab(tab) {
+  ['chats', 'groups', 'profile'].forEach(t => {
+    el(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`).classList.remove('active');
+  });
+  el(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
 }
 
 /* ==========================================================
@@ -333,10 +365,125 @@ function capturePhoto() {
 ========================================================== */
 function openMessenger() {
   el("messenger").style.display = "flex";
+  setActiveTab('chats');
+  showInboxView();
 }
 
 function closeMessenger() {
   el("messenger").style.display = "none";
+  el("messenger").classList.remove('chat-active');
+}
+
+/* ==========================================================
+   INBOX FEATURE
+========================================================== */
+async function loadInboxConversations() {
+  const { data } = await sb.from("messages")
+    .select(`
+      *,
+      sender:profiles!messages_sender_id_fkey(username, avatar_url),
+      receiver:profiles!messages_receiver_id_fkey(username, avatar_url)
+    `)
+    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+    .order("created_at", { ascending: false });
+
+  // Group messages by conversation
+  const conversations = {};
+  
+  data?.forEach(msg => {
+    // Determine the other user in the conversation
+    const otherUserId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+    const otherUser = msg.sender_id === currentUser.id ? msg.receiver : msg.sender;
+    
+    if (!conversations[otherUserId]) {
+      conversations[otherUserId] = {
+        user_id: otherUserId,
+        username: otherUser?.username || 'Unknown User',
+        avatar_url: otherUser?.avatar_url,
+        last_message: msg.message || (msg.image_url ? '📷 Image' : ''),
+        last_time: msg.created_at,
+        unread: false,
+        messages_count: 1
+      };
+    } else {
+      conversations[otherUserId].messages_count++;
+    }
+  });
+
+  return Object.values(conversations);
+}
+
+async function renderInbox() {
+  const inboxContainer = el("inboxList");
+  if (!inboxContainer) return;
+
+  inboxContainer.innerHTML = "<div class='loading'>Loading conversations...</div>";
+  
+  const conversations = await loadInboxConversations();
+  
+  inboxContainer.innerHTML = "";
+  
+  if (conversations.length === 0) {
+    inboxContainer.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <h4>No messages yet</h4>
+        <p class="text-muted">Start a conversation with someone!</p>
+      </div>
+    `;
+    return;
+  }
+  
+  conversations.forEach(conv => {
+    const row = document.createElement("div");
+    row.className = "list-row inbox-conversation";
+    row.dataset.userId = conv.user_id;
+    
+    const lastMsg = conv.last_message.length > 30 
+      ? conv.last_message.substring(0, 30) + "..." 
+      : conv.last_message;
+    
+    const time = new Date(conv.last_time).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+    
+    row.innerHTML = `
+      <div class="avatar48">
+        ${conv.avatar_url 
+          ? `<img src="${conv.avatar_url}" alt="${conv.username}">` 
+          : conv.username.charAt(0).toUpperCase()
+        }
+      </div>
+      <div class="conversation-info">
+        <div class="conversation-header">
+          <strong>${conv.username}</strong>
+          <span class="conversation-time">${time}</span>
+        </div>
+        <div class="conversation-preview">
+          ${lastMsg}
+          ${conv.unread ? '<span class="unread-badge"></span>' : ''}
+        </div>
+      </div>
+    `;
+    
+    row.onclick = () => {
+      const user = {
+        id: conv.user_id,
+        username: conv.username,
+        avatar_url: conv.avatar_url
+      };
+      openDM(user);
+      // On mobile, switch to chat view
+      if (window.innerWidth <= 768) {
+        el("messenger").classList.add('chat-active');
+      }
+    };
+    
+    inboxContainer.appendChild(row);
+  });
 }
 
 /* ==========================================================
@@ -358,6 +505,37 @@ async function loadUsersAndGroups() {
   renderUsersList();
   renderGroupsList();
   populateAddMemberSelect();
+  renderInbox();
+}
+
+/* VIEW MANAGEMENT */
+function showInboxView() {
+  el("inboxView").classList.remove("hidden");
+  el("peopleView").classList.add("hidden");
+  el("groupsView").classList.add("hidden");
+  el("inboxTab").classList.add("active");
+  el("peopleTab").classList.remove("active");
+  el("groupsTab").classList.remove("active");
+}
+
+function showPeopleView() {
+  el("inboxView").classList.add("hidden");
+  el("peopleView").classList.remove("hidden");
+  el("groupsView").classList.add("hidden");
+  el("inboxTab").classList.remove("active");
+  el("peopleTab").classList.add("active");
+  el("groupsTab").classList.remove("active");
+  renderUsersList();
+}
+
+function showGroupsView() {
+  el("inboxView").classList.add("hidden");
+  el("peopleView").classList.add("hidden");
+  el("groupsView").classList.remove("hidden");
+  el("inboxTab").classList.remove("active");
+  el("peopleTab").classList.remove("active");
+  el("groupsTab").classList.add("active");
+  renderGroupsList();
 }
 
 /* USERS LIST */
@@ -376,7 +554,13 @@ function renderUsersList() {
       <div class="list-name">${u.username}</div>
     `;
 
-    row.onclick = () => openDM(u);
+    row.onclick = () => {
+      openDM(u);
+      // On mobile, switch to chat view
+      if (window.innerWidth <= 768) {
+        el("messenger").classList.add('chat-active');
+      }
+    };
     box.appendChild(row);
   });
 }
@@ -395,7 +579,13 @@ function renderGroupsList() {
       <div class="list-name">${g.name}</div>
     `;
 
-    row.onclick = () => openGroupChat(g);
+    row.onclick = () => {
+      openGroupChat(g);
+      // On mobile, switch to chat view
+      if (window.innerWidth <= 768) {
+        el("messenger").classList.add('chat-active');
+      }
+    };
     box.appendChild(row);
   });
 }
@@ -407,7 +597,9 @@ function filterContacts() {
   const users = allUsersCache.filter(u => u.username.toLowerCase().includes(term));
   const groups = allGroupsCache.filter(g => g.name.toLowerCase().includes(term));
 
-  el("usersList").innerHTML = "";
+  // Update users list in people view
+  const usersList = el("usersList");
+  usersList.innerHTML = "";
   users.forEach(u => {
     const r = document.createElement("div");
     r.className = "list-row";
@@ -415,23 +607,31 @@ function filterContacts() {
       <div class="avatar48">${u.avatar_url ? `<img src="${u.avatar_url}">` : u.username[0]}</div>
       <div>${u.username}</div>
     `;
-    r.onclick = () => openDM(u);
-    el("usersList").appendChild(r);
+    r.onclick = () => {
+      openDM(u);
+      if (window.innerWidth <= 768) {
+        el("messenger").classList.add('chat-active');
+      }
+    };
+    usersList.appendChild(r);
   });
 
-  el("groupsList").innerHTML = "";
+  // Update groups list in groups view
+  const groupsList = el("groupsList");
+  groupsList.innerHTML = "";
   groups.forEach(g => {
     const r = document.createElement("div");
     r.className = "list-row";
     r.innerHTML = `<div class="group-icon">G</div><div>${g.name}</div>`;
-    r.onclick = () => openGroupChat(g);
-    el("groupsList").appendChild(r);
+    r.onclick = () => {
+      openGroupChat(g);
+      if (window.innerWidth <= 768) {
+        el("messenger").classList.add('chat-active');
+      }
+    };
+    groupsList.appendChild(r);
   });
 }
-
-/* SCROLL HELPERS */
-function scrollToUsers() { el("usersList").scrollIntoView({ behavior: "smooth" }); }
-function scrollToGroups() { el("groupsList").scrollIntoView({ behavior: "smooth" }); }
 
 /* ==========================================================
    DIRECT MESSAGE
@@ -442,6 +642,12 @@ async function openDM(user) {
   el("chatHead").textContent = user.username;
   el("leaveGroupBtn").style.display = "none";
   el("groupDetails").classList.add("hidden");
+  
+  // Show back button on mobile
+  const backToInboxBtn = el("backToInboxBtn");
+  if (backToInboxBtn) {
+    backToInboxBtn.style.display = window.innerWidth <= 768 ? "inline-flex" : "none";
+  }
 
   const { data } = await sb.from("messages")
     .select("*")
@@ -463,6 +669,12 @@ async function openGroupChat(g) {
   el("chatHead").textContent = g.name;
   el("leaveGroupBtn").style.display = "inline-block";
   el("groupDetails").classList.remove("hidden");
+  
+  // Show back button on mobile
+  const backToInboxBtn = el("backToInboxBtn");
+  if (backToInboxBtn) {
+    backToInboxBtn.style.display = window.innerWidth <= 768 ? "inline-flex" : "none";
+  }
 
   await loadGroupMembers(g.id);
 
@@ -582,9 +794,9 @@ function addMessageBubble(m) {
   const div = document.createElement("div");
 
   const isMine = m.sender_id === currentUser.id;
-  div.className = "msg " + (isMine ? "me" : "");
+  div.className = "msg " + (isMine ? "me" : "other");
 
-  let text = m.message ? `<div>${escapeHTML(m.message)}</div>` : "";
+  let text = m.message ? `<div class="msg-content">${escapeHTML(m.message)}</div>` : "";
   let img = m.image_url ? `<img class="chat-image" src="${m.image_url}">` : "";
 
   div.innerHTML = `${text}${img}<div class="time">${new Date(m.created_at).toLocaleTimeString()}</div>`;
@@ -636,6 +848,9 @@ async function sendChatMessage() {
 
   el("messageInput").value = "";
   el("chatImageInput").value = "";
+  
+  // Refresh inbox to show updated conversation
+  renderInbox();
 }
 
 /* ==========================================================
@@ -659,6 +874,9 @@ function setupRealtimeListeners() {
           (msg.sender_id === other && msg.receiver_id === currentUser.id);
 
         if (relevant) addMessageBubble(msg);
+        
+        // Refresh inbox for new messages
+        renderInbox();
       }
     )
     .subscribe();
