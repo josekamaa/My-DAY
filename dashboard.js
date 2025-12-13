@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadAuthUser();
   await loadProfiles();
   await loadGroups();
+  await loadPosts();
   setupRealtimeListeners();
 });
 
@@ -124,6 +125,60 @@ async function loadGroups() {
 }
 
 /* ================================================================
+   POSTS
+================================================================ */
+
+async function loadPosts() {
+  const { data } = await supabaseClient
+    .from("posts")
+    .select("*, profiles(username, avatar_url)")
+    .order("created_at", { ascending: false });
+
+  const container = document.getElementById("posts");
+  container.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <path d="M3 9h18"/>
+          <path d="M9 21V9"/>
+        </svg>
+        <h4>No posts yet</h4>
+        <p class="text-muted">Be the first to create a post!</p>
+      </div>
+    `;
+    return;
+  }
+
+  data.forEach(post => {
+    const postDiv = document.createElement("div");
+    postDiv.className = "post";
+    
+    postDiv.innerHTML = `
+      <div class="post-header">
+        <div class="avatar48">
+          ${post.profiles?.avatar_url 
+            ? `<img src="${post.profiles.avatar_url}" alt="${post.profiles.username}">`
+            : (post.profiles?.username?.charAt(0) || "U")}
+        </div>
+        <div>
+          <strong>${escape(post.profiles?.username || "Unknown")}</strong>
+          <div class="text-muted small">${new Date(post.created_at).toLocaleString()}</div>
+        </div>
+      </div>
+      <p style="margin-top: 8px;">${escape(post.caption || "")}</p>
+      ${post.media_url 
+        ? `<img src="${post.media_url}" class="post-media" alt="Post media">` 
+        : ""}
+    `;
+
+    container.appendChild(postDiv);
+  });
+}
+
+/* ================================================================
    UI EVENT SETUP
 ================================================================ */
 
@@ -138,6 +193,34 @@ function setupUIEvents() {
   document.getElementById("avatarInput").onchange = uploadAvatar;
 
   document.getElementById("chatImageInput").onchange = () => {};
+
+  // Post creation buttons
+  document.getElementById("showCreatePostBtn").onclick = () => {
+    document.getElementById("createPostBox").classList.remove("hidden");
+    document.getElementById("showCreatePostBtn").classList.add("active");
+    document.getElementById("showFeedBtn").classList.remove("active");
+  };
+
+  document.getElementById("showFeedBtn").onclick = () => {
+    document.getElementById("createPostBox").classList.add("hidden");
+    document.getElementById("showFeedBtn").classList.add("active");
+    document.getElementById("showCreatePostBtn").classList.remove("active");
+    loadPosts();
+  };
+
+  document.getElementById("postBtn").onclick = createPost;
+  document.getElementById("cancelPostBtn").onclick = () => {
+    document.getElementById("createPostBox").classList.add("hidden");
+    document.getElementById("caption").value = "";
+    document.getElementById("mediaFile").value = "";
+    document.getElementById("showFeedBtn").classList.add("active");
+    document.getElementById("showCreatePostBtn").classList.remove("active");
+  };
+
+  // Inbox tabs
+  document.getElementById("inboxTab").onclick = () => switchInboxTab("inbox");
+  document.getElementById("peopleTab").onclick = () => switchInboxTab("people");
+  document.getElementById("groupsTab").onclick = () => switchInboxTab("groups");
 }
 
 /* ================================================================
@@ -146,6 +229,7 @@ function setupUIEvents() {
 
 function openMessenger() {
   document.getElementById("messenger").style.display = "flex";
+  switchInboxTab("inbox");
   renderInbox();
 }
 
@@ -153,17 +237,37 @@ function closeMessenger() {
   document.getElementById("messenger").style.display = "none";
 }
 
+function switchInboxTab(tab) {
+  // Reset all tabs
+  document.getElementById("inboxTab").classList.remove("active");
+  document.getElementById("peopleTab").classList.remove("active");
+  document.getElementById("groupsTab").classList.remove("active");
+  
+  // Hide all views
+  document.getElementById("inboxView").classList.add("hidden");
+  document.getElementById("peopleView").classList.add("hidden");
+  document.getElementById("groupsView").classList.add("hidden");
+  
+  // Activate selected tab
+  document.getElementById(`${tab}Tab`).classList.add("active");
+  document.getElementById(`${tab}View`).classList.remove("hidden");
+  
+  // Load content if needed
+  if (tab === "inbox") renderInbox();
+  if (tab === "people") renderPeopleList();
+  if (tab === "groups") renderGroupList();
+}
+
 /* ================================================================
-   INBOX (NULL SAFE, FK FREE)
+   INBOX (FIXED SYNTAX - NO 400 ERRORS)
 ================================================================ */
 
 async function loadInbox() {
-  const filter = `(sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id})`;
-
+  // CORRECT SYNTAX: No parentheses, just comma-separated conditions
   const { data, error } = await supabaseClient
     .from("messages")
     .select("id,sender_id,receiver_id,message,image_url,created_at,read")
-    .or(filter)
+    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -191,8 +295,12 @@ async function loadInbox() {
         unread: msg.receiver_id === currentUser.id && !msg.read
       };
     } else {
-      if (msg.receiver_id === currentUser.id && !msg.read) {
+      const existingTime = new Date(inbox[other].last_time);
+      const newTime = new Date(msg.created_at);
+      if (msg.receiver_id === currentUser.id && !msg.read && newTime > existingTime) {
         inbox[other].unread = true;
+        inbox[other].last_message = msg.message || (msg.image_url ? "📷 Image" : "");
+        inbox[other].last_time = msg.created_at;
       }
     }
   });
@@ -204,13 +312,21 @@ async function loadInbox() {
 
 async function renderInbox() {
   const list = document.getElementById("inboxList");
-  list.innerHTML = "Loading…";
+  list.innerHTML = `<div class="loading">Loading…</div>`;
 
   const inbox = await loadInbox();
   list.innerHTML = "";
 
   if (!inbox.length) {
-    list.innerHTML = `<div class="empty">No messages yet</div>`;
+    list.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <h4>No messages yet</h4>
+        <p class="text-muted">Start a conversation with someone!</p>
+      </div>
+    `;
     return;
   }
 
@@ -218,28 +334,38 @@ async function renderInbox() {
     const row = document.createElement("div");
     row.className = "list-row";
 
+    const avatarContent = conv.avatar_url 
+      ? `<img src="${conv.avatar_url}" alt="${conv.username}">`
+      : conv.username.charAt(0);
+
     row.innerHTML = `
       <div class="avatar48">
-        ${conv.avatar_url ?
-        `<img src="${conv.avatar_url}">`
-        : conv.username.charAt(0)}
+        ${avatarContent}
       </div>
-      <div class="list-name">
-        <strong>${escape(conv.username)}</strong><br>
-        <span class="muted small">${escape(conv.last_message)}</span>
+      <div class="conversation-info">
+        <div class="conversation-header">
+          <strong>${escape(conv.username)}</strong>
+          <span class="conversation-time">${formatTime(conv.last_time)}</span>
+        </div>
+        <div class="conversation-preview">
+          <span>${escape(conv.last_message)}</span>
+          ${conv.unread ? '<span class="unread-badge"></span>' : ''}
+        </div>
       </div>
-      ${conv.unread ? `<span class="unread-dot"></span>` : ""}
     `;
 
-    row.onclick = () =>
-      openDM({ id: conv.user_id, username: conv.username, avatar_url: conv.avatar_url });
+    row.onclick = () => openDM({ 
+      id: conv.user_id, 
+      username: conv.username, 
+      avatar_url: conv.avatar_url 
+    });
 
     list.appendChild(row);
   });
 }
 
 /* ================================================================
-   DIRECT MESSAGE SCREEN
+   DIRECT MESSAGE SCREEN (FIXED SYNTAX)
 ================================================================ */
 
 async function openDM(user) {
@@ -248,16 +374,20 @@ async function openDM(user) {
   document.getElementById("chatHead").textContent = user.username;
   document.getElementById("groupDetails").classList.add("hidden");
   document.getElementById("leaveGroupBtn").style.display = "none";
+  document.getElementById("backToInboxBtn").classList.remove("hidden");
+  
+  // Update UI for mobile
+  document.getElementById("messenger").classList.add("chat-active");
 
-  const filter = `(sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id})`;
-
+  // CORRECT SYNTAX: Use .or() with proper format
   let { data } = await supabaseClient
     .from("messages")
     .select("id,sender_id,receiver_id,message,image_url,created_at")
-    .or(filter)
+    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${user.id}`)
     .order("created_at");
 
-  data = data.filter(
+  // Filter for conversation between current user and selected user
+  data = (data || []).filter(
     m =>
       (m.sender_id === currentUser.id && m.receiver_id === user.id) ||
       (m.sender_id === user.id && m.receiver_id === currentUser.id)
@@ -274,8 +404,13 @@ async function openGroupChat(group) {
   activeChat = { type: "group", id: group.id, name: group.name };
 
   document.getElementById("chatHead").textContent = group.name;
+  document.getElementById("groupTitle").textContent = group.name;
   document.getElementById("groupDetails").classList.remove("hidden");
   document.getElementById("leaveGroupBtn").style.display = "inline-block";
+  document.getElementById("backToInboxBtn").classList.remove("hidden");
+  
+  // Update UI for mobile
+  document.getElementById("messenger").classList.add("chat-active");
 
   const { data } = await supabaseClient
     .from("group_messages")
@@ -293,6 +428,19 @@ async function openGroupChat(group) {
 function renderMessages(list) {
   const box = document.getElementById("messagesList");
   box.innerHTML = "";
+
+  if (!list || list.length === 0) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <h4>No messages yet</h4>
+        <p class="text-muted">Send the first message!</p>
+      </div>
+    `;
+    return;
+  }
 
   (list || []).forEach(addMessageBubble);
 
@@ -312,12 +460,16 @@ function addMessageBubble(msg) {
     minute: "2-digit"
   });
 
-  div.innerHTML = `
-    ${msg.message ? `<div class="msg-text">${escape(msg.message)}</div>` : ""}
-    ${msg.image_url ? `<img class="msg-img" src="${msg.image_url}">` : ""}
-    <div class="msg-time">${time}</div>
-  `;
+  let content = "";
+  if (msg.message) {
+    content += `<div class="msg-content">${escape(msg.message)}</div>`;
+  }
+  if (msg.image_url) {
+    content += `<img src="${msg.image_url}" class="chat-image" alt="Chat image">`;
+  }
+  content += `<div class="time">${time}</div>`;
 
+  div.innerHTML = content;
   box.appendChild(div);
 }
 
@@ -331,16 +483,23 @@ async function sendMessage() {
   const text = document.getElementById("messageInput").value.trim();
   const file = document.getElementById("chatImageInput").files[0];
 
+  if (!text && !file) return;
+
   let image_url = null;
 
   if (file) {
     const path = `${currentUser.id}_${Date.now()}_${file.name}`;
-    const upload = await supabaseClient
+    const { data, error } = await supabaseClient
       .storage
       .from("chat_images")
       .upload(path, file);
 
-    image_url = `${SUPABASE_URL}/storage/v1/object/public/chat_images/${upload.data.path}`;
+    if (error) {
+      console.error("Image upload error:", error);
+      return;
+    }
+
+    image_url = `${SUPABASE_URL}/storage/v1/object/public/chat_images/${data.path}`;
   }
 
   if (activeChat.type === "dm") {
@@ -348,7 +507,8 @@ async function sendMessage() {
       sender_id: currentUser.id,
       receiver_id: activeChat.id,
       message: text || null,
-      image_url
+      image_url,
+      read: false
     });
   }
 
@@ -364,6 +524,7 @@ async function sendMessage() {
   document.getElementById("messageInput").value = "";
   document.getElementById("chatImageInput").value = "";
 
+  // Refresh current chat
   if (activeChat.type === "dm") {
     await openDM({ id: activeChat.id, username: activeChat.name });
   } else {
@@ -371,6 +532,57 @@ async function sendMessage() {
   }
 
   renderInbox();
+}
+
+/* ================================================================
+   CREATE POST
+================================================================ */
+
+async function createPost() {
+  const caption = document.getElementById("caption").value.trim();
+  const mediaFile = document.getElementById("mediaFile").files[0];
+
+  if (!caption && !mediaFile) {
+    alert("Please add a caption or media");
+    return;
+  }
+
+  let media_url = null;
+
+  if (mediaFile) {
+    const path = `${currentUser.id}_${Date.now()}_${mediaFile.name}`;
+    const { data, error } = await supabaseClient
+      .storage
+      .from("post_media")
+      .upload(path, mediaFile);
+
+    if (error) {
+      console.error("Media upload error:", error);
+      return;
+    }
+
+    media_url = `${SUPABASE_URL}/storage/v1/object/public/post_media/${data.path}`;
+  }
+
+  const { error } = await supabaseClient.from("posts").insert({
+    user_id: currentUser.id,
+    caption: caption || null,
+    media_url
+  });
+
+  if (error) {
+    console.error("Post creation error:", error);
+    return;
+  }
+
+  // Reset form and refresh feed
+  document.getElementById("caption").value = "";
+  document.getElementById("mediaFile").value = "";
+  document.getElementById("createPostBox").classList.add("hidden");
+  document.getElementById("showFeedBtn").classList.add("active");
+  document.getElementById("showCreatePostBtn").classList.remove("active");
+
+  await loadPosts();
 }
 
 /* ================================================================
@@ -383,11 +595,16 @@ async function uploadAvatar(e) {
 
   const path = `${currentUser.id}_${Date.now()}_${file.name}`;
 
-  const upload = await supabaseClient.storage
+  const { data, error } = await supabaseClient.storage
     .from("avatars")
     .upload(path, file);
 
-  const url = `${SUPABASE_URL}/storage/v1/object/public/avatars/${upload.data.path}`;
+  if (error) {
+    console.error("Avatar upload error:", error);
+    return;
+  }
+
+  const url = `${SUPABASE_URL}/storage/v1/object/public/avatars/${data.path}`;
 
   await supabaseClient.from("profiles")
     .update({ avatar_url: url })
@@ -418,7 +635,10 @@ function setupRealtimeListeners() {
         activeChat.type === "dm" &&
         (msg.sender_id === activeChat.id || msg.receiver_id === activeChat.id);
 
-      if (relevant) addMessageBubble(msg);
+      if (relevant) {
+        addMessageBubble(msg);
+      }
+      
       renderInbox();
     })
     .subscribe();
@@ -446,15 +666,37 @@ function renderPeopleList() {
   const box = document.getElementById("usersList");
   box.innerHTML = "";
 
+  if (peopleList.length === 0) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <h4>No other users</h4>
+        <p class="text-muted">You're the only one here</p>
+      </div>
+    `;
+    return;
+  }
+
   peopleList.forEach(p => {
     const div = document.createElement("div");
     div.className = "list-row";
 
+    const avatarContent = p.avatar_url 
+      ? `<img src="${p.avatar_url}" alt="${p.username}">`
+      : p.username.charAt(0);
+
     div.innerHTML = `
       <div class="avatar48">
-        ${p.avatar_url ? `<img src="${p.avatar_url}">` : p.username.charAt(0)}
+        ${avatarContent}
       </div>
-      <div class="list-name">${escape(p.username)}</div>
+      <div class="conversation-info">
+        <div class="conversation-header">
+          <strong>${escape(p.username)}</strong>
+        </div>
+      </div>
     `;
 
     div.onclick = () => openDM(p);
@@ -467,13 +709,36 @@ function renderGroupList() {
   const box = document.getElementById("groupsList");
   box.innerHTML = "";
 
+  if (groupList.length === 0) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <h4>No groups yet</h4>
+        <p class="text-muted">Create your first group!</p>
+      </div>
+    `;
+    return;
+  }
+
   groupList.forEach(g => {
     const div = document.createElement("div");
     div.className = "list-row";
 
     div.innerHTML = `
       <div class="group-icon">G</div>
-      <div class="list-name">${escape(g.name)}</div>
+      <div class="conversation-info">
+        <div class="conversation-header">
+          <strong>${escape(g.name)}</strong>
+        </div>
+        <div class="conversation-preview">
+          ${g.description || "No description"}
+        </div>
+      </div>
     `;
 
     div.onclick = () => openGroupChat(g);
@@ -483,12 +748,29 @@ function renderGroupList() {
 }
 
 /* ================================================================
-   UTIL
+   UTIL FUNCTIONS
 ================================================================ */
 
 function escape(str) {
   return String(str || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function formatTime(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffHours = diffMs / (1000 * 60 * 60);
+  
+  if (diffHours < 24) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } else if (diffHours < 48) {
+    return "Yesterday";
+  } else {
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
 }
