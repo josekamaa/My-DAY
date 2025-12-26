@@ -2,7 +2,7 @@
    SUPABASE CLIENT (NO NAME CONFLICTS)
 =========================================================== */
 const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
-const SUPABASE_KEY = "YOUR_KEY_HERE";  // put your actual key
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";  // put your actual key
 
 // IMPORTANT: sb = client  (no conflict)
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
