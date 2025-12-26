@@ -471,7 +471,7 @@
       border-color: var(--primary);
     }
 
-    /* Messenger */
+    /* Messenger - UPDATED FOR FUNCTIONALITY */
     .messenger {
       position: fixed;
       inset: 0;
@@ -487,84 +487,114 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .messenger-header {
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--gray-light);
+    .messenger .topbar {
+      padding: 14px;
+      border-bottom: 1px solid #eee;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 12px;
       background: var(--white);
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
 
-    .messenger-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .messenger-title i {
-      color: var(--primary);
-      font-size: 1.2rem;
-    }
-
-    .back-btn {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      background: none;
-      border: none;
-      color: var(--primary);
-      font-weight: 600;
-      cursor: pointer;
-      padding: 8px;
-      border-radius: var(--radius-sm);
-      transition: var(--transition);
-    }
-
-    .back-btn:hover {
-      background: var(--gray-light);
-    }
-
-    .messenger-content {
+    .messenger .content {
       flex: 1;
       display: flex;
       min-height: 0;
       overflow: hidden;
     }
 
-    .conversations-sidebar {
-      width: 320px;
+    .user-list {
+      width: 280px;
       border-right: 1px solid var(--gray-light);
-      display: flex;
-      flex-direction: column;
+      overflow: auto;
+      padding: 10px;
       background: #f9fafc;
     }
 
-    .conversations-header {
-      padding: 1.2rem;
-      border-bottom: 1px solid var(--gray-light);
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #f5f7ff;
+    }
+
+    .msg {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: var(--white);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      position: relative;
+      word-wrap: break-word;
+    }
+
+    .msg.me {
+      align-self: flex-end;
+      background: var(--primary);
+      color: var(--white);
+      border-top-right-radius: 4px;
+    }
+
+    .msg.other {
+      align-self: flex-start;
+      border-top-left-radius: 4px;
+    }
+
+    .msg-time {
+      font-size: 0.75rem;
+      color: var(--gray);
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .msg.me .msg-time {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .send-box {
+      display: flex;
+      gap: 10px;
+      padding: 16px;
+      border-top: 1px solid var(--gray-light);
       background: var(--white);
     }
 
-    .conversations-header h3 {
-      font-size: 1.2rem;
-      color: var(--dark);
-    }
-
-    .conversations-list {
+    #messageInput {
       flex: 1;
-      overflow-y: auto;
+      padding: 12px 16px;
+      border-radius: 24px;
+      border: 1px solid var(--gray-light);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      background: #f9fafc;
     }
 
+    #messageInput:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--white);
+    }
+
+    /* Conversation Items */
     .conversation-item {
       display: flex;
       align-items: center;
-      padding: 1rem 1.2rem;
+      padding: 12px;
       gap: 12px;
       cursor: pointer;
       transition: var(--transition);
-      border-bottom: 1px solid var(--gray-light);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
     }
 
     .conversation-item:hover {
@@ -573,7 +603,6 @@
 
     .conversation-item.active {
       background: rgba(67, 97, 238, 0.1);
-      border-left: 4px solid var(--primary);
     }
 
     .conversation-avatar {
@@ -581,6 +610,7 @@
       height: 48px;
       border-radius: 50%;
       overflow: hidden;
+      flex-shrink: 0;
     }
 
     .conversation-avatar img {
@@ -591,182 +621,22 @@
 
     .conversation-info {
       flex: 1;
+      min-width: 0;
     }
 
     .conversation-name {
       font-weight: 600;
       color: var(--dark);
+      font-size: 1rem;
+      margin-bottom: 4px;
     }
 
-    .conversation-preview {
+    .conversation-last-msg {
       font-size: 0.9rem;
       color: var(--gray-dark);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
-    }
-
-    .conversation-time {
-      font-size: 0.8rem;
-      color: var(--gray);
-      margin-top: 4px;
-    }
-
-    .chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chat-header {
-      padding: 1.2rem 1.5rem;
-      border-bottom: 1px solid var(--gray-light);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--white);
-    }
-
-    .chat-user-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .chat-user-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      overflow: hidden;
-    }
-
-    .chat-user-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .chat-user-name {
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
-
-    .chat-user-status {
-      font-size: 0.9rem;
-      color: var(--gray);
-    }
-
-    .messages-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.5rem;
-      background: #f5f7ff;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .message {
-      display: flex;
-      max-width: 75%;
-    }
-
-    .message.incoming {
-      align-self: flex-start;
-    }
-
-    .message.outgoing {
-      align-self: flex-end;
-      flex-direction: row-reverse;
-    }
-
-    .message-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      overflow: hidden;
-      margin-top: 4px;
-    }
-
-    .message-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .message-content {
-      margin: 0 12px;
-      padding: 12px 16px;
-      border-radius: 18px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      position: relative;
-    }
-
-    .message.incoming .message-content {
-      background: var(--white);
-      border-top-left-radius: 4px;
-    }
-
-    .message.outgoing .message-content {
-      background: var(--primary);
-      color: var(--white);
-      border-top-right-radius: 4px;
-    }
-
-    .message-time {
-      font-size: 0.75rem;
-      color: var(--gray);
-      margin-top: 4px;
-      text-align: right;
-    }
-
-    .message.outgoing .message-time {
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    .message-input-area {
-      padding: 1.2rem;
-      border-top: 1px solid var(--gray-light);
-      background: var(--white);
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .message-input {
-      flex: 1;
-      padding: 12px 16px;
-      border-radius: 24px;
-      border: 1px solid var(--gray-light);
-      font-family: 'Inter', sans-serif;
-      font-size: 1rem;
-      background: #f9fafc;
-    }
-
-    .message-input:focus {
-      outline: none;
-      border-color: var(--primary);
-      background: var(--white);
-    }
-
-    .send-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: var(--primary);
-      color: var(--white);
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-
-    .send-btn:hover {
-      background: var(--primary-light);
-      transform: scale(1.05);
     }
 
     /* Camera Modal */
@@ -851,6 +721,25 @@
       font-size: 1.5rem;
     }
 
+    /* Back Button for Mobile */
+    .back-btn {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .back-btn:hover {
+      background: var(--gray-light);
+    }
+
     /* Utility Classes */
     .hidden {
       display: none !important;
@@ -902,20 +791,20 @@
         padding: 1rem;
       }
       
-      .messenger-header, .chat-header, .message-input-area {
-        padding: 1rem;
+      .messenger {
+        flex-direction: column;
       }
       
-      .messages-container {
-        padding: 1rem;
-      }
-      
-      .conversations-sidebar {
+      .user-list {
         width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--gray-light);
+        max-height: 40vh;
       }
       
       .chat-area {
         display: none;
+        flex: 1;
       }
       
       .chat-area.active {
@@ -926,8 +815,16 @@
         display: flex;
       }
       
-      .message {
+      .messages {
+        padding: 15px;
+      }
+      
+      .msg {
         max-width: 85%;
+      }
+      
+      .send-box {
+        padding: 12px;
       }
     }
 
@@ -968,6 +865,10 @@
       .action-btn {
         padding: 8px;
         justify-content: center;
+      }
+      
+      .user-list {
+        max-height: 50vh;
       }
     }
   </style>
@@ -1072,55 +973,35 @@
   </div>
 </div>
 
-<!-- Messenger -->
+<!-- Messenger - RESTORED SIMPLER STRUCTURE FOR COMPATIBILITY -->
 <div class="messenger" id="messenger">
-  <div class="messenger-header">
-    <div class="messenger-title">
-      <button class="back-btn" id="backToConversations">
-        <i class="fas fa-arrow-left"></i>
-        <span>Back</span>
-      </button>
-      <i class="fas fa-inbox"></i>
-      <strong>Inbox</strong>
-    </div>
-    <button class="btn btn-secondary" onclick="closeMessenger()">
+  <div class="topbar">
+    <button class="btn btn-secondary back-btn" id="backToInbox">
+      <i class="fas fa-arrow-left"></i>
+      <span>Back</span>
+    </button>
+    <button class="btn btn-ghost" onclick="closeMessenger()">
       <i class="fas fa-times"></i>
       <span>Close</span>
     </button>
+    <strong>Inbox</strong>
   </div>
 
-  <div class="messenger-content">
-    <div class="conversations-sidebar" id="conversationsSidebar">
-      <div class="conversations-header">
-        <h3>Messages</h3>
-      </div>
-      <div class="conversations-list" id="userList"></div>
+  <div class="content">
+    <div class="user-list" id="userList">
+      <!-- User list will be populated by JavaScript -->
     </div>
-
+    
     <div class="chat-area" id="chatArea">
-      <div class="chat-header">
-        <div class="chat-user-info">
-          <div class="chat-user-avatar" id="chatUserAvatar">
-            <img src="" alt="">
-          </div>
-          <div>
-            <div class="chat-user-name" id="chatUserName">Select a conversation</div>
-            <div class="chat-user-status" id="chatUserStatus">Online</div>
-          </div>
-        </div>
-        <div class="chat-actions">
-          <button class="btn btn-icon btn-secondary">
-            <i class="fas fa-phone"></i>
-          </button>
-        </div>
+      <div class="messages" id="messagesList">
+        <!-- Messages will be populated by JavaScript -->
       </div>
-
-      <div class="messages-container" id="messagesList"></div>
-
-      <div class="message-input-area">
-        <input type="text" class="message-input" id="messageInput" placeholder="Type a message..." />
-        <button class="send-btn" onclick="sendMessage()">
+      
+      <div class="send-box">
+        <input type="text" id="messageInput" placeholder="Write a message..." />
+        <button class="btn btn-primary" onclick="sendMessage()">
           <i class="fas fa-paper-plane"></i>
+          <span>Send</span>
         </button>
       </div>
     </div>
@@ -1130,38 +1011,129 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="dashboard.js"></script>
 <script>
-  // Additional JS for improved mobile functionality
+  // Additional JavaScript for mobile inbox functionality
   document.addEventListener('DOMContentLoaded', function() {
-    const backBtn = document.getElementById('backToConversations');
-    const conversationsSidebar = document.getElementById('conversationsSidebar');
+    const messenger = document.getElementById('messenger');
+    const inboxBtn = document.getElementById('inboxBtn');
+    const backBtn = document.getElementById('backToInbox');
+    const userList = document.getElementById('userList');
     const chatArea = document.getElementById('chatArea');
+    const messagesList = document.getElementById('messagesList');
+    const messageInput = document.getElementById('messageInput');
     
-    backBtn.addEventListener('click', function() {
-      conversationsSidebar.style.display = 'flex';
-      chatArea.classList.remove('active');
-      backBtn.style.display = 'none';
+    // Store the currently selected user
+    let currentChatUser = null;
+    
+    // Open messenger when inbox button is clicked
+    inboxBtn.addEventListener('click', function() {
+      messenger.style.display = 'flex';
+      // Reset to user list view on mobile
+      if (window.innerWidth <= 768) {
+        userList.style.display = 'block';
+        chatArea.style.display = 'none';
+        backBtn.style.display = 'none';
+      }
+      // Load user list (this function should be in dashboard.js)
+      if (typeof loadUserList === 'function') {
+        loadUserList();
+      }
     });
     
-    // Function to open chat on mobile
-    window.openChat = function(userId, userName, userAvatar) {
+    // Back button functionality for mobile
+    backBtn.addEventListener('click', function() {
       if (window.innerWidth <= 768) {
-        conversationsSidebar.style.display = 'none';
-        chatArea.classList.add('active');
+        userList.style.display = 'block';
+        chatArea.style.display = 'none';
+        backBtn.style.display = 'none';
+        currentChatUser = null;
+      }
+    });
+    
+    // Function to open chat with a user (call this from dashboard.js)
+    window.openChat = function(userId, userName, userAvatar) {
+      currentChatUser = userId;
+      
+      if (window.innerWidth <= 768) {
+        userList.style.display = 'none';
+        chatArea.style.display = 'flex';
         backBtn.style.display = 'flex';
       }
       
-      // Update chat header
-      document.getElementById('chatUserName').textContent = userName;
-      if (userAvatar) {
-        document.getElementById('chatUserAvatar').querySelector('img').src = userAvatar;
+      // Update chat header if you have one
+      const chatHeader = document.querySelector('.topbar strong');
+      if (chatHeader) {
+        chatHeader.textContent = `Chat with ${userName}`;
       }
       
+      // Clear previous messages
+      messagesList.innerHTML = '';
+      
       // Load messages for this user
-      // This function should be implemented in dashboard.js
+      // This should call your existing loadMessages function from dashboard.js
       if (typeof loadMessages === 'function') {
         loadMessages(userId);
       }
     };
+    
+    // Send message function (enhanced)
+    window.sendMessage = function() {
+      const message = messageInput.value.trim();
+      if (!message || !currentChatUser) return;
+      
+      // Call your existing sendMessage function from dashboard.js
+      if (typeof sendMessageToUser === 'function') {
+        sendMessageToUser(currentChatUser, message);
+      } else if (typeof window.sendMessageOriginal === 'function') {
+        // Fallback to original function name
+        window.sendMessageOriginal(currentChatUser, message);
+      }
+      
+      // Clear input
+      messageInput.value = '';
+      
+      // Add message to UI immediately
+      const msgElement = document.createElement('div');
+      msgElement.className = 'msg me';
+      msgElement.innerHTML = `
+        <div>${message}</div>
+        <div class="msg-time">Just now</div>
+      `;
+      messagesList.appendChild(msgElement);
+      messagesList.scrollTop = messagesList.scrollHeight;
+    };
+    
+    // Allow Enter key to send message
+    messageInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    // Close messenger
+    window.closeMessenger = function() {
+      messenger.style.display = 'none';
+      currentChatUser = null;
+    };
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+      if (window.innerWidth > 768) {
+        // On desktop, show both user list and chat area
+        userList.style.display = 'block';
+        chatArea.style.display = 'flex';
+        backBtn.style.display = 'none';
+      } else if (currentChatUser) {
+        // On mobile with active chat, show chat area with back button
+        userList.style.display = 'none';
+        chatArea.style.display = 'flex';
+        backBtn.style.display = 'flex';
+      } else {
+        // On mobile without active chat, show user list
+        userList.style.display = 'block';
+        chatArea.style.display = 'none';
+        backBtn.style.display = 'none';
+      }
+    });
   });
 </script>
 </body>
