@@ -8,13 +8,40 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,500,600&display=swap">
 
 <style>
+/* =====================================================
+   THEME (LIGHT / DARK – CSS ONLY)
+===================================================== */
 :root {
   --primary:#4a90e2;
+  --primary-dark:#3a78c2;
   --bg:#f4f6fb;
   --card:#ffffff;
   --text:#222;
+  --muted:#777;
   --border:#e5e7eb;
+
+  --chat-bg:#f4f6fb;
+  --msg-other:#e5e7eb;
+  --msg-me:#4a90e2;
+
+  --online:#22c55e;
+  --unread:#ef4444;
+
   --radius:14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0f172a;
+    --card:#111827;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --border:#1f2937;
+
+    --chat-bg:#020617;
+    --msg-other:#1f2937;
+    --msg-me:#2563eb;
+  }
 }
 
 * { box-sizing:border-box; }
@@ -26,7 +53,9 @@ body {
   color:var(--text);
 }
 
-/* HEADER */
+/* =====================================================
+   HEADER
+===================================================== */
 header {
   background:linear-gradient(135deg,#667eea,#764ba2);
   color:#fff;
@@ -34,6 +63,12 @@ header {
   display:flex;
   justify-content:space-between;
   align-items:center;
+}
+
+header h2 {
+  margin:0;
+  font-size:20px;
+  font-weight:600;
 }
 
 .btn {
@@ -47,10 +82,12 @@ header {
 }
 
 .btn.ghost {
-  background:rgba(255,255,255,.25);
+  background:rgba(255,255,255,.2);
 }
 
-/* LAYOUT */
+/* =====================================================
+   LAYOUT
+===================================================== */
 .container {
   max-width:1200px;
   margin:20px auto;
@@ -64,37 +101,78 @@ header {
   .container{grid-template-columns:1fr;}
 }
 
-/* SIDEBAR */
+/* =====================================================
+   SIDEBAR + MODERN AVATAR STYLE
+===================================================== */
 .sidebar {
   background:var(--card);
   border-radius:var(--radius);
   padding:18px;
+  box-shadow:0 4px 14px rgba(0,0,0,.08);
 }
 
-.story-ring {
-  width:94px;
-  height:94px;
+/* Modern Avatar Style - FOR PROFILE ONLY */
+.sidebar .story-ring {
+  width:100px;
+  height:100px;
   border-radius:50%;
-  padding:3px;
-  background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af,#515bd4);
-  margin-bottom:12px;
-}
-
-.avatar {
-  width:100%;
-  height:100%;
-  border-radius:50%;
-  overflow:hidden;
+  position:relative;
+  margin:0 auto 12px;
   display:flex;
   align-items:center;
   justify-content:center;
+}
+
+.sidebar .story-ring::before {
+  content:'';
+  position:absolute;
+  inset:-3px;
+  border-radius:50%;
+  background:linear-gradient(135deg, #667eea, #764ba2, #f58529, #dd2a7b);
+  z-index:0;
+  animation:rotate 4s linear infinite;
+}
+
+.sidebar .story-ring::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:var(--card);
+  z-index:1;
+}
+
+@keyframes rotate {
+  0% { transform:rotate(0deg); }
+  100% { transform:rotate(360deg); }
+}
+
+/* Profile avatar in sidebar */
+.sidebar .avatar {
+  width:94px;
+  height:94px;
+  border-radius:50%;
+  position:relative;
+  z-index:2;
   background:var(--primary);
   color:#fff;
   font-size:32px;
   font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  border:3px solid var(--card);
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  transition:transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.avatar img {
+.sidebar .avatar:hover {
+  transform:scale(1.05);
+  box-shadow:0 6px 20px rgba(0,0,0,0.2);
+}
+
+.sidebar .avatar img {
   width:100%;
   height:100%;
   object-fit:cover;
@@ -104,12 +182,61 @@ header {
   font-size:18px;
   font-weight:600;
   margin-bottom:16px;
+  text-align:center;
 }
 
-/* FEED */
+.sidebar hr {
+  border:none;
+  border-top:1px solid var(--border);
+  margin:16px 0;
+}
+
+/* =====================================================
+   FIX FOR POST AVATARS
+===================================================== */
+/* Post avatars - override the general avatar style */
+.post .avatar {
+  width:40px !important;
+  height:40px !important;
+  font-size:16px !important;
+  border:2px solid var(--primary) !important;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1) !important;
+  flex-shrink:0;
+  transition:transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post .avatar:hover {
+  transform:scale(1.03);
+  box-shadow:0 3px 10px rgba(0,0,0,0.15) !important;
+}
+
+.post .avatar img {
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+}
+
+/* Ensure post avatars are circular */
+.post .avatar {
+  border-radius:50% !important;
+}
+
+/* Remove story ring effects from post avatars */
+.post .story-ring,
+.post .story-ring::before,
+.post .story-ring::after {
+  display:none !important;
+}
+
+/* =====================================================
+   FEED – INSTAGRAM STYLE
+===================================================== */
+.feed h2 { margin:0 0 14px; }
+
 .post {
   background:var(--card);
   border-radius:var(--radius);
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
   margin-bottom:20px;
   overflow:hidden;
 }
@@ -121,40 +248,204 @@ header {
   padding:14px;
 }
 
-.post-header .avatar {
-  width:42px;
-  height:42px;
-  flex-shrink:0;
-}
-
-.post-header strong {
-  font-size:14px;
-}
-
-.post img {
+.post img,
+.post video {
   width:100%;
   display:block;
+  background:#000;
+  max-height:500px;
+  object-fit:contain;
 }
 
 .post-content {
   padding:14px;
 }
 
-/* CREATE POST */
-.create-post {
-  background:var(--card);
-  border-radius:var(--radius);
-  padding:14px;
-  margin-bottom:20px;
+.post-actions {
+  display:flex;
+  gap:14px;
+  margin-bottom:6px;
+  font-weight:600;
 }
 
-.create-post textarea {
-  width:100%;
-  border:1px solid var(--border);
-  border-radius:10px;
+.post-caption {
+  font-size:14px;
+  line-height:1.4;
+}
+
+.post-caption span { font-weight:600; }
+
+/* =====================================================
+   MESSENGER
+===================================================== */
+.messenger {
+  position:fixed;
+  inset:0;
+  background:var(--card);
+  z-index:3000;
+  display:none;
+  flex-direction:column;
+}
+
+/* Topbar */
+.messenger .topbar {
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* Content */
+.messenger .content {
+  flex:1;
+  display:flex;
+  min-height:0;
+}
+
+/* User list */
+.user-list {
+  width:280px;
+  border-right:1px solid var(--border);
+  overflow-y:auto;
   padding:10px;
-  resize:none;
+}
+
+.user-list > div {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+  position:relative;
+}
+
+/* Messenger avatars */
+.user-list .avatar {
+  width:36px !important;
+  height:36px !important;
+  font-size:14px !important;
+  border-radius:50% !important;
+}
+
+/* Online dot */
+.user-list .status {
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--online);
+  position:absolute;
+  left:38px;
+  bottom:10px;
+  border:2px solid var(--card);
+}
+
+/* Unread badge */
+.user-list .badge {
+  margin-left:auto;
+  background:var(--unread);
+  color:#fff;
+  font-size:11px;
+  font-weight:600;
+  padding:2px 6px;
+  border-radius:999px;
+}
+
+/* Chat */
+.chat-area {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+.chat-header {
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  font-weight:600;
+}
+
+.messages {
+  flex:1;
+  overflow-y:auto;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  background:var(--chat-bg);
+}
+
+/* Message bubbles */
+.msg {
+  max-width:72%;
+  padding:8px 12px;
+  border-radius:16px;
+  background:var(--msg-other);
+  font-size:14px;
+  position:relative;
+}
+
+/* Timestamp */
+.msg::after {
+  content: attr(data-time);
+  display:block;
+  font-size:10px;
+  opacity:.6;
+  margin-top:4px;
+}
+
+/* Read receipts */
+.msg.me::before {
+  content:"✓✓";
+  position:absolute;
+  right:8px;
+  bottom:4px;
+  font-size:11px;
+  opacity:.7;
+}
+
+/* My messages */
+.msg.me {
+  align-self:flex-end;
+  background:var(--msg-me);
+  color:#fff;
+}
+
+/* Send box */
+.send-box {
+  display:flex;
+  gap:8px;
+  padding:12px;
+  border-top:1px solid var(--border);
+}
+
+#messageInput {
+  flex:1;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+
+/* Mobile */
+@media (max-width:800px){
+  .messenger .content { flex-direction:column; }
+  .user-list {
+    width:100%;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+  }
+}
+
+/* Sidebar buttons */
+.sidebar label.btn {
+  width:100%;
+  text-align:center;
+  display:block;
   margin-bottom:10px;
+}
+
+.sidebar .btn {
+  width:100%;
 }
 </style>
 </head>
@@ -171,46 +462,54 @@ header {
 
 <div class="container">
 
-  <aside class="sidebar">
-    <div class="story-ring">
-      <div class="avatar" id="profileAvatar">
-        <span id="avatarInitial">U</span>
-      </div>
+<aside class="sidebar">
+  <div class="story-ring">
+    <div class="avatar" id="profileAvatar">
+      <span id="avatarInitial">U</span>
     </div>
-    <div class="username" id="profileUsername">Loading…</div>
-  </aside>
+  </div>
+  <div class="username" id="profileUsername">Loading…</div>
 
-  <main class="feed">
+  <label class="btn" style="width:100%;text-align:center;">
+    Change Avatar
+    <input type="file" id="avatarInput" accept="image/*" hidden>
+  </label>
 
-    <!-- ✅ CREATE POST (IMAGE + CAPTION FIX) -->
-    <div class="create-post" id="createPost" style="display:none;">
-      <textarea id="postCaption" placeholder="Write a caption..."></textarea>
+  <hr>
 
-      <!-- REQUIRED FILE INPUT -->
-      <label class="btn ghost" style="width:100%; text-align:center; margin-bottom:10px;">
-        Add Image
-        <input
-          type="file"
-          id="postImage"
-          accept="image/*"
-          hidden
-        >
-      </label>
+  <button class="btn" style="width:100%;" onclick="openCamera()">Take Photo</button>
+</aside>
 
-      <button class="btn" style="width:100%;" onclick="submitPost()">Post</button>
-    </div>
+<main class="feed">
+  <h2>Latest Posts</h2>
+  <div id="posts"></div>
+</main>
 
-    <h2>Latest Posts</h2>
-    <div id="posts"></div>
-
-  </main>
 </div>
 
-<div class="messenger" id="messenger"></div>
+<!-- MESSENGER -->
+<div class="messenger" id="messenger">
+  <div class="topbar">
+    <button class="btn ghost" onclick="closeMessenger()">← Back</button>
+    <strong>Inbox</strong>
+  </div>
 
-<!-- IMPORTANT: defer fixes addEventListener null error -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="dashboard.js" defer></script>
+  <div class="content">
+    <div class="user-list" id="userList"></div>
 
+    <div class="chat-area">
+      <div class="chat-header">Conversation</div>
+      <div class="messages" id="messagesList"></div>
+
+      <div class="send-box">
+        <input id="messageInput" placeholder="Write a message..." />
+        <button class="btn" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="dashboard.js"></script>
 </body>
 </html>
