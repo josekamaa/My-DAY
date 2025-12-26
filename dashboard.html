@@ -9,10 +9,11 @@
 
 <style>
 /* =====================================================
-   THEME
+   THEME (LIGHT / DARK – CSS ONLY)
 ===================================================== */
 :root {
   --primary:#4a90e2;
+  --primary-dark:#3a78c2;
   --bg:#f4f6fb;
   --card:#ffffff;
   --text:#222;
@@ -22,6 +23,9 @@
   --chat-bg:#f4f6fb;
   --msg-other:#e5e7eb;
   --msg-me:#4a90e2;
+
+  --online:#22c55e;
+  --unread:#ef4444;
 
   --radius:14px;
 }
@@ -33,6 +37,7 @@
     --text:#e5e7eb;
     --muted:#9ca3af;
     --border:#1f2937;
+
     --chat-bg:#020617;
     --msg-other:#1f2937;
     --msg-me:#2563eb;
@@ -60,6 +65,12 @@ header {
   align-items:center;
 }
 
+header h2 {
+  margin:0;
+  font-size:20px;
+  font-weight:600;
+}
+
 .btn {
   border:none;
   padding:10px 16px;
@@ -70,7 +81,9 @@ header {
   font-weight:600;
 }
 
-.btn.ghost { background:rgba(255,255,255,.2); }
+.btn.ghost {
+  background:rgba(255,255,255,.2);
+}
 
 /* =====================================================
    LAYOUT
@@ -89,7 +102,7 @@ header {
 }
 
 /* =====================================================
-   SIDEBAR + STORY
+   SIDEBAR + STORY RING
 ===================================================== */
 .sidebar {
   background:var(--card);
@@ -104,7 +117,7 @@ header {
   border-radius:50%;
   padding:3px;
   background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af,#515bd4);
-  cursor:pointer;
+  margin-bottom:12px;
 }
 
 .avatar {
@@ -112,17 +125,38 @@ header {
   height:100%;
   border-radius:50%;
   background:var(--primary);
-  display:flex;
-  align-items:center;
-  justify-content:center;
   color:#fff;
   font-size:32px;
   font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.avatar img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.username {
+  font-size:18px;
+  font-weight:600;
+  margin-bottom:16px;
+}
+
+.sidebar hr {
+  border:none;
+  border-top:1px solid var(--border);
+  margin:16px 0;
 }
 
 /* =====================================================
    FEED – INSTAGRAM STYLE
 ===================================================== */
+.feed h2 { margin:0 0 14px; }
+
 .post {
   background:var(--card);
   border-radius:var(--radius);
@@ -145,22 +179,23 @@ header {
   background:#000;
 }
 
-/* Sticky actions */
+.post-content {
+  padding:14px;
+}
+
 .post-actions {
-  position:sticky;
-  bottom:0;
-  background:var(--card);
   display:flex;
-  gap:16px;
-  padding:10px 14px;
-  border-top:1px solid var(--border);
+  gap:14px;
+  margin-bottom:6px;
   font-weight:600;
 }
 
 .post-caption {
-  padding:0 14px 14px;
   font-size:14px;
+  line-height:1.4;
 }
+
+.post-caption span { font-weight:600; }
 
 /* =====================================================
    MESSENGER
@@ -174,38 +209,61 @@ header {
   flex-direction:column;
 }
 
+/* Topbar */
 .messenger .topbar {
-  padding:14px;
+  padding:14px 16px;
   border-bottom:1px solid var(--border);
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:12px;
 }
 
-/* Search (UI only) */
-.inbox-search {
-  margin-left:auto;
-}
-
-.inbox-search input {
-  padding:6px 10px;
-  border-radius:8px;
-  border:1px solid var(--border);
-  font-size:13px;
-}
-
-/* Layout */
+/* Content */
 .messenger .content {
   flex:1;
   display:flex;
+  min-height:0;
 }
 
-/* Users */
+/* User list */
 .user-list {
   width:280px;
   border-right:1px solid var(--border);
-  padding:10px;
   overflow-y:auto;
+  padding:10px;
+}
+
+.user-list > div {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+  position:relative;
+}
+
+/* Online dot */
+.user-list .status {
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--online);
+  position:absolute;
+  left:38px;
+  bottom:10px;
+  border:2px solid var(--card);
+}
+
+/* Unread badge */
+.user-list .badge {
+  margin-left:auto;
+  background:var(--unread);
+  color:#fff;
+  font-size:11px;
+  font-weight:600;
+  padding:2px 6px;
+  border-radius:999px;
 }
 
 /* Chat */
@@ -213,6 +271,12 @@ header {
   flex:1;
   display:flex;
   flex-direction:column;
+}
+
+.chat-header {
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  font-weight:600;
 }
 
 .messages {
@@ -225,7 +289,7 @@ header {
   background:var(--chat-bg);
 }
 
-/* Message */
+/* Message bubbles */
 .msg {
   max-width:72%;
   padding:8px 12px;
@@ -244,59 +308,21 @@ header {
   margin-top:4px;
 }
 
-/* My message */
+/* Read receipts */
+.msg.me::before {
+  content:"✓✓";
+  position:absolute;
+  right:8px;
+  bottom:4px;
+  font-size:11px;
+  opacity:.7;
+}
+
+/* My messages */
 .msg.me {
   align-self:flex-end;
   background:var(--msg-me);
   color:#fff;
-}
-
-/* Reactions */
-.msg:hover .reactions {
-  opacity:1;
-  transform:translateY(0);
-}
-
-.reactions {
-  position:absolute;
-  bottom:100%;
-  right:0;
-  background:var(--card);
-  border-radius:999px;
-  padding:4px 8px;
-  display:flex;
-  gap:6px;
-  font-size:14px;
-  opacity:0;
-  transform:translateY(6px);
-  transition:.2s;
-}
-
-/* Typing indicator */
-.typing {
-  display:flex;
-  gap:4px;
-  padding:6px 10px;
-  background:var(--msg-other);
-  border-radius:16px;
-  width:fit-content;
-}
-
-.typing span {
-  width:6px;
-  height:6px;
-  background:#999;
-  border-radius:50%;
-  animation:blink 1.4s infinite both;
-}
-
-.typing span:nth-child(2){animation-delay:.2s}
-.typing span:nth-child(3){animation-delay:.4s}
-
-@keyframes blink {
-  0%{opacity:.2}
-  20%{opacity:1}
-  100%{opacity:.2}
 }
 
 /* Send box */
@@ -309,37 +335,19 @@ header {
 
 #messageInput {
   flex:1;
-  padding:10px;
+  padding:10px 12px;
   border-radius:10px;
   border:1px solid var(--border);
 }
 
-/* =====================================================
-   STORY VIEWER (UI ONLY)
-===================================================== */
-.story-viewer {
-  position:fixed;
-  inset:0;
-  background:#000;
-  display:none;
-  z-index:5000;
-  color:#fff;
-  align-items:center;
-  justify-content:center;
-}
-
-.story-viewer .story {
-  width:90%;
-  max-width:400px;
-  aspect-ratio:9/16;
-  background:#111;
-  border-radius:20px;
-}
-
 /* Mobile */
-@media(max-width:800px){
-  .messenger .content{flex-direction:column;}
-  .user-list{width:100%;border-right:none;border-bottom:1px solid var(--border);}
+@media (max-width:800px){
+  .messenger .content { flex-direction:column; }
+  .user-list {
+    width:100%;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+  }
 }
 </style>
 </head>
@@ -363,6 +371,15 @@ header {
     </div>
   </div>
   <div class="username" id="profileUsername">Loading…</div>
+
+  <label class="btn" style="width:100%;text-align:center;">
+    Change Avatar
+    <input type="file" id="avatarInput" accept="image/*" hidden>
+  </label>
+
+  <hr>
+
+  <button class="btn" style="width:100%;" onclick="openCamera()">Take Photo</button>
 </aside>
 
 <main class="feed">
@@ -377,15 +394,13 @@ header {
   <div class="topbar">
     <button class="btn ghost" onclick="closeMessenger()">← Back</button>
     <strong>Inbox</strong>
-    <div class="inbox-search">
-      <input placeholder="Search" />
-    </div>
   </div>
 
   <div class="content">
     <div class="user-list" id="userList"></div>
 
     <div class="chat-area">
+      <div class="chat-header">Conversation</div>
       <div class="messages" id="messagesList"></div>
 
       <div class="send-box">
