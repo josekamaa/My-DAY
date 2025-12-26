@@ -2,577 +2,447 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎓 Joseph Kamau Graduation Celebration</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My_Day - Start Your Journey</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Reset and base styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
-        
-        html {
-            scroll-behavior: smooth;
-        }
-        
+
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
             color: #fff;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
             overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 800px;
-            background-color: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            padding: 30px 25px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            margin-top: 15px;
-        }
-        
-        .header {
-            margin-bottom: 25px;
-        }
-        
-        .graduation-icon {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.2rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            background: linear-gradient(to right, #ffd700, #ffed4e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            line-height: 1.3;
-        }
-        
-        .subtitle {
-            font-size: 1.1rem;
-            color: #d1d8ff;
-            margin-bottom: 20px;
-            font-weight: 300;
-            letter-spacing: 0.5px;
-            line-height: 1.4;
-        }
-        
-        .student-info {
-            background-color: rgba(255, 255, 255, 0.15);
-            border-radius: 15px;
-            padding: 25px 20px;
-            margin: 25px 0;
-            text-align: left;
-            border-left: 5px solid #ffd700;
-        }
-        
-        .student-info h2 {
-            font-size: 1.6rem;
-            margin-bottom: 15px;
-            color: #ffd700;
             display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .student-info h2 i {
-            font-size: 1.4rem;
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .info-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .info-item:last-child {
-            border-bottom: none;
-        }
-        
-        .info-item i {
-            color: #ffd700;
-            font-size: 1.3rem;
-            min-width: 30px;
-            padding-top: 3px;
-        }
-        
-        .countdown {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            padding: 25px 20px;
-            margin: 25px 0;
-        }
-        
-        .countdown h2 {
-            font-size: 1.6rem;
-            margin-bottom: 20px;
-            color: #ffd700;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 10px;
-        }
-        
-        .countdown-timer {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        
-        .time-unit {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 20px 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .time-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #ffd700;
-            line-height: 1;
-        }
-        
-        .time-label {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #d1d8ff;
-            margin-top: 8px;
-        }
-        
-        .message {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 25px 20px;
-            margin: 25px 0;
-            border-top: 3px solid #ffd700;
-            border-bottom: 3px solid #ffd700;
-        }
-        
-        .message p {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            font-style: italic;
-            color: #f0f2ff;
-            text-align: center;
-        }
-        
-        .button-container {
-            margin-top: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-        }
-        
-        .action-button {
-            background: linear-gradient(to right, #ffd700, #ffed4e);
-            color: #0c2461;
-            border: none;
-            padding: 20px 30px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
-            display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
-            width: 100%;
-            min-height: 60px;
+            padding: 20px;
         }
-        
-        .action-button:hover, .action-button:active {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        
-        .action-button:active {
-            transform: translateY(-1px);
-        }
-        
-        .action-button.share {
-            background: linear-gradient(to right, #4a69bd, #6a89cc);
-            color: white;
-            box-shadow: 0 5px 20px rgba(74, 105, 189, 0.4);
-        }
-        
-        .footer {
-            margin-top: 30px;
-            font-size: 0.9rem;
-            color: #a5b1ff;
-            text-align: center;
-            width: 100%;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .footer p {
-            margin-bottom: 8px;
-        }
-        
-        .footer i {
-            margin-right: 5px;
-        }
-        
-        .accent-shapes {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: -1;
-            overflow: hidden;
-        }
-        
+
+        /* Animated floating shapes */
         .shape {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            z-index: 0;
         }
-        
-        .shape-1 {
-            width: 120px;
-            height: 120px;
-            top: -40px;
-            right: -40px;
-        }
-        
-        .shape-2 {
+
+        .shape:nth-child(1) {
             width: 80px;
             height: 80px;
-            bottom: -20px;
-            left: -20px;
+            top: 20%;
+            left: 10%;
+            animation: float 25s infinite linear;
         }
-        
+
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            right: 10%;
+            animation: float 30s infinite linear reverse;
+        }
+
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            bottom: 20%;
+            left: 20%;
+            animation: float 20s infinite linear;
+        }
+
+        .shape:nth-child(4) {
+            width: 100px;
+            height: 100px;
+            top: 15%;
+            right: 20%;
+            animation: float 35s infinite linear;
+        }
+
         @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
         }
-        
-        /* Tablet view */
-        @media (min-width: 600px) {
-            .container {
-                padding: 35px 30px;
-            }
-            
-            h1 {
-                font-size: 2.5rem;
-            }
-            
-            .info-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .countdown-timer {
-                grid-template-columns: repeat(4, 1fr);
-            }
-            
-            .button-container {
-                flex-direction: row;
-                justify-content: center;
-            }
-            
-            .action-button {
-                width: auto;
-                min-width: 220px;
-            }
+
+        /* Main container */
+        .container {
+            text-align: center;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
         }
-        
-        /* Desktop view */
-        @media (min-width: 900px) {
+
+        /* Decorative border effect */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b, #86a8e7, #91eae4);
+            z-index: 2;
+        }
+
+        /* Logo and header */
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            font-size: 2.8rem;
+            color: #fff;
+            background: linear-gradient(135deg, #ff7e5f, #86a8e7);
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #fff, #e0f7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+            line-height: 1.1;
+        }
+
+        .tagline {
+            font-size: 1.4rem;
+            font-weight: 300;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Features section */
+        .features {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .feature {
+            flex: 1;
+            min-width: 180px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 16px;
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s, background 0.3s;
+        }
+
+        .feature:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .feature i {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            display: block;
+            color: #86a8e7;
+        }
+
+        .feature h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        /* CTA section */
+        .cta-section {
+            margin-bottom: 30px;
+        }
+
+        .cta-text {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 18px 35px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            min-width: 180px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .footer a {
+            color: #fff;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .footer a:hover {
+            opacity: 1;
+        }
+
+        /* Media queries */
+        @media (max-width: 768px) {
             .container {
-                padding: 40px;
+                padding: 30px 20px;
+                border-radius: 20px;
             }
             
             h1 {
                 font-size: 2.8rem;
             }
             
-            .info-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        /* Large mobile devices */
-        @media (min-width: 400px) and (max-width: 599px) {
-            .countdown-timer {
-                grid-template-columns: repeat(4, 1fr);
+            .tagline {
+                font-size: 1.2rem;
             }
             
-            .time-unit {
-                padding: 15px 5px;
+            .feature {
+                min-width: 150px;
+                padding: 15px;
             }
             
-            .time-value {
-                font-size: 1.8rem;
+            .btn {
+                padding: 16px 30px;
+                font-size: 1.1rem;
+                min-width: 160px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
             }
         }
-        
-        /* Very small devices */
-        @media (max-width: 360px) {
+
+        @media (max-width: 480px) {
             h1 {
-                font-size: 1.9rem;
+                font-size: 2.2rem;
             }
             
-            .graduation-icon {
-                font-size: 3rem;
+            .logo-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 2.2rem;
             }
             
-            .time-value {
-                font-size: 1.8rem;
+            .tagline {
+                font-size: 1.1rem;
             }
-        }
-        
-        /* Accessibility improvements */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
+            
+            .features {
+                flex-direction: column;
+                align-items: center;
             }
-        }
-        
-        /* Touch-friendly improvements */
-        button, .action-button {
-            touch-action: manipulation;
-        }
-        
-        /* Better focus styles for accessibility */
-        .action-button:focus {
-            outline: 3px solid rgba(255, 215, 0, 0.6);
-            outline-offset: 3px;
+            
+            .feature {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Animated background shapes -->
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+
     <div class="container">
-        <div class="accent-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-        </div>
-        
-        <div class="header">
-            <div class="graduation-icon">
-                <i class="fas fa-graduation-cap"></i>
-            </div>
-            <h1>Joseph Kamau Graduation Celebration</h1>
-            <p class="subtitle">Celebrating a Milestone in Information Science</p>
-        </div>
-        
-        <div class="student-info">
-            <h2><i class="fas fa-user-graduate"></i> About the Graduate</h2>
-            <div class="info-grid">
-                <div class="info-item">
-                    <i class="fas fa-user"></i>
-                    <div>
-                        <strong>Full Name:</strong><br>
-                        Joseph Kamau Muthike
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-book"></i>
-                    <div>
-                        <strong>Field of Study:</strong><br>
-                        Information Science
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-calendar-alt"></i>
-                    <div>
-                        <strong>Graduation Date:</strong><br>
-                        December 17, 2025
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-university"></i>
-                    <div>
-                        <strong>Status:</strong><br>
-                        Final Year Student
-                    </div>
-                </div>
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-sun"></i>
             </div>
         </div>
         
-        <div class="countdown">
-            <h2><i class="fas fa-clock"></i> Countdown to Graduation</h2>
-            <div class="countdown-timer">
-                <div class="time-unit">
-                    <div class="time-value" id="days">00</div>
-                    <div class="time-label">Days</div>
-                </div>
-                <div class="time-unit">
-                    <div class="time-value" id="hours">00</div>
-                    <div class="time-label">Hours</div>
-                </div>
-                <div class="time-unit">
-                    <div class="time-value" id="minutes">00</div>
-                    <div class="time-label">Minutes</div>
-                </div>
-                <div class="time-unit">
-                    <div class="time-value" id="seconds">00</div>
-                    <div class="time-label">Seconds</div>
-                </div>
+        <h1>My_Day</h1>
+        
+        <p class="tagline">Share your journey. Connect with friends. Make every day memorable.</p>
+        
+        <div class="features">
+            <div class="feature">
+                <i class="fas fa-camera"></i>
+                <h3>Share Photos</h3>
+                <p>Post your favorite moments</p>
+            </div>
+            
+            <div class="feature">
+                <i class="fas fa-users"></i>
+                <h3>Connect</h3>
+                <p>Build your community</p>
+            </div>
+            
+            <div class="feature">
+                <i class="fas fa-comments"></i>
+                <h3>Engage</h3>
+                <p>Join meaningful conversations</p>
             </div>
         </div>
         
-        <div class="message">
-            <p>"Thank you for being part of my incredible academic journey. This milestone marks not just the end of my studies, but the beginning of a new chapter where I can apply my knowledge in Information Science to make meaningful contributions to the world of technology."</p>
-        </div>
-        
-        <div class="button-container">
-            <button class="action-button" onclick="window.location.href='register.html'">
-                <i class="fas fa-rocket"></i> Join the Celebration
-            </button>
-            <button class="action-button share" onclick="shareCelebration()">
-                <i class="fas fa-share-alt"></i> Share the News
-            </button>
+        <div class="cta-section">
+            <p class="cta-text">My_Day helps you capture life's moments and stay connected with people who matter. Start your journey today.</p>
+            
+            <div class="button-group">
+                <a href="register.html" class="btn btn-primary">
+                    <i class="fas fa-rocket"></i> Start Now
+                </a>
+                
+            </div>
         </div>
         
         <div class="footer">
-            <p><i class="fas fa-copyright"></i>kamtech 2025| Joseph Kamau Muthike | Information Science Graduate</p>
-            <p><i class="fas fa-envelope"></i> Contact: jemuthike02@gmail.com</p>
+            <a href="#"><i class="fas fa-info-circle"></i> Learn More</a>
+            <a href="#"><i class="fas fa-shield-alt"></i> Privacy</a>
+            <a href="#"><i class="fas fa-question-circle"></i> Help</a>
         </div>
     </div>
 
     <script>
-        // Countdown to graduation date
-        function updateCountdown() {
-            const graduationDate = new Date('December 17, 2025 10:00:00').getTime();
-            const now = new Date().getTime();
-            const timeRemaining = graduationDate - now;
-            
-            if (timeRemaining > 0) {
-                const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+        // Add interactive animation to buttons on hover
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('mouseenter', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
                 
-                document.getElementById('days').textContent = days.toString().padStart(2, '0');
-                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-                document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
-            } else {
-                document.querySelector('.countdown-timer').innerHTML = 
-                    '<div style="font-size: 1.3rem; padding: 20px; grid-column: 1 / -1;">🎉 Congratulations! The graduation day is here! 🎉</div>';
-            }
-        }
-        
-        // Update countdown every second
-        setInterval(updateCountdown, 1000);
-        updateCountdown(); // Initial call
-        
-        // Share functionality with better mobile support
-        function shareCelebration() {
-            const shareText = "Join me in celebrating Joseph Kamau's graduation in Information Science on December 17, 2025!";
-            const shareUrl = window.location.href;
-            
-            // Try Web Share API first (works on mobile devices)
-            if (navigator.share) {
-                navigator.share({
-                    title: "Joseph Kamau Graduation",
-                    text: shareText,
-                    url: shareUrl
-                })
-                .then(() => console.log('Successful share'))
-                .catch((error) => {
-                    console.log('Error sharing:', error);
-                    fallbackShare(shareText, shareUrl);
-                });
-            } else {
-                fallbackShare(shareText, shareUrl);
-            }
-        }
-        
-        function fallbackShare(shareText, shareUrl) {
-            // Create a temporary input element for copying
-            const tempInput = document.createElement('input');
-            tempInput.value = `${shareText} ${shareUrl}`;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            tempInput.setSelectionRange(0, 99999); // For mobile devices
-            
-            try {
-                const successful = document.execCommand('copy');
-                document.body.removeChild(tempInput);
+                const ripple = document.createElement('span');
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.style.width = ripple.style.height = '100px';
+                ripple.style.marginLeft = '-50px';
+                ripple.style.marginTop = '-50px';
                 
-                if (successful) {
-                    alert("Celebration message copied to clipboard! Share it with your friends.");
-                } else {
-                    prompt("Copy this link to share:", shareUrl);
-                }
-            } catch (err) {
-                document.body.removeChild(tempInput);
-                prompt("Copy this link to share:", shareUrl);
-            }
-        }
-        
-        // Add touch feedback to buttons
-        const buttons = document.querySelectorAll('.action-button');
-        buttons.forEach(button => {
-            button.addEventListener('touchstart', function() {
-                this.style.transform = 'translateY(-1px)';
-            });
-            
-            button.addEventListener('touchend', function() {
-                this.style.transform = 'translateY(0)';
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
             });
         });
-        
-        // Prevent zoom on double-tap for mobile
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(event) {
-            const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
+
+        // Add CSS for ripple effect
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
             }
-            lastTouchEnd = now;
-        }, false);
-        
-        // Improve hover behavior for touch devices
-        if ('ontouchstart' in window || navigator.maxTouchPoints) {
-            // Remove hover effects that might cause issues on touch devices
-            document.body.classList.add('touch-device');
-        }
+        `;
+        document.head.appendChild(style);
+
+        // Make shapes move with mouse slightly
+        document.addEventListener('mousemove', (e) => {
+            const shapes = document.querySelectorAll('.shape');
+            const mouseX = e.clientX / window.innerWidth;
+            const mouseY = e.clientY / window.innerHeight;
+            
+            shapes.forEach((shape, index) => {
+                const speed = 0.5 + (index * 0.1);
+                const x = (mouseX * 20 * speed) - 10;
+                const y = (mouseY * 20 * speed) - 10;
+                
+                shape.style.transform = `translate(${x}px, ${y}px)`;
+            });
+        });
     </script>
 </body>
 </html>
