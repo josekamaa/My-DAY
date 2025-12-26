@@ -2,7 +2,6 @@
    SUPABASE CLIENT
 =========================================================== */
 const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
-// Note: Ensure this is your ANON key, not service_role
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -14,9 +13,10 @@ let currentUser = null;
 let userLikes = new Set();
 let activeChatUser = null;
 let msgSub = null;
+let isPosting = false; // Flag to prevent duplicate posts
 
 /* ===========================================================
-   SHORTCUT
+   HELPER
 =========================================================== */
 function el(id) { return document.getElementById(id); }
 
@@ -67,8 +67,7 @@ async function loadProfilePanel() {
   if (url) {
     const img = document.createElement("img");
     img.src = url;
-    // Clear initial and add image
-    el("profileAvatar").innerHTML = "";
+    el("profileAvatar").innerHTML = ""; // Clear initial
     el("profileAvatar").appendChild(img);
   }
 }
@@ -99,63 +98,81 @@ el("avatarInput").addEventListener("change", async (e) => {
 });
 
 /* ===========================================================
-   CREATE POST
+   CREATE POST (WITH DUPLICATE PREVENTION)
 =========================================================== */
 async function createPost() {
-  const caption = el("caption").value.trim(); // Ensure this ID exists in HTML, otherwise use prompt or add input
-  // Note: Your HTML didn't explicitly show 'caption' ID in the snippet provided, 
-  // but this logic assumes a create post form exists or uses the hidden one.
-  // If using the hidden box, ensure inputs match IDs.
-  
-  // Based on your code structure, assuming 'mediaFile' is the file input
-  const media = el("mediaFile") ? el("mediaFile").files[0] : null; 
+  // Prevent double clicks
+  if (isPosting) return;
 
-  // Since the provided HTML has a "Create Post" button calling toggleCreatePost(), 
-  // but the modal content wasn't fully visible in the snippet, 
-  // ensure you have <input id="caption"> and <input type="file" id="mediaFile"> in your HTML.
-  
-  // For safety in this "clean" version, I will assume the elements exist as per your original JS.
-  if (!el("caption")) return alert("Missing caption input in HTML");
+  const caption = el("caption").value.trim();
+  const media = el("mediaFile") ? el("mediaFile").files[0] : null;
 
-  const capVal = el("caption").value.trim();
-  
-  if (!capVal && !media) {
+  if (!caption && !media) {
     return alert("Write something or upload media");
   }
 
-  let mediaUrl = null;
-  let mediaType = null;
+  // Lock UI
+  isPosting = true;
+  const btn = el("postBtn");
+  const originalText = btn.textContent;
+  
+  btn.disabled = true;
+  btn.textContent = "Posting...";
+  btn.style.opacity = "0.7";
 
-  if (media) {
-    const path = `${Date.now()}_${media.name}`;
-    const { data, error } = await sb
-      .storage.from("posts")
-      .upload(path, media);
+  try {
+    let mediaUrl = null;
+    let mediaType = null;
 
-    if (error) return alert("Upload failed");
+    if (media) {
+      const path = `${Date.now()}_${media.name}`;
+      const { data, error } = await sb
+        .storage.from("posts")
+        .upload(path, media);
 
-    mediaUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${encodeURIComponent(data.path)}`;
-    mediaType = media.type.startsWith("video") ? "video" : "image";
+      if (error) throw error;
+
+      mediaUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${encodeURIComponent(data.path)}`;
+      mediaType = media.type.startsWith("video") ? "video" : "image";
+    }
+
+    const { error: insertError } = await sb.from("posts").insert({
+      user_id: currentUser.id,
+      user_name: currentUser.email.split("@")[0],
+      caption,
+      media_url: mediaUrl,
+      media_type: mediaType,
+      likes: 0
+    });
+
+    if (insertError) throw insertError;
+
+    // Reset Form
+    el("caption").value = "";
+    if (el("mediaFile")) el("mediaFile").value = "";
+    
+    toggleCreatePost(); // Close modal
+    loadPosts();        // Refresh feed
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to post. Please try again.");
+  } finally {
+    // Unlock UI
+    isPosting = false;
+    btn.disabled = false;
+    btn.textContent = originalText;
+    btn.style.opacity = "1";
   }
+}
 
-  await sb.from("posts").insert({
-    user_id: currentUser.id,
-    user_name: currentUser.email.split("@")[0],
-    caption: capVal,
-    media_url: mediaUrl,
-    media_type: mediaType,
-    likes: 0
-  });
-
-  el("caption").value = "";
-  if(el("mediaFile")) el("mediaFile").value = "";
-  el("createPostBox").classList.add("hidden");
-
-  loadPosts();
+function toggleCreatePost() {
+  const box = el("createPostBox");
+  if (box) box.classList.toggle("hidden");
 }
 
 /* ===========================================================
-   LOAD POSTS (FIXED AVATAR CLASS)
+   LOAD POSTS (FIXED CLASS NAME)
 =========================================================== */
 async function loadUserLikes() {
   const { data } = await sb.from("post_likes")
@@ -189,17 +206,16 @@ async function loadPosts() {
     const div = document.createElement("div");
     div.className = "post";
 
-    // --- FIX APPLIED HERE ---
-    // Changed class "user-avatar" to "avatar" to match CSS
+    // Use "avatar" class for CSS consistency (Circle shape)
     const avatarHTML = avatarUrl
       ? `<div class="avatar"><img src="${avatarUrl}"></div>`
-      : `<div class="avatar"><img src=""></div>`; // Placeholder if empty
+      : `<div class="avatar"><span style="font-size:16px;">${username.charAt(0).toUpperCase()}</span></div>`;
 
     let mediaHTML = "";
     if (post.media_type === "image")
-      mediaHTML = `<img src="${post.media_url}" style="width:100%;border-radius:8px;margin-top:8px;">`;
+      mediaHTML = `<img src="${post.media_url}">`;
     if (post.media_type === "video")
-      mediaHTML = `<video src="${post.media_url}" controls style="width:100%;border-radius:8px;margin-top:8px;"></video>`;
+      mediaHTML = `<video src="${post.media_url}" controls></video>`;
 
     div.innerHTML = `
       <div class="post-header">
@@ -211,10 +227,10 @@ async function loadPosts() {
         ${mediaHTML}
       </div>
       <div class="actions" style="margin:10px 14px;">
-        <button class="btn ghost" style="padding:6px 12px; font-size:13px;" onclick="likePost(${post.id}, ${post.likes})">
+        <button class="btn ghost" style="padding:6px 12px; font-size:13px; color:#333;" onclick="likePost(${post.id}, ${post.likes})">
           ${userLikes.has(post.id) ? "❤️" : "🤍"} Like (${post.likes})
         </button>
-        <button class="btn ghost" style="padding:6px 12px; font-size:13px;" onclick="toggleComments(${post.id})">💬 Comments</button>
+        <button class="btn ghost" style="padding:6px 12px; font-size:13px; color:#333;" onclick="toggleComments(${post.id})">💬 Comments</button>
       </div>
 
       <div class="comments-section" id="comments-${post.id}" style="display:none; padding:0 14px 14px;">
@@ -234,7 +250,7 @@ async function loadPosts() {
 }
 
 /* ===========================================================
-   LIKE POST
+   INTERACTIONS
 =========================================================== */
 async function likePost(postId, likes) {
   if (userLikes.has(postId)) return alert("Already liked");
@@ -242,13 +258,10 @@ async function likePost(postId, likes) {
   await sb.from("post_likes").insert({ post_id: postId, user_id: currentUser.id });
   await sb.from("posts").update({ likes: likes + 1 }).eq("id", postId);
 
-  loadUserLikes(); // Refresh local set
+  loadUserLikes();
   loadPosts();
 }
 
-/* ===========================================================
-   COMMENTS
-=========================================================== */
 async function addComment(postId) {
   const box = el(`comment-input-${postId}`);
   const text = box.value.trim();
@@ -294,12 +307,7 @@ function toggleComments(id) {
 let cameraStream = null;
 
 async function openCamera() {
-  // Ensure the camera preview elements exist in your HTML
-  if(!el("cameraPreview")) {
-      // If the HTML structure for camera isn't there, we just alert (or you can insert it dynamically)
-      // Assuming your HTML has a hidden div for this overlay
-      return alert("Camera preview element missing in HTML");
-  }
+  if (!el("cameraPreview")) return alert("Camera UI missing");
   
   el("cameraPreview").style.display = "flex";
   const video = el("cameraVideo");
@@ -310,8 +318,8 @@ async function openCamera() {
         audio: false
     });
     video.srcObject = cameraStream;
-  } catch(e) {
-      alert("Could not access camera");
+  } catch (e) {
+      alert("Camera access denied or unavailable");
       el("cameraPreview").style.display = "none";
   }
 }
@@ -320,14 +328,14 @@ function closeCamera() {
   if (cameraStream) {
     cameraStream.getTracks().forEach(t => t.stop());
   }
-  if(el("cameraPreview")) el("cameraPreview").style.display = "none";
+  if (el("cameraPreview")) el("cameraPreview").style.display = "none";
 }
 
 function capturePhoto() {
   const video = el("cameraVideo");
   const canvas = el("photoCanvas");
   
-  if(!video || !canvas) return;
+  if (!video || !canvas) return;
 
   const ctx = canvas.getContext("2d");
   canvas.width = video.videoWidth;
@@ -340,20 +348,21 @@ function capturePhoto() {
     const dt = new DataTransfer();
     dt.items.add(file);
     
-    // Assign to the file input used by createPost
-    if(el("mediaFile")) el("mediaFile").files = dt.files;
+    // Set file to input
+    if (el("mediaFile")) el("mediaFile").files = dt.files;
 
     closeCamera();
     
-    // Show create post box if it exists
-    if(el("createPostBox")) el("createPostBox").classList.remove("hidden");
+    // Open Create Post Modal
+    const box = el("createPostBox");
+    if (box) box.classList.remove("hidden");
   });
 }
 
 /* ===========================================================
    MESSENGER SYSTEM
 =========================================================== */
-if(el("inboxBtn")) el("inboxBtn").addEventListener("click", openMessenger);
+if (el("inboxBtn")) el("inboxBtn").addEventListener("click", openMessenger);
 
 function openMessenger() {
   el("messenger").style.display = "flex";
@@ -379,7 +388,14 @@ async function loadUserList() {
 
   data.forEach(u => {
     const row = document.createElement("div");
-    // Styles handled by CSS class 'user-list > div', but we add specifics here if needed
+    // Styling handled in CSS but flex layout inline for specifics
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "10px";
+    row.style.padding = "10px";
+    row.style.cursor = "pointer";
+    row.onmouseover = () => row.style.background = "#f0f0f0";
+    row.onmouseout = () => row.style.background = "transparent";
     
     const initial = u.username.charAt(0).toUpperCase();
     const avatarImg = u.avatar_url 
@@ -402,23 +418,19 @@ async function openChat(user) {
   activeChatUser = user;
   el("messagesList").innerHTML = "";
 
-  // Note: RLS policies must allow this OR
   const { data } = await sb
     .from("messages")
     .select("*")
     .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${user.id}),and(sender_id.eq.${user.id},receiver_id.eq.${currentUser.id})`)
     .order("created_at", { ascending: true });
 
-  if(data) data.forEach(renderMessage);
+  if (data) data.forEach(renderMessage);
 }
 
 function renderMessage(msg) {
   const div = document.createElement("div");
   div.className = "msg" + (msg.sender_id === currentUser.id ? " me" : "");
   div.textContent = msg.message;
-  // Optional: add data-time attribute for CSS
-  div.setAttribute("data-time", new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-
   el("messagesList").appendChild(div);
   el("messagesList").scrollTop = el("messagesList").scrollHeight;
 }
@@ -445,8 +457,8 @@ function subscribeMessages() {
       { event: "INSERT", schema: "public", table: "messages" },
       payload => {
         const msg = payload.new;
-
         if (!activeChatUser) return;
+        
         const isBetween =
           (msg.sender_id === currentUser.id && msg.receiver_id === activeChatUser.id) ||
           (msg.sender_id === activeChatUser.id && msg.receiver_id === currentUser.id);
@@ -457,30 +469,6 @@ function subscribeMessages() {
 }
 
 /* ===========================================================
-   TOGGLE CREATE POST
-=========================================================== */
-function toggleCreatePost() {
-  // Check if the element exists. In your HTML it wasn't explicitly shown but the script referenced it.
-  // If it's a modal, ensure <div id="createPostBox" class="hidden">...</div> exists.
-  const box = el("createPostBox");
-  if(box) box.classList.toggle("hidden");
-  else {
-      // Fallback if the modal HTML is missing: simple prompt flow
-      const cap = prompt("Post Caption:");
-      if(cap) {
-          // Shim for quick posting without modal
-           sb.from("posts").insert({
-            user_id: currentUser.id,
-            user_name: currentUser.email.split("@")[0],
-            caption: cap,
-            likes: 0
-          }).then(loadPosts);
-      }
-  }
-}
-
-/* ===========================================================
    INIT
 =========================================================== */
 loadUser();
-       
