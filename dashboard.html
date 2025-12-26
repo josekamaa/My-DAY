@@ -111,19 +111,19 @@ header h2 {
   box-shadow:0 4px 14px rgba(0,0,0,.08);
 }
 
-/* Modern Avatar Style - FOR PROFILE ONLY */
-.sidebar .story-ring {
+/* Modern Avatar Style */
+.story-ring {
   width:100px;
   height:100px;
   border-radius:50%;
   position:relative;
-  margin:0 auto 12px;
+  margin-bottom:12px;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-.sidebar .story-ring::before {
+.story-ring::before {
   content:'';
   position:absolute;
   inset:-3px;
@@ -133,7 +133,7 @@ header h2 {
   animation:rotate 4s linear infinite;
 }
 
-.sidebar .story-ring::after {
+.story-ring::after {
   content:'';
   position:absolute;
   inset:0;
@@ -147,8 +147,7 @@ header h2 {
   100% { transform:rotate(360deg); }
 }
 
-/* Profile avatar in sidebar */
-.sidebar .avatar {
+.avatar {
   width:94px;
   height:94px;
   border-radius:50%;
@@ -167,12 +166,12 @@ header h2 {
   transition:transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.sidebar .avatar:hover {
+.avatar:hover {
   transform:scale(1.05);
   box-shadow:0 6px 20px rgba(0,0,0,0.2);
 }
 
-.sidebar .avatar img {
+.avatar img {
   width:100%;
   height:100%;
   object-fit:cover;
@@ -182,50 +181,12 @@ header h2 {
   font-size:18px;
   font-weight:600;
   margin-bottom:16px;
-  text-align:center;
 }
 
 .sidebar hr {
   border:none;
   border-top:1px solid var(--border);
   margin:16px 0;
-}
-
-/* =====================================================
-   FIX FOR POST AVATARS
-===================================================== */
-/* Post avatars - override the general avatar style */
-.post .avatar {
-  width:40px !important;
-  height:40px !important;
-  font-size:16px !important;
-  border:2px solid var(--primary) !important;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1) !important;
-  flex-shrink:0;
-  transition:transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.post .avatar:hover {
-  transform:scale(1.03);
-  box-shadow:0 3px 10px rgba(0,0,0,0.15) !important;
-}
-
-.post .avatar img {
-  width:100% !important;
-  height:100% !important;
-  object-fit:cover !important;
-}
-
-/* Ensure post avatars are circular */
-.post .avatar {
-  border-radius:50% !important;
-}
-
-/* Remove story ring effects from post avatars */
-.post .story-ring,
-.post .story-ring::before,
-.post .story-ring::after {
-  display:none !important;
 }
 
 /* =====================================================
@@ -246,6 +207,19 @@ header h2 {
   align-items:center;
   gap:10px;
   padding:14px;
+}
+
+.post-header .avatar {
+  width:40px;
+  height:40px;
+  font-size:16px;
+  border:2px solid var(--primary);
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.post-header .avatar:hover {
+  transform:scale(1.03);
+  box-shadow:0 3px 10px rgba(0,0,0,0.15);
 }
 
 .post img,
@@ -287,7 +261,6 @@ header h2 {
   flex-direction:column;
 }
 
-/* Topbar */
 .messenger .topbar {
   padding:14px 16px;
   border-bottom:1px solid var(--border);
@@ -296,14 +269,12 @@ header h2 {
   gap:12px;
 }
 
-/* Content */
 .messenger .content {
   flex:1;
   display:flex;
   min-height:0;
 }
 
-/* User list */
 .user-list {
   width:280px;
   border-right:1px solid var(--border);
@@ -311,48 +282,6 @@ header h2 {
   padding:10px;
 }
 
-.user-list > div {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px;
-  border-radius:10px;
-  cursor:pointer;
-  position:relative;
-}
-
-/* Messenger avatars */
-.user-list .avatar {
-  width:36px !important;
-  height:36px !important;
-  font-size:14px !important;
-  border-radius:50% !important;
-}
-
-/* Online dot */
-.user-list .status {
-  width:10px;
-  height:10px;
-  border-radius:50%;
-  background:var(--online);
-  position:absolute;
-  left:38px;
-  bottom:10px;
-  border:2px solid var(--card);
-}
-
-/* Unread badge */
-.user-list .badge {
-  margin-left:auto;
-  background:var(--unread);
-  color:#fff;
-  font-size:11px;
-  font-weight:600;
-  padding:2px 6px;
-  border-radius:999px;
-}
-
-/* Chat */
 .chat-area {
   flex:1;
   display:flex;
@@ -375,7 +304,6 @@ header h2 {
   background:var(--chat-bg);
 }
 
-/* Message bubbles */
 .msg {
   max-width:72%;
   padding:8px 12px;
@@ -385,33 +313,12 @@ header h2 {
   position:relative;
 }
 
-/* Timestamp */
-.msg::after {
-  content: attr(data-time);
-  display:block;
-  font-size:10px;
-  opacity:.6;
-  margin-top:4px;
-}
-
-/* Read receipts */
-.msg.me::before {
-  content:"✓✓";
-  position:absolute;
-  right:8px;
-  bottom:4px;
-  font-size:11px;
-  opacity:.7;
-}
-
-/* My messages */
 .msg.me {
   align-self:flex-end;
   background:var(--msg-me);
   color:#fff;
 }
 
-/* Send box */
 .send-box {
   display:flex;
   gap:8px;
@@ -426,7 +333,6 @@ header h2 {
   border:1px solid var(--border);
 }
 
-/* Mobile */
 @media (max-width:800px){
   .messenger .content { flex-direction:column; }
   .user-list {
@@ -436,16 +342,49 @@ header h2 {
   }
 }
 
-/* Sidebar buttons */
-.sidebar label.btn {
-  width:100%;
-  text-align:center;
-  display:block;
-  margin-bottom:10px;
+/* =====================================================
+   CREATE POST MODAL & CAMERA
+===================================================== */
+.modal-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.5);
+  z-index:2000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  backdrop-filter:blur(5px);
+}
+.hidden { display:none !important; }
+
+.create-box {
+  background:var(--card);
+  padding:20px;
+  border-radius:var(--radius);
+  width:90%;
+  max-width:500px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.2);
 }
 
-.sidebar .btn {
+.camera-preview {
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:4000;
+  display:none;
+  flex-direction:column;
+}
+.camera-preview video {
+  flex:1;
   width:100%;
+  object-fit:cover;
+}
+.camera-controls {
+  padding:20px;
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  background:rgba(0,0,0,0.8);
 }
 </style>
 </head>
@@ -487,7 +426,6 @@ header h2 {
 
 </div>
 
-<!-- MESSENGER -->
 <div class="messenger" id="messenger">
   <div class="topbar">
     <button class="btn ghost" onclick="closeMessenger()">← Back</button>
@@ -509,7 +447,31 @@ header h2 {
   </div>
 </div>
 
+<div id="createPostBox" class="modal-overlay hidden">
+  <div class="create-box">
+    <h3 style="margin-top:0;">Create Post</h3>
+    <textarea id="caption" rows="3" placeholder="What's on your mind?" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;"></textarea>
+    
+    <input type="file" id="mediaFile" accept="image/*,video/*" style="margin-bottom:14px;display:block;">
+    
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button class="btn ghost" onclick="toggleCreatePost()">Cancel</button>
+      <button class="btn" onclick="createPost()">Post</button>
+    </div>
+  </div>
+</div>
+
+<div id="cameraPreview" class="camera-preview">
+  <video id="cameraVideo" autoplay playsinline></video>
+  <canvas id="photoCanvas" style="display:none;"></canvas>
+  <div class="camera-controls">
+    <button class="btn ghost" onclick="closeCamera()">Cancel</button>
+    <button class="btn" style="background:#fff;color:#000;border-radius:50%;width:60px;height:60px;" onclick="capturePhoto()">O</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="dashboard.js"></script>
 </body>
-</html>
+   </html>
+
