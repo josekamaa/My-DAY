@@ -216,6 +216,12 @@ header h2 {
   overflow:hidden;
   border:2px solid var(--primary);
   flex-shrink:0;
+  background:var(--primary);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:600;
 }
 
 .post-avatar img {
@@ -466,6 +472,79 @@ header h2 {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="dashboard.js"></script>
+<script>
+// Sample JavaScript to demonstrate the post structure
+document.addEventListener('DOMContentLoaded', function() {
+  const postsContainer = document.getElementById('posts');
+  
+  // Sample post data
+  const samplePosts = [
+    {
+      username: "JohnDoe",
+      avatarInitial: "J",
+      imageUrl: "https://images.unsplash.com/photo-1682685797366-715d29e33f9d?w=500&auto=format&fit=crop",
+      caption: "Beautiful sunset today! 🌅"
+    },
+    {
+      username: "JaneSmith",
+      avatarInitial: "J",
+      imageUrl: "https://images.unsplash.com/photo-1682687982501-1e58ab814714?w-500&auto=format&fit=crop",
+      caption: "Loving this new coffee shop! ☕"
+    }
+  ];
+  
+  // Create sample posts
+  samplePosts.forEach(post => {
+    const postElement = document.createElement('div');
+    postElement.className = 'post';
+    postElement.innerHTML = `
+      <div class="post-header">
+        <div class="post-avatar">
+          <span>${post.avatarInitial}</span>
+        </div>
+        <strong>${post.username}</strong>
+      </div>
+      <img src="${post.imageUrl}" alt="Post by ${post.username}" loading="lazy">
+      <div class="post-content">
+        <div class="post-actions">
+          <span>❤️ Like</span>
+          <span>💬 Comment</span>
+          <span>↪️ Share</span>
+        </div>
+        <div class="post-caption">
+          <span>${post.username}</span> ${post.caption}
+        </div>
+      </div>
+    `;
+    postsContainer.appendChild(postElement);
+  });
+});
+
+// Mock functions for buttons
+function toggleCreatePost() {
+  alert('Create Post functionality would go here');
+}
+
+function openCamera() {
+  alert('Camera functionality would go here');
+}
+
+function closeMessenger() {
+  document.getElementById('messenger').style.display = 'none';
+}
+
+function sendMessage() {
+  const input = document.getElementById('messageInput');
+  if (input.value.trim()) {
+    alert('Message sent: ' + input.value);
+    input.value = '';
+  }
+}
+
+// Inbox button functionality
+document.getElementById('inboxBtn').addEventListener('click', function() {
+  document.getElementById('messenger').style.display = 'flex';
+});
+</script>
 </body>
 </html>
