@@ -9,100 +9,40 @@
 
 <style>
 /* =====================================================
-   THEME VARIABLES & RESET
+   THEME VARIABLES
 ===================================================== */
 :root {
-  /* Colors - Light Theme */
   --primary: #4a90e2;
-  --primary-light: rgba(74, 144, 226, 0.1);
   --primary-dark: #3a78c2;
-  --secondary: #7c3aed;
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --text: #222;
+  --muted: #777;
+  --border: #e5e7eb;
+  --hover: #f0f2f5;
+  
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
   --info: #06b6d4;
   
-  /* Background & Surfaces */
-  --bg: #f8fafc;
-  --card: #ffffff;
-  --sidebar: #ffffff;
-  --right-sidebar: #ffffff;
-  --hover: #f1f5f9;
-  --overlay: rgba(0, 0, 0, 0.5);
+  --online: #22c55e;
+  --offline: #94a3b8;
   
-  /* Text */
-  --text: #1e293b;
-  --text-light: #64748b;
-  --text-lighter: #94a3b8;
-  --muted: #64748b;
-  
-  /* Borders & Dividers */
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15);
-  
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  
-  /* Transitions */
-  --transition-fast: 0.15s ease;
-  --transition: 0.3s ease;
-  --transition-slow: 0.5s ease;
-  
-  /* Border Radius */
-  --radius-sm: 8px;
   --radius: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
+  --shadow: 0 4px 14px rgba(0,0,0,.08);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,.12);
   
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space: 12px;
-  --space-md: 16px;
-  --space-lg: 20px;
-  --space-xl: 24px;
-  --space-2xl: 32px;
-  
-  /* Z-index */
-  --z-dropdown: 100;
-  --z-sticky: 200;
-  --z-modal: 1000;
-  --z-popover: 1010;
-  --z-tooltip: 1020;
-  --z-toast: 1030;
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* Dark Theme */
 [data-theme="dark"] {
   --bg: #0f172a;
   --card: #1e293b;
-  --sidebar: #1e293b;
-  --right-sidebar: #1e293b;
-  --hover: #334155;
-  --overlay: rgba(0, 0, 0, 0.7);
-  
-  --text: #f1f5f9;
-  --text-light: #cbd5e1;
-  --text-lighter: #94a3b8;
-  --muted: #94a3b8;
-  
+  --text: #e5e7eb;
+  --muted: #94a3af;
   --border: #334155;
-  --border-light: #1e293b;
-  
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.4);
+  --hover: #2d3748;
 }
 
 * {
@@ -112,151 +52,11 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background-color: var(--bg);
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
   color: var(--text);
   line-height: 1.5;
-  font-size: 14px;
-  transition: background-color var(--transition), color var(--transition);
-  overflow-x: hidden;
-}
-
-/* =====================================================
-   TYPOGRAPHY
-===================================================== */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.2;
-  margin-bottom: var(--space);
-}
-
-h1 { font-size: 28px; }
-h2 { font-size: 22px; }
-h3 { font-size: 18px; }
-h4 { font-size: 16px; }
-h5 { font-size: 14px; }
-h6 { font-size: 12px; }
-
-p {
-  margin-bottom: var(--space);
-}
-
-a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-a:hover {
-  color: var(--primary-dark);
-}
-
-.text-muted {
-  color: var(--muted);
-}
-
-.text-small {
-  font-size: 12px;
-}
-
-/* =====================================================
-   BUTTONS
-===================================================== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: var(--radius);
-  border: none;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  outline: none;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-primary {
-  background: var(--gradient-primary);
-  color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.btn-primary:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.btn-secondary {
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--hover);
-  border-color: var(--text-lighter);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text);
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background: var(--hover);
-}
-
-.btn-icon {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border-radius: var(--radius-full);
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-.btn-lg {
-  padding: 14px 24px;
-  font-size: 16px;
-}
-
-.btn-full {
-  width: 100%;
-}
-
-.btn-loading::after {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-full);
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+  transition: background-color 0.3s, color 0.3s;
 }
 
 /* =====================================================
@@ -265,20 +65,20 @@ a:hover {
 .header {
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky);
+  z-index: 100;
   background: var(--card);
-  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
   padding: 12px 24px;
+  backdrop-filter: blur(10px);
 }
 
 .header-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-xl);
+  gap: 20px;
 }
 
 .logo {
@@ -302,7 +102,6 @@ a:hover {
   color: white;
 }
 
-/* Search */
 .search-container {
   flex: 1;
   max-width: 500px;
@@ -312,12 +111,12 @@ a:hover {
 .search-input {
   width: 100%;
   padding: 10px 16px 10px 44px;
-  border-radius: var(--radius-full);
+  border-radius: 20px;
   border: 1px solid var(--border);
   background: var(--hover);
   color: var(--text);
   font-size: 14px;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
 }
 
 .search-input:focus {
@@ -332,18 +131,31 @@ a:hover {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-lighter);
+  color: var(--muted);
 }
 
-/* Header Actions */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 8px;
 }
 
-.notification-btn {
-  position: relative;
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.btn-icon:hover {
+  background: var(--hover);
 }
 
 .notification-badge {
@@ -354,7 +166,7 @@ a:hover {
   height: 18px;
   background: var(--danger);
   color: white;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   font-size: 10px;
   display: flex;
   align-items: center;
@@ -362,124 +174,71 @@ a:hover {
   border: 2px solid var(--card);
 }
 
-.theme-toggle {
-  background: transparent;
-  border: none;
-  color: var(--text);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: var(--radius);
-  transition: background var(--transition-fast);
-}
-
-.theme-toggle:hover {
-  background: var(--hover);
-}
-
-/* Notification Dropdown */
-.notification-dropdown {
+/* Dropdowns */
+.dropdown {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  width: 360px;
+  width: 320px;
   background: var(--card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
   border: 1px solid var(--border);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
-  transition: all var(--transition);
-  z-index: var(--z-dropdown);
+  transition: all 0.3s;
+  z-index: 1000;
 }
 
-.notification-dropdown.active {
+.dropdown.active {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
 }
 
-.notification-header {
-  padding: var(--space-md);
+.dropdown-header {
+  padding: 16px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.notification-list {
+.dropdown-list {
   max-height: 400px;
   overflow-y: auto;
-}
-
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  border-bottom: 1px solid var(--border-light);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.notification-item:hover {
-  background: var(--hover);
-}
-
-.notification-item.unread {
-  background: var(--primary-light);
-}
-
-.notification-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.notification-icon.like { background: var(--danger); }
-.notification-icon.comment { background: var(--primary); }
-.notification-icon.follow { background: var(--success); }
-.notification-icon.message { background: var(--info); }
-
-.notification-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.notification-time {
-  font-size: 12px;
-  color: var(--text-lighter);
-  margin-top: 2px;
 }
 
 /* =====================================================
    MAIN LAYOUT
 ===================================================== */
 .main-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 0 24px;
   display: grid;
   grid-template-columns: 280px 1fr 320px;
   gap: 24px;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 80px);
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .main-container {
     grid-template-columns: 280px 1fr;
   }
+  .right-sidebar {
+    display: none;
+  }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 768px) {
   .main-container {
     grid-template-columns: 1fr;
-    padding: 16px;
+    padding: 0 16px;
+  }
+  .sidebar {
+    display: none;
   }
 }
 
@@ -491,43 +250,28 @@ a:hover {
   top: 88px;
   height: calc(100vh - 112px);
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 
-.sidebar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: var(--radius-full);
-}
-
-/* Profile Card */
 .profile-card {
   background: var(--card);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
+  border-radius: var(--radius);
+  padding: 24px;
   text-align: center;
-  margin-bottom: var(--space-xl);
-  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
 }
 
 .avatar-container {
   position: relative;
   width: 100px;
   height: 100px;
-  margin: 0 auto var(--space-lg);
+  margin: 0 auto 16px;
 }
 
 .avatar-ring {
   width: 100%;
   height: 100%;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   background: conic-gradient(from 0deg, #667eea, #764ba2, #f58529, #dd2a7b, #667eea);
   position: absolute;
   animation: rotate 4s linear infinite;
@@ -537,7 +281,7 @@ a:hover {
 .avatar {
   width: 100%;
   height: 100%;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   background: var(--card);
   position: relative;
   z-index: 1;
@@ -568,64 +312,93 @@ a:hover {
   to { transform: rotate(360deg); }
 }
 
-.profile-info {
-  margin-bottom: var(--space-lg);
-}
-
 .profile-name {
   font-size: 20px;
-  margin-bottom: 4px;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .profile-bio {
-  color: var(--text-light);
+  color: var(--muted);
   font-size: 14px;
-  margin-bottom: var(--space-lg);
+  margin-bottom: 16px;
 }
 
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space);
-  margin-bottom: var(--space-lg);
-  padding: var(--space) 0;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px 0;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .stat-value {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text);
 }
 
 .stat-label {
   font-size: 12px;
-  color: var(--text-lighter);
+  color: var(--muted);
   margin-top: 2px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--hover);
+}
+
+.btn-full {
+  width: 100%;
 }
 
 /* Navigation */
 .nav-section {
   background: var(--card);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--space-xl);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
 }
 
 .nav-header {
-  padding: var(--space-lg) var(--space-lg) var(--space);
+  padding: 16px 20px 8px;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-lighter);
+  color: var(--muted);
 }
 
 .nav-items {
@@ -635,35 +408,23 @@ a:hover {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: var(--space);
-  padding: var(--space-md) var(--space-lg);
+  gap: 12px;
+  padding: 12px 20px;
   color: var(--text);
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
   cursor: pointer;
-  position: relative;
+  border-left: 3px solid transparent;
 }
 
 .nav-item:hover {
   background: var(--hover);
-  color: var(--primary);
 }
 
 .nav-item.active {
-  background: var(--primary-light);
+  background: var(--hover);
   color: var(--primary);
-  border-left: 3px solid var(--primary);
-}
-
-.nav-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  background: var(--primary);
+  border-left-color: var(--primary);
 }
 
 .nav-icon {
@@ -677,35 +438,34 @@ a:hover {
   color: white;
   font-size: 11px;
   padding: 2px 8px;
-  border-radius: var(--radius-full);
+  border-radius: 10px;
 }
 
 /* Online Friends */
 .online-friends {
   background: var(--card);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
 }
 
 .online-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space);
-  margin-top: var(--space);
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .online-user {
   display: flex;
   align-items: center;
-  gap: var(--space);
-  padding: var(--space-sm) 0;
+  gap: 12px;
 }
 
 .online-avatar {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   position: relative;
 }
 
@@ -722,121 +482,40 @@ a:hover {
   right: 0;
   width: 10px;
   height: 10px;
-  background: var(--success);
-  border-radius: var(--radius-full);
+  background: var(--online);
+  border-radius: 50%;
   border: 2px solid var(--card);
 }
 
 /* =====================================================
    MAIN CONTENT
 ===================================================== */
-.main-content {
-  min-width: 0; /* For flexbox truncation */
-}
-
-/* Stories */
-.stories-container {
-  margin-bottom: var(--space-xl);
-}
-
-.stories-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space);
-}
-
-.stories-scroll {
-  display: flex;
-  gap: var(--space);
-  overflow-x: auto;
-  padding: 4px 0;
-  scrollbar-width: none;
-}
-
-.stories-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.story-item {
-  flex: 0 0 auto;
-  width: 100px;
-  cursor: pointer;
-}
-
-.story-avatar {
-  width: 100px;
-  height: 150px;
-  border-radius: var(--radius);
-  overflow: hidden;
-  position: relative;
-  margin-bottom: var(--space-sm);
-  background: var(--gradient-primary);
-}
-
-.story-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.story-add .story-avatar {
-  background: var(--card);
-  border: 2px dashed var(--border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-light);
-}
-
-.story-add .story-avatar i {
-  font-size: 24px;
-  margin-bottom: 8px;
-}
-
-.story-user {
-  font-size: 12px;
-  text-align: center;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Create Post */
 .create-post {
   background: var(--card);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
-  margin-bottom: var(--space-xl);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
 }
 
 .post-input-container {
   display: flex;
   align-items: center;
-  gap: var(--space);
-  margin-bottom: var(--space-lg);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .post-input-avatar {
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
 }
 
-.post-input-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .post-input {
   flex: 1;
-  padding: var(--space-md);
+  padding: 12px 16px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--bg);
@@ -845,7 +524,6 @@ a:hover {
   font-size: 14px;
   resize: none;
   min-height: 48px;
-  max-height: 120px;
 }
 
 .post-input:focus {
@@ -857,13 +535,7 @@ a:hover {
 .post-actions {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-sm);
-}
-
-@media (max-width: 768px) {
-  .post-actions {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  gap: 8px;
 }
 
 .post-action-btn {
@@ -877,33 +549,25 @@ a:hover {
   border-radius: var(--radius);
   color: var(--text);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
+  font-size: 14px;
 }
 
 .post-action-btn:hover {
   background: var(--border);
-  transform: translateY(-1px);
-}
-
-.post-action-btn i {
-  font-size: 16px;
 }
 
 /* Feed */
-.feed-section {
-  margin-bottom: var(--space-2xl);
-}
-
 .feed-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-xl);
+  margin-bottom: 20px;
 }
 
 .feed-tabs {
   display: flex;
-  gap: var(--space-sm);
+  gap: 8px;
   background: var(--card);
   padding: 4px;
   border-radius: var(--radius);
@@ -914,11 +578,10 @@ a:hover {
   padding: 8px 16px;
   border: none;
   background: transparent;
-  color: var(--text-light);
-  border-radius: var(--radius-sm);
+  color: var(--text);
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  transition: all var(--transition-fast);
 }
 
 .feed-tab.active {
@@ -930,19 +593,19 @@ a:hover {
 .posts-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: 20px;
 }
 
 .post-card {
   background: var(--card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: var(--shadow-md);
-  transition: transform var(--transition), box-shadow var(--transition);
+  box-shadow: var(--shadow);
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .post-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
 
@@ -950,19 +613,19 @@ a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-lg);
+  padding: 16px;
 }
 
 .post-user-info {
   display: flex;
   align-items: center;
-  gap: var(--space);
+  gap: 12px;
 }
 
 .post-avatar {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   overflow: hidden;
 }
 
@@ -984,17 +647,13 @@ a:hover {
 
 .post-time {
   font-size: 12px;
-  color: var(--text-lighter);
-}
-
-.post-menu {
-  position: relative;
+  color: var(--muted);
 }
 
 .post-menu-btn {
   background: transparent;
   border: none;
-  color: var(--text-lighter);
+  color: var(--muted);
   cursor: pointer;
   padding: 4px;
   border-radius: var(--radius);
@@ -1006,11 +665,11 @@ a:hover {
 }
 
 .post-content {
-  padding: 0 var(--space-lg) var(--space-lg);
+  padding: 0 16px 16px;
 }
 
 .post-text {
-  margin-bottom: var(--space-lg);
+  margin-bottom: 16px;
   line-height: 1.6;
   white-space: pre-wrap;
 }
@@ -1018,7 +677,7 @@ a:hover {
 .post-media {
   border-radius: var(--radius);
   overflow: hidden;
-  margin-bottom: var(--space-lg);
+  margin-bottom: 16px;
 }
 
 .post-media img,
@@ -1034,17 +693,17 @@ a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space) var(--space-lg);
+  padding: 12px 16px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  color: var(--text-lighter);
+  color: var(--muted);
   font-size: 13px;
 }
 
 .post-actions-container {
   display: flex;
-  padding: var(--space-md) var(--space-lg);
-  gap: var(--space);
+  padding: 12px 16px;
+  gap: 12px;
 }
 
 .post-action {
@@ -1056,35 +715,24 @@ a:hover {
   padding: 10px;
   border: none;
   background: transparent;
-  color: var(--text-light);
+  color: var(--text);
   border-radius: var(--radius);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
   font-weight: 500;
 }
 
 .post-action:hover {
   background: var(--hover);
-  color: var(--text);
 }
 
 .post-action.active {
   color: var(--primary);
 }
 
-.post-action.active i {
-  animation: pulse 0.5s ease;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
 /* Comments */
 .comments-section {
-  padding: 0 var(--space-lg) var(--space-lg);
+  padding: 0 16px 16px;
   display: none;
 }
 
@@ -1095,20 +743,20 @@ a:hover {
 .comments-list {
   max-height: 300px;
   overflow-y: auto;
-  margin-bottom: var(--space);
+  margin-bottom: 12px;
 }
 
 .comment-item {
   display: flex;
-  gap: var(--space);
-  padding: var(--space) 0;
-  border-bottom: 1px solid var(--border-light);
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .comment-avatar {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -1126,7 +774,7 @@ a:hover {
 .comment-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .comment-username {
@@ -1136,7 +784,7 @@ a:hover {
 
 .comment-time {
   font-size: 11px;
-  color: var(--text-lighter);
+  color: var(--muted);
 }
 
 .comment-text {
@@ -1146,13 +794,13 @@ a:hover {
 
 .comment-form {
   display: flex;
-  gap: var(--space);
+  gap: 12px;
 }
 
 .comment-input {
   flex: 1;
   padding: 10px 16px;
-  border-radius: var(--radius-full);
+  border-radius: 20px;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
@@ -1173,22 +821,21 @@ a:hover {
   top: 88px;
   height: calc(100vh - 112px);
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 .widget {
   background: var(--card);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-xl);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
 }
 
 .widget-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space);
+  margin-bottom: 16px;
 }
 
 .widget-title {
@@ -1199,7 +846,7 @@ a:hover {
 .widget-action {
   background: transparent;
   border: none;
-  color: var(--text-lighter);
+  color: var(--muted);
   cursor: pointer;
   padding: 4px;
   border-radius: var(--radius);
@@ -1210,125 +857,25 @@ a:hover {
   color: var(--text);
 }
 
-/* Birthday Widget */
-.birthday-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space);
-  padding: var(--space) 0;
-}
-
-.birthday-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  background: var(--warning);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* Sponsored Widget */
-.sponsored-item {
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: var(--space);
-}
-
-.sponsored-image {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  display: block;
-}
-
-.sponsored-content {
-  padding: var(--space);
-}
-
-.sponsored-title {
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.sponsored-url {
-  font-size: 12px;
-  color: var(--text-lighter);
-}
-
-/* Events Widget */
-.events-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space);
-}
-
-.event-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space);
-  padding: var(--space-sm) 0;
-}
-
-.event-date {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius);
-  background: var(--primary);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.event-day {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.event-month {
-  font-size: 11px;
-  opacity: 0.9;
-}
-
-.event-details {
-  flex: 1;
-}
-
-.event-title {
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.event-time {
-  font-size: 12px;
-  color: var(--text-lighter);
-}
-
 /* Contacts Widget */
 .contacts-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space);
+  gap: 12px;
 }
 
 .contact-item {
   display: flex;
   align-items: center;
-  gap: var(--space);
-  padding: var(--space-sm) 0;
+  gap: 12px;
+  padding: 8px 0;
   cursor: pointer;
 }
 
 .contact-avatar {
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   position: relative;
   flex-shrink: 0;
 }
@@ -1346,8 +893,8 @@ a:hover {
   right: 0;
   width: 10px;
   height: 10px;
-  background: var(--success);
-  border-radius: var(--radius-full);
+  background: var(--online);
+  border-radius: 50%;
   border: 2px solid var(--card);
 }
 
@@ -1366,25 +913,25 @@ a:hover {
 
 .contact-status-text {
   font-size: 12px;
-  color: var(--text-lighter);
+  color: var(--muted);
 }
 
 /* Quick Links */
 .quick-links {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 8px;
 }
 
 .quick-link {
   display: flex;
   align-items: center;
-  gap: var(--space);
+  gap: 12px;
   padding: 10px;
   border-radius: var(--radius);
   color: var(--text);
   text-decoration: none;
-  transition: background var(--transition-fast);
+  transition: background 0.2s;
 }
 
 .quick-link:hover {
@@ -1398,19 +945,19 @@ a:hover {
 }
 
 /* =====================================================
-   MODALS & OVERLAYS
+   MODALS
 ===================================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: var(--overlay);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-modal);
+  z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transition: all var(--transition);
+  transition: all 0.3s;
   backdrop-filter: blur(5px);
 }
 
@@ -1421,14 +968,14 @@ a:hover {
 
 .modal {
   background: var(--card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
   transform: translateY(20px);
-  transition: transform var(--transition);
-  box-shadow: var(--shadow-xl);
+  transition: transform 0.3s;
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-overlay.active .modal {
@@ -1436,7 +983,7 @@ a:hover {
 }
 
 .modal-header {
-  padding: var(--space-xl);
+  padding: 20px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
@@ -1451,7 +998,7 @@ a:hover {
 .modal-close {
   background: transparent;
   border: none;
-  color: var(--text-lighter);
+  color: var(--muted);
   cursor: pointer;
   padding: 4px;
   border-radius: var(--radius);
@@ -1463,15 +1010,15 @@ a:hover {
 }
 
 .modal-body {
-  padding: var(--space-xl);
+  padding: 20px;
 }
 
 .modal-footer {
-  padding: var(--space-xl);
+  padding: 20px;
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
-  gap: var(--space);
+  gap: 12px;
 }
 
 /* =====================================================
@@ -1481,11 +1028,11 @@ a:hover {
   position: fixed;
   inset: 0;
   background: var(--card);
-  z-index: var(--z-modal);
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform var(--transition);
+  transition: transform 0.3s;
 }
 
 .messenger-overlay.active {
@@ -1493,7 +1040,7 @@ a:hover {
 }
 
 .messenger-header {
-  padding: var(--space-lg) var(--space-xl);
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
@@ -1504,7 +1051,7 @@ a:hover {
 .messenger-title {
   display: flex;
   align-items: center;
-  gap: var(--space);
+  gap: 12px;
 }
 
 .messenger-body {
@@ -1522,7 +1069,7 @@ a:hover {
 }
 
 .messenger-search {
-  padding: var(--space-lg);
+  padding: 16px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -1534,11 +1081,11 @@ a:hover {
 .chat-item {
   display: flex;
   align-items: center;
-  gap: var(--space);
-  padding: var(--space-lg);
-  border-bottom: 1px solid var(--border-light);
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background 0.2s;
 }
 
 .chat-item:hover,
@@ -1549,7 +1096,7 @@ a:hover {
 .chat-avatar {
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -1567,12 +1114,12 @@ a:hover {
 
 .chat-name {
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .chat-preview {
   font-size: 13px;
-  color: var(--text-lighter);
+  color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1587,7 +1134,7 @@ a:hover {
 
 .chat-time {
   font-size: 11px;
-  color: var(--text-lighter);
+  color: var(--muted);
 }
 
 .chat-unread {
@@ -1595,7 +1142,7 @@ a:hover {
   color: white;
   font-size: 11px;
   padding: 2px 6px;
-  border-radius: var(--radius-full);
+  border-radius: 10px;
 }
 
 .messenger-content {
@@ -1606,7 +1153,7 @@ a:hover {
 }
 
 .chat-header {
-  padding: var(--space-lg) var(--space-xl);
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border);
   background: var(--card);
   display: flex;
@@ -1617,27 +1164,27 @@ a:hover {
 .chat-user-info {
   display: flex;
   align-items: center;
-  gap: var(--space);
+  gap: 12px;
 }
 
 .chat-status {
   font-size: 12px;
-  color: var(--text-lighter);
+  color: var(--muted);
 }
 
 .chat-messages {
   flex: 1;
-  padding: var(--space-xl);
+  padding: 20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space);
+  gap: 12px;
 }
 
 .message {
   max-width: 70%;
-  padding: var(--space) var(--space-md);
-  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  border-radius: 18px;
   position: relative;
   animation: fadeIn 0.3s ease;
 }
@@ -1646,14 +1193,14 @@ a:hover {
   align-self: flex-end;
   background: var(--primary);
   color: white;
-  border-bottom-right-radius: var(--radius-sm);
+  border-bottom-right-radius: 4px;
 }
 
 .message.received {
   align-self: flex-start;
   background: var(--card);
   border: 1px solid var(--border);
-  border-bottom-left-radius: var(--radius-sm);
+  border-bottom-left-radius: 4px;
 }
 
 .message-time {
@@ -1664,7 +1211,7 @@ a:hover {
 }
 
 .chat-input-container {
-  padding: var(--space-lg) var(--space-xl);
+  padding: 16px 20px;
   border-top: 1px solid var(--border);
   background: var(--card);
 }
@@ -1672,13 +1219,13 @@ a:hover {
 .chat-input-wrapper {
   display: flex;
   align-items: flex-end;
-  gap: var(--space);
+  gap: 12px;
 }
 
 .chat-input {
   flex: 1;
   padding: 12px 16px;
-  border-radius: var(--radius-full);
+  border-radius: 24px;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
@@ -1696,43 +1243,7 @@ a:hover {
 }
 
 /* =====================================================
-   ANIMATIONS
-===================================================== */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* =====================================================
-   UTILITY CLASSES
+   UTILITIES
 ===================================================== */
 .hidden {
   display: none !important;
@@ -1740,10 +1251,6 @@ a:hover {
 
 .flex {
   display: flex;
-}
-
-.flex-col {
-  flex-direction: column;
 }
 
 .items-center {
@@ -1754,105 +1261,32 @@ a:hover {
   justify-content: space-between;
 }
 
-.gap-1 { gap: 4px; }
 .gap-2 { gap: 8px; }
 .gap-3 { gap: 12px; }
 .gap-4 { gap: 16px; }
-.gap-5 { gap: 20px; }
-.gap-6 { gap: 24px; }
 
-.mt-1 { margin-top: 4px; }
 .mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 12px; }
 .mt-4 { margin-top: 16px; }
-.mt-5 { margin-top: 20px; }
-.mt-6 { margin-top: 24px; }
 
-.mb-1 { margin-bottom: 4px; }
 .mb-2 { margin-bottom: 8px; }
 .mb-3 { margin-bottom: 12px; }
 .mb-4 { margin-bottom: 16px; }
-.mb-5 { margin-bottom: 20px; }
-.mb-6 { margin-bottom: 24px; }
 
-.p-1 { padding: 4px; }
-.p-2 { padding: 8px; }
 .p-3 { padding: 12px; }
 .p-4 { padding: 16px; }
 .p-5 { padding: 20px; }
-.p-6 { padding: 24px; }
 
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 
-.font-bold { font-weight: 700; }
 .font-semibold { font-weight: 600; }
 
-.rounded { border-radius: var(--radius); }
-.rounded-full { border-radius: var(--radius-full); }
-
 .w-full { width: 100%; }
-.h-full { height: 100%; }
 
 .cursor-pointer { cursor: pointer; }
 
-/* =====================================================
-   RESPONSIVE
-===================================================== */
-@media (max-width: 768px) {
-  .header-container {
-    flex-wrap: wrap;
-    gap: var(--space);
-  }
-  
-  .search-container {
-    order: 3;
-    width: 100%;
-    max-width: 100%;
-  }
-  
-  .main-container {
-    padding: 12px;
-  }
-  
-  .post-actions {
-    grid-template-columns: 1fr;
-  }
-  
-  .messenger-sidebar {
-    width: 100%;
-  }
-  
-  .messenger-body {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  :root {
-    --space-xl: 20px;
-    --space-lg: 16px;
-    --space-md: 12px;
-    --space: 8px;
-  }
-  
-  .header {
-    padding: 12px;
-  }
-  
-  .main-container {
-    gap: 16px;
-  }
-  
-  .profile-stats {
-    grid-template-columns: 1fr;
-    gap: var(--space);
-  }
-}
-
-/* =====================================================
-   SKELETON LOADING
-===================================================== */
+/* Loading Skeletons */
 .skeleton {
   background: linear-gradient(90deg, var(--hover) 25%, var(--border) 50%, var(--hover) 75%);
   background-size: 200% 100%;
@@ -1862,7 +1296,7 @@ a:hover {
 
 .skeleton-post {
   height: 400px;
-  margin-bottom: var(--space-xl);
+  margin-bottom: 20px;
 }
 
 @keyframes loading {
@@ -1870,17 +1304,54 @@ a:hover {
   100% { background-position: -200% 0; }
 }
 
-/* =====================================================
-   FLOATING ACTION BUTTON
-===================================================== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 100px;
+  right: 30px;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toast {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow-lg);
+  border-left: 4px solid var(--primary);
+  animation: slideIn 0.3s ease;
+  min-width: 300px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--warning); }
+.toast.info { border-left-color: var(--info); }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* FAB */
 .fab {
   position: fixed;
   bottom: 30px;
   right: 30px;
   width: 56px;
   height: 56px;
-  border-radius: var(--radius-full);
-  background: var(--gradient-primary);
+  border-radius: 50%;
+  background: var(--primary);
   color: white;
   border: none;
   cursor: pointer;
@@ -1889,70 +1360,13 @@ a:hover {
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  z-index: var(--z-sticky);
-  transition: all var(--transition);
+  z-index: 100;
+  transition: all 0.3s;
 }
 
 .fab:hover {
-  transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
-}
-
-/* =====================================================
-   TOAST NOTIFICATIONS
-===================================================== */
-.toast-container {
-  position: fixed;
-  bottom: 100px;
-  right: 30px;
-  z-index: var(--z-toast);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space);
-}
-
-.toast {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: var(--space-md) var(--space-lg);
-  box-shadow: var(--shadow-lg);
-  border-left: 4px solid var(--primary);
-  animation: slideIn 0.3s ease;
-  min-width: 300px;
-  display: flex;
-  align-items: center;
-  gap: var(--space);
-}
-
-.toast.success { border-left-color: var(--success); }
-.toast.warning { border-left-color: var(--warning); }
-.toast.error { border-left-color: var(--danger); }
-.toast.info { border-left-color: var(--info); }
-
-.toast-icon {
-  font-size: 18px;
-}
-
-.toast-success .toast-icon { color: var(--success); }
-.toast-warning .toast-icon { color: var(--warning); }
-.toast-error .toast-icon { color: var(--danger); }
-.toast-info .toast-icon { color: var(--info); }
-
-.toast-content {
-  flex: 1;
-}
-
-.toast-close {
-  background: transparent;
-  border: none;
-  color: var(--text-lighter);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: var(--radius);
-}
-
-.toast-close:hover {
-  color: var(--text);
+  transform: scale(1.1);
+  background: var(--primary-dark);
 }
 </style>
 </head>
@@ -1962,7 +1376,6 @@ a:hover {
 <!-- Header -->
 <header class="header">
   <div class="header-container">
-    <!-- Logo -->
     <a href="#" class="logo">
       <div class="logo-icon">
         <i class="fas fa-sun"></i>
@@ -1970,63 +1383,53 @@ a:hover {
       <span>My-Day</span>
     </a>
 
-    <!-- Search -->
     <div class="search-container">
       <i class="fas fa-search search-icon"></i>
       <input type="text" class="search-input" placeholder="Search posts, people, or topics...">
     </div>
 
-    <!-- Header Actions -->
     <div class="header-actions">
-      <!-- Theme Toggle -->
-      <button class="theme-toggle btn-icon" id="themeToggle">
+      <button class="btn-icon" id="themeToggle">
         <i class="fas fa-moon"></i>
       </button>
 
-      <!-- Notifications -->
-      <div class="notification-wrapper">
-        <button class="notification-btn btn-icon" id="notificationBtn">
+      <div class="notification-wrapper" style="position: relative;">
+        <button class="btn-icon" id="notificationBtn">
           <i class="fas fa-bell"></i>
-          <span class="notification-badge">3</span>
+          <span class="notification-badge" id="notificationBadge">0</span>
         </button>
-        <div class="notification-dropdown" id="notificationDropdown">
-          <div class="notification-header">
+        <div class="dropdown" id="notificationDropdown">
+          <div class="dropdown-header">
             <h5>Notifications</h5>
-            <button class="btn btn-sm btn-ghost">Mark all as read</button>
+            <button class="btn btn-secondary btn-sm" onclick="markAllNotificationsAsRead()">Mark all as read</button>
           </div>
-          <div class="notification-list" id="notificationList">
+          <div class="dropdown-list" id="notificationList">
             <!-- Notifications loaded dynamically -->
           </div>
         </div>
       </div>
 
-      <!-- Messenger -->
       <button class="btn-icon" id="messengerBtn">
         <i class="fas fa-comments"></i>
       </button>
 
-      <!-- User Menu -->
-      <div class="user-menu-wrapper">
+      <div class="user-menu-wrapper" style="position: relative;">
         <button class="btn-icon" id="userMenuBtn">
           <div class="avatar" style="width: 36px; height: 36px;" id="headerAvatar">
             <span class="avatar-initial">U</span>
           </div>
         </button>
-        <div class="notification-dropdown" id="userMenuDropdown">
-          <div class="notification-list">
-            <a href="#" class="nav-item">
+        <div class="dropdown" id="userMenuDropdown">
+          <div class="dropdown-list">
+            <a href="#" class="nav-item" onclick="openEditProfile()">
               <i class="fas fa-user nav-icon"></i>
-              <span>My Profile</span>
+              <span>Edit Profile</span>
             </a>
             <a href="#" class="nav-item">
               <i class="fas fa-cog nav-icon"></i>
               <span>Settings</span>
             </a>
-            <a href="#" class="nav-item">
-              <i class="fas fa-question-circle nav-icon"></i>
-              <span>Help & Support</span>
-            </a>
-            <hr style="margin: var(--space-sm) 0; border: none; border-top: 1px solid var(--border);">
+            <hr style="margin: 8px 0; border: none; border-top: 1px solid var(--border);">
             <a href="#" class="nav-item" id="logoutBtn">
               <i class="fas fa-sign-out-alt nav-icon"></i>
               <span>Logout</span>
@@ -2042,7 +1445,6 @@ a:hover {
 <div class="main-container">
   <!-- Left Sidebar -->
   <aside class="sidebar">
-    <!-- Profile Card -->
     <div class="profile-card">
       <div class="avatar-container">
         <div class="avatar-ring"></div>
@@ -2053,72 +1455,58 @@ a:hover {
       <div class="profile-info">
         <h3 class="profile-name" id="profileUsername">Loading...</h3>
         <p class="profile-bio" id="profileBio">Welcome to My-Day!</p>
-        <button class="btn btn-secondary btn-full" onclick="openEditProfile()">
+        <button class="btn btn-secondary btn-full mt-4" onclick="openEditProfile()">
           <i class="fas fa-edit"></i> Edit Profile
         </button>
       </div>
       <div class="profile-stats">
         <div class="stat">
-          <span class="stat-value" id="postCount">0</span>
-          <span class="stat-label">Posts</span>
+          <div class="stat-value" id="postCount">0</div>
+          <div class="stat-label">Posts</div>
         </div>
         <div class="stat">
-          <span class="stat-value" id="followingCount">0</span>
-          <span class="stat-label">Following</span>
+          <div class="stat-value" id="followingCount">0</div>
+          <div class="stat-label">Following</div>
         </div>
         <div class="stat">
-          <span class="stat-value" id="followerCount">0</span>
-          <span class="stat-label">Followers</span>
+          <div class="stat-value" id="followerCount">0</div>
+          <div class="stat-label">Followers</div>
         </div>
       </div>
     </div>
 
-    <!-- Navigation -->
     <div class="nav-section">
       <div class="nav-header">Navigation</div>
       <ul class="nav-items">
         <li>
-          <a href="#" class="nav-item active" data-tab="feed">
+          <a href="#" class="nav-item active" onclick="loadPosts()">
             <i class="fas fa-home nav-icon"></i>
             <span>News Feed</span>
           </a>
         </li>
         <li>
-          <a href="#" class="nav-item" data-tab="explore">
+          <a href="#" class="nav-item" onclick="openMessenger()">
+            <i class="fas fa-comments nav-icon"></i>
+            <span>Messages</span>
+            <span class="nav-badge" id="messageBadge">0</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-item" onclick="showToast('Explore feature coming soon!', 'info')">
             <i class="fas fa-compass nav-icon"></i>
             <span>Explore</span>
           </a>
         </li>
         <li>
-          <a href="#" class="nav-item" data-tab="notifications">
+          <a href="#" class="nav-item" onclick="showNotifications()">
             <i class="fas fa-bell nav-icon"></i>
             <span>Notifications</span>
-            <span class="nav-badge">3</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="nav-item" data-tab="bookmarks">
-            <i class="fas fa-bookmark nav-icon"></i>
-            <span>Bookmarks</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="nav-item" data-tab="groups">
-            <i class="fas fa-users nav-icon"></i>
-            <span>Groups</span>
-            <span class="nav-badge">5</span>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="nav-item" data-tab="events">
-            <i class="fas fa-calendar nav-icon"></i>
-            <span>Events</span>
+            <span class="nav-badge" id="sidebarNotificationBadge">0</span>
           </a>
         </li>
       </ul>
     </div>
 
-    <!-- Online Friends -->
     <div class="online-friends">
       <h4>Online Friends</h4>
       <div class="online-list" id="onlineList">
@@ -2129,41 +1517,30 @@ a:hover {
 
   <!-- Main Content -->
   <main class="main-content">
-    <!-- Stories -->
-    <section class="stories-container">
-      <div class="stories-header">
-        <h4>Stories</h4>
-        <button class="btn btn-ghost btn-sm">See All</button>
-      </div>
-      <div class="stories-scroll" id="storiesContainer">
-        <!-- Stories loaded dynamically -->
-      </div>
-    </section>
-
     <!-- Create Post -->
     <section class="create-post">
       <div class="post-input-container">
         <div class="post-input-avatar" id="createPostAvatar">
           <span class="avatar-initial">U</span>
         </div>
-        <textarea class="post-input" placeholder="What's on your mind, User?" id="createPostInput"></textarea>
+        <textarea class="post-input" placeholder="What's on your mind?" id="createPostInput" rows="1"></textarea>
       </div>
       <div class="post-actions">
-        <button class="post-action-btn" onclick="openCamera()">
-          <i class="fas fa-video" style="color:#f093fb;"></i>
-          <span>Live Video</span>
+        <button class="post-action-btn" onclick="openCameraModal()">
+          <i class="fas fa-video"></i>
+          <span>Live</span>
         </button>
-        <button class="post-action-btn" onclick="openPhotoPicker()">
-          <i class="fas fa-images" style="color:#4ade80;"></i>
+        <button class="post-action-btn" onclick="openPhotoPickerModal()">
+          <i class="fas fa-images"></i>
           <span>Photo/Video</span>
         </button>
-        <button class="post-action-btn" onclick="openFeelingPicker()">
-          <i class="fas fa-smile" style="color:#fbbf24;"></i>
-          <span>Feeling/Activity</span>
+        <button class="post-action-btn" onclick="openFeelingPickerModal()">
+          <i class="fas fa-smile"></i>
+          <span>Feeling</span>
         </button>
         <button class="post-action-btn" onclick="openCreatePostModal()">
-          <i class="fas fa-pen" style="color:#667eea;"></i>
-          <span>Write Article</span>
+          <i class="fas fa-pen"></i>
+          <span>Write</span>
         </button>
       </div>
     </section>
@@ -2173,14 +1550,12 @@ a:hover {
       <div class="feed-header">
         <h3>News Feed</h3>
         <div class="feed-tabs">
-          <button class="feed-tab active" data-feed="all">All Posts</button>
-          <button class="feed-tab" data-feed="following">Following</button>
-          <button class="feed-tab" data-feed="popular">Popular</button>
+          <button class="feed-tab active" onclick="loadPosts()">All Posts</button>
+          <button class="feed-tab" onclick="loadFollowingPosts()">Following</button>
+          <button class="feed-tab" onclick="loadPopularPosts()">Popular</button>
         </div>
       </div>
       <div class="posts-container" id="postsContainer">
-        <!-- Posts loaded dynamically -->
-        <div class="skeleton skeleton-post"></div>
         <div class="skeleton skeleton-post"></div>
         <div class="skeleton skeleton-post"></div>
       </div>
@@ -2189,67 +1564,16 @@ a:hover {
 
   <!-- Right Sidebar -->
   <aside class="right-sidebar">
-    <!-- Birthdays -->
-    <div class="widget">
-      <div class="widget-header">
-        <h4 class="widget-title">Birthdays</h4>
-        <button class="widget-action">
-          <i class="fas fa-ellipsis-h"></i>
-        </button>
-      </div>
-      <div class="birthday-item">
-        <div class="birthday-icon">
-          <i class="fas fa-birthday-cake"></i>
-        </div>
-        <div>
-          <strong>Sarah Connor</strong> has a birthday today
-        </div>
-      </div>
-    </div>
-
-    <!-- Sponsored -->
-    <div class="widget">
-      <div class="widget-header">
-        <h4 class="widget-title">Sponsored</h4>
-        <button class="widget-action">
-          <i class="fas fa-ellipsis-h"></i>
-        </button>
-      </div>
-      <div class="sponsored-item">
-        <img src="https://picsum.photos/300/150?random=1" alt="Ad" class="sponsored-image">
-        <div class="sponsored-content">
-          <div class="sponsored-title">Learn React in 30 Days</div>
-          <div class="sponsored-url">reactcourse.com</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Events -->
-    <div class="widget">
-      <div class="widget-header">
-        <h4 class="widget-title">Upcoming Events</h4>
-        <button class="widget-action">
-          <i class="fas fa-ellipsis-h"></i>
-        </button>
-      </div>
-      <div class="events-list" id="eventsList">
-        <!-- Events loaded dynamically -->
-      </div>
-    </div>
-
-    <!-- Contacts -->
+    <!-- Contacts Widget -->
     <div class="widget">
       <div class="widget-header">
         <h4 class="widget-title">Contacts</h4>
-        <div class="widget-actions">
-          <button class="widget-action">
-            <i class="fas fa-video"></i>
+        <div class="flex gap-2">
+          <button class="widget-action" onclick="refreshContacts()">
+            <i class="fas fa-sync-alt"></i>
           </button>
-          <button class="widget-action">
+          <button class="widget-action" onclick="showToast('Search contacts feature coming soon!', 'info')">
             <i class="fas fa-search"></i>
-          </button>
-          <button class="widget-action">
-            <i class="fas fa-ellipsis-h"></i>
           </button>
         </div>
       </div>
@@ -2264,21 +1588,21 @@ a:hover {
         <h4 class="widget-title">Shortcuts</h4>
       </div>
       <div class="quick-links">
-        <a href="#" class="quick-link">
+        <a href="#" class="quick-link" onclick="showToast('Groups feature coming soon!', 'info')">
           <i class="fas fa-users"></i>
           <span>Groups</span>
         </a>
-        <a href="#" class="quick-link">
-          <i class="fas fa-gamepad"></i>
-          <span>Gaming</span>
+        <a href="#" class="quick-link" onclick="showToast('Events feature coming soon!', 'info')">
+          <i class="fas fa-calendar"></i>
+          <span>Events</span>
         </a>
-        <a href="#" class="quick-link">
+        <a href="#" class="quick-link" onclick="showToast('Games feature coming soon!', 'info')">
+          <i class="fas fa-gamepad"></i>
+          <span>Games</span>
+        </a>
+        <a href="#" class="quick-link" onclick="showToast('News feature coming soon!', 'info')">
           <i class="fas fa-newspaper"></i>
           <span>News</span>
-        </a>
-        <a href="#" class="quick-link">
-          <i class="fas fa-shopping-bag"></i>
-          <span>Marketplace</span>
         </a>
       </div>
     </div>
@@ -2313,52 +1637,46 @@ a:hover {
         </div>
         <div>
           <div class="profile-name" id="modalPostName">User</div>
-          <select class="post-privacy" id="postPrivacy" style="margin-top: 4px; padding: 4px 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); color: var(--text);">
+          <select class="post-privacy mt-2" id="postPrivacy" style="padding: 4px 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 12px;">
             <option value="public">🌍 Public</option>
-            <option value="friends">👥 Friends</option>
-            <option value="private">🔒 Only me</option>
+            <option value="friends">👥 Friends Only</option>
+            <option value="private">🔒 Only Me</option>
           </select>
         </div>
       </div>
-      <textarea class="post-input" id="postCaption" placeholder="What's on your mind?" rows="4"></textarea>
+      <textarea class="post-input mt-3" id="postCaption" placeholder="What's on your mind?" rows="4"></textarea>
       
-      <div class="post-media-preview" id="postMediaPreview" style="margin-top: var(--space); display: none;">
-        <img src="" alt="Preview" id="mediaPreview" style="width: 100%; border-radius: var(--radius); max-height: 300px; object-fit: cover;">
-        <button class="btn btn-sm btn-ghost" onclick="removeMedia()" style="position: absolute; top: 10px; right: 10px; background: var(--overlay); color: white;">
-          <i class="fas fa-times"></i>
-        </button>
+      <div class="post-media-preview mt-3" id="postMediaPreview" style="display: none;">
+        <div style="position: relative;">
+          <img src="" alt="Preview" id="mediaPreview" style="width: 100%; border-radius: var(--radius); max-height: 300px; object-fit: cover;">
+          <button class="btn-icon" onclick="removeMedia()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       </div>
       
-      <div class="post-feeling" id="postFeeling" style="margin-top: var(--space); padding: var(--space); background: var(--hover); border-radius: var(--radius); display: none;">
+      <div class="post-feeling mt-3" id="postFeeling" style="display: none; padding: 12px; background: var(--hover); border-radius: var(--radius);">
         <span id="feelingText"></span>
-        <button class="btn btn-sm btn-ghost" onclick="removeFeeling()" style="margin-left: var(--space);">
+        <button class="btn-icon" onclick="removeFeeling()" style="margin-left: 8px;">
           <i class="fas fa-times"></i>
         </button>
       </div>
       
-      <div class="post-actions" style="margin-top: var(--space-lg);">
+      <div class="post-actions mt-3">
         <button class="post-action-btn" onclick="openPhotoPickerModal()">
           <i class="fas fa-images"></i>
           <span>Photo/Video</span>
         </button>
         <button class="post-action-btn" onclick="openFeelingPickerModal()">
           <i class="fas fa-smile"></i>
-          <span>Feeling/Activity</span>
-        </button>
-        <button class="post-action-btn" onclick="openTagFriends()">
-          <i class="fas fa-tag"></i>
-          <span>Tag Friends</span>
-        </button>
-        <button class="post-action-btn" onclick="openLocationPicker()">
-          <i class="fas fa-map-marker-alt"></i>
-          <span>Check In</span>
+          <span>Feeling</span>
         </button>
       </div>
       
-      <input type="file" id="mediaInput" accept="image/*,video/*" multiple style="display: none;">
+      <input type="file" id="mediaInput" accept="image/*,video/*" style="display: none;">
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeCreatePostModal()">Cancel</button>
+      <button class="btn btn-secondary" onclick="closeCreatePostModal()">Cancel</button>
       <button class="btn btn-primary" onclick="submitPost()" id="submitPostBtn">Post</button>
     </div>
   </div>
@@ -2374,8 +1692,8 @@ a:hover {
       </button>
     </div>
     <div class="modal-body">
-      <div class="avatar-upload" style="text-align: center; margin-bottom: var(--space-xl);">
-        <div class="avatar-container" style="width: 120px; height: 120px; margin: 0 auto var(--space);">
+      <div class="text-center mb-4">
+        <div class="avatar-container" style="width: 120px; height: 120px; margin: 0 auto 16px;">
           <div class="avatar-ring"></div>
           <div class="avatar" id="editProfileAvatar">
             <span class="avatar-initial" id="editAvatarInitial">U</span>
@@ -2387,30 +1705,25 @@ a:hover {
         <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
       </div>
       
-      <div class="form-group" style="margin-bottom: var(--space-lg);">
-        <label for="editUsername" style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">Username</label>
+      <div class="mb-3">
+        <label for="editUsername" class="font-semibold mb-2" style="display: block;">Username</label>
         <input type="text" id="editUsername" class="post-input" placeholder="Enter username" maxlength="30">
-        <div class="char-count" id="usernameCharCount" style="text-align: right; font-size: 12px; color: var(--text-lighter); margin-top: 4px;">0/30</div>
+        <div id="usernameCharCount" style="text-align: right; font-size: 12px; color: var(--muted); margin-top: 4px;">0/30</div>
       </div>
       
-      <div class="form-group" style="margin-bottom: var(--space-lg);">
-        <label for="editBio" style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">Bio</label>
+      <div class="mb-3">
+        <label for="editBio" class="font-semibold mb-2" style="display: block;">Bio</label>
         <textarea id="editBio" class="post-input" placeholder="Tell us about yourself" rows="3" maxlength="150"></textarea>
-        <div class="char-count" id="bioCharCount" style="text-align: right; font-size: 12px; color: var(--text-lighter); margin-top: 4px;">0/150</div>
+        <div id="bioCharCount" style="text-align: right; font-size: 12px; color: var(--muted); margin-top: 4px;">0/150</div>
       </div>
       
-      <div class="form-group" style="margin-bottom: var(--space-lg);">
-        <label for="editLocation" style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">Location</label>
+      <div class="mb-3">
+        <label for="editLocation" class="font-semibold mb-2" style="display: block;">Location</label>
         <input type="text" id="editLocation" class="post-input" placeholder="City, Country">
-      </div>
-      
-      <div class="form-group" style="margin-bottom: var(--space-lg);">
-        <label for="editWebsite" style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">Website</label>
-        <input type="url" id="editWebsite" class="post-input" placeholder="https://example.com">
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeEditProfileModal()">Cancel</button>
+      <button class="btn btn-secondary" onclick="closeEditProfileModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveProfile()" id="saveProfileBtn">Save Changes</button>
     </div>
   </div>
@@ -2426,18 +1739,18 @@ a:hover {
       </button>
     </div>
     <div class="modal-body">
-      <div class="camera-container" style="width: 100%; height: 400px; background: #000; border-radius: var(--radius); overflow: hidden; position: relative;">
+      <div style="width: 100%; height: 400px; background: #000; border-radius: var(--radius); overflow: hidden; position: relative;">
         <video id="cameraVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
         <canvas id="photoCanvas" style="display: none;"></canvas>
       </div>
-      <div class="camera-controls" style="display: flex; justify-content: center; gap: var(--space); margin-top: var(--space-lg);">
-        <button class="btn btn-ghost" onclick="switchCamera()">
+      <div class="flex justify-between mt-4">
+        <button class="btn btn-secondary" onclick="switchCamera()">
           <i class="fas fa-sync-alt"></i> Switch Camera
         </button>
         <button class="btn btn-primary" onclick="capturePhoto()" style="width: 60px; height: 60px; border-radius: 50%; padding: 0;">
           <i class="fas fa-camera"></i>
         </button>
-        <button class="btn btn-ghost" onclick="closeCameraModal()">
+        <button class="btn btn-secondary" onclick="closeCameraModal()">
           Cancel
         </button>
       </div>
@@ -2455,8 +1768,8 @@ a:hover {
       </button>
     </div>
     <div class="modal-body">
-      <div class="feelings-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space);">
-        <!-- Feelings will be populated by JS -->
+      <div class="feelings-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;" id="feelingsGrid">
+        <!-- Feelings loaded by JS -->
       </div>
     </div>
   </div>
@@ -2466,16 +1779,16 @@ a:hover {
 <div class="messenger-overlay" id="messengerModal">
   <div class="messenger-header">
     <div class="messenger-title">
-      <button class="btn btn-ghost btn-icon" onclick="closeMessengerModal()">
+      <button class="btn-icon" onclick="closeMessenger()">
         <i class="fas fa-arrow-left"></i>
       </button>
       <h3>Messages</h3>
     </div>
-    <div class="messenger-actions">
-      <button class="btn btn-ghost btn-icon">
+    <div class="flex gap-2">
+      <button class="btn-icon" onclick="showToast('Video call feature coming soon!', 'info')">
         <i class="fas fa-video"></i>
       </button>
-      <button class="btn btn-ghost btn-icon">
+      <button class="btn-icon" onclick="startNewChat()">
         <i class="fas fa-edit"></i>
       </button>
     </div>
@@ -2485,7 +1798,7 @@ a:hover {
       <div class="messenger-search">
         <div class="search-container">
           <i class="fas fa-search search-icon"></i>
-          <input type="text" class="search-input" placeholder="Search messages...">
+          <input type="text" class="search-input" placeholder="Search messages..." id="messageSearch">
         </div>
       </div>
       <div class="messenger-chats" id="messengerChats">
@@ -2503,52 +1816,32 @@ a:hover {
             <div class="chat-status" id="chatUserStatus">Click on a contact to start chatting</div>
           </div>
         </div>
-        <div class="chat-actions">
-          <button class="btn btn-ghost btn-icon">
+        <div class="flex gap-2">
+          <button class="btn-icon" onclick="showToast('Voice call feature coming soon!', 'info')">
             <i class="fas fa-phone"></i>
           </button>
-          <button class="btn btn-ghost btn-icon">
+          <button class="btn-icon" onclick="showToast('Video call feature coming soon!', 'info')">
             <i class="fas fa-video"></i>
-          </button>
-          <button class="btn btn-ghost btn-icon">
-            <i class="fas fa-ellipsis-h"></i>
           </button>
         </div>
       </div>
       <div class="chat-messages" id="chatMessages">
-        <div class="welcome-message" style="text-align: center; padding: 40px 20px; color: var(--text-lighter);">
+        <div class="text-center p-5" style="color: var(--muted);">
           <i class="fas fa-comments" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
-          <h3 style="margin: 0 0 8px 0;">Welcome to Messages</h3>
+          <h3>Welcome to Messages</h3>
           <p>Select a contact from the list to start a conversation</p>
         </div>
       </div>
       <div class="chat-input-container">
         <div class="chat-input-wrapper">
-          <button class="btn btn-ghost btn-icon">
+          <button class="btn-icon" onclick="showToast('More options coming soon!', 'info')">
             <i class="fas fa-plus"></i>
           </button>
           <textarea class="chat-input" id="chatInput" placeholder="Type a message..." rows="1"></textarea>
-          <button class="btn btn-primary btn-icon" onclick="sendChatMessage()">
+          <button class="btn btn-primary" onclick="sendChatMessage()" style="border-radius: 50%; width: 44px; height: 44px; padding: 0;">
             <i class="fas fa-paper-plane"></i>
           </button>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Analytics Modal -->
-<div class="modal-overlay" id="analyticsModal">
-  <div class="modal" style="max-width: 800px;">
-    <div class="modal-header">
-      <h3 class="modal-title">Post Analytics</h3>
-      <button class="modal-close" onclick="closeAnalyticsModal()">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div id="analyticsContent">
-        <!-- Analytics loaded dynamically -->
       </div>
     </div>
   </div>
