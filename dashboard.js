@@ -96,6 +96,11 @@ async function tableExists(tableName) {
   }
 }
 
+// Convert post ID to number for BIGINT database columns
+function toPostIdNumber(postId) {
+  return Number(postId);
+}
+
 /* ===========================================================
    THEME MANAGEMENT
 =========================================================== */
@@ -236,11 +241,14 @@ function updateAvatarImages(avatarUrl) {
 =========================================================== */
 async function toggleLike(postId) {
   try {
+    // Convert postId to number for BIGINT database column
+    const postIdNum = toPostIdNumber(postId);
+    
     // Check if user already liked this post
     const { data: existingLike } = await sb
       .from('post_likes')
       .select('id')
-      .eq('post_id', postId)
+      .eq('post_id', postIdNum)
       .eq('user_id', currentUser.id)
       .single()
       .catch(() => ({ data: null }));
@@ -261,7 +269,7 @@ async function toggleLike(postId) {
       const { error } = await sb
         .from('post_likes')
         .insert({
-          post_id: postId,
+          post_id: postIdNum,
           user_id: currentUser.id,
           created_at: new Date().toISOString()
         });
@@ -288,12 +296,12 @@ async function toggleLike(postId) {
 
 async function createLikeTables() {
   try {
-    // Create post_likes table
+    // Create post_likes table with BIGINT for post_id
     const { error: likeError } = await sb.rpc('create_post_likes_table');
     
     if (likeError) {
-      // If RPC doesn't exist, try direct SQL
-      console.log('RPC not available, attempting manual table creation');
+      console.log('RPC not available, creating tables manually...');
+      // Table creation will happen via SQL commands
     }
   } catch (error) {
     console.error('Error creating like tables:', error);
@@ -302,10 +310,13 @@ async function createLikeTables() {
 
 async function getLikeCount(postId) {
   try {
+    // Convert postId to number for BIGINT database column
+    const postIdNum = toPostIdNumber(postId);
+    
     const { count, error } = await sb
       .from('post_likes')
       .select('*', { count: 'exact', head: true })
-      .eq('post_id', postId);
+      .eq('post_id', postIdNum);
       
     if (error) {
       // Table might not exist yet
@@ -323,10 +334,13 @@ async function getLikeCount(postId) {
 
 async function getUserLiked(postId) {
   try {
+    // Convert postId to number for BIGINT database column
+    const postIdNum = toPostIdNumber(postId);
+    
     const { data, error } = await sb
       .from('post_likes')
       .select('id')
-      .eq('post_id', postId)
+      .eq('post_id', postIdNum)
       .eq('user_id', currentUser.id)
       .single();
       
@@ -338,10 +352,13 @@ async function getUserLiked(postId) {
 
 async function getCommentCount(postId) {
   try {
+    // Convert postId to number for BIGINT database column
+    const postIdNum = toPostIdNumber(postId);
+    
     const { count, error } = await sb
       .from('post_comments')
       .select('*', { count: 'exact', head: true })
-      .eq('post_id', postId);
+      .eq('post_id', postIdNum);
       
     if (error) {
       // Table might not exist yet
@@ -383,13 +400,16 @@ async function loadComments(postId) {
   commentsList.innerHTML = '<p class="text-center">Loading comments...</p>';
   
   try {
+    // Convert postId to number for BIGINT database column
+    const postIdNum = toPostIdNumber(postId);
+    
     const { data: comments, error } = await sb
       .from('post_comments')
       .select(`
         *,
         profiles:user_id (username, avatar_url)
       `)
-      .eq('post_id', postId)
+      .eq('post_id', postIdNum)
       .order('created_at', { ascending: true });
       
     if (error) {
@@ -469,10 +489,13 @@ async function submitComment(postId) {
   }
   
   try {
+    // Convert postId to number for BIGINT database column
+    const postIdNum = toPostIdNumber(postId);
+    
     const { error } = await sb
       .from('post_comments')
       .insert({
-        post_id: postId,
+        post_id: postIdNum,
         user_id: currentUser.id,
         content: content,
         created_at: new Date().toISOString()
@@ -503,11 +526,12 @@ async function submitComment(postId) {
 
 async function createCommentTables() {
   try {
-    // Create post_comments table
+    // Create post_comments table with BIGINT for post_id
     const { error: commentError } = await sb.rpc('create_post_comments_table');
     
     if (commentError) {
-      console.log('RPC not available, attempting manual table creation');
+      console.log('RPC not available, creating tables manually...');
+      // Table creation will happen via SQL commands
     }
   } catch (error) {
     console.error('Error creating comment tables:', error);
@@ -635,6 +659,9 @@ async function createPostElement(post, profile, postIdStr) {
     }
   }
   
+  // Use post.id directly (it's already a number from the database)
+  const postId = post.id;
+  
   div.innerHTML = `
     <div class="post-header">
       <div class="post-user-info">
@@ -662,19 +689,19 @@ async function createPostElement(post, profile, postIdStr) {
     <div class="post-stats">
       <div class="post-likes">
         <i class="fas fa-heart" style="color: ${userLiked ? 'var(--danger)' : 'var(--muted)'};"></i>
-        <span id="like-count-${post.id}">${likeCount} like${likeCount !== 1 ? 's' : ''}</span>
+        <span id="like-count-${postId}">${likeCount} like${likeCount !== 1 ? 's' : ''}</span>
       </div>
       <div class="post-comments">
-        <span id="comment-count-${post.id}">${commentCount} comment${commentCount !== 1 ? 's' : ''}</span>
+        <span id="comment-count-${postId}">${commentCount} comment${commentCount !== 1 ? 's' : ''}</span>
       </div>
     </div>
     
     <div class="post-actions-container">
-      <button class="post-action like-btn ${userLiked ? 'active' : ''}" data-post="${post.id}" onclick="handleLike('${post.id}')">
+      <button class="post-action like-btn ${userLiked ? 'active' : ''}" data-post="${postId}" onclick="handleLike(${postId})">
         <i class="${userLiked ? 'fas' : 'far'} fa-heart"></i>
         <span>Like</span>
       </button>
-      <button class="post-action comment-btn" data-post="${post.id}" onclick="toggleComments('${post.id}')">
+      <button class="post-action comment-btn" data-post="${postId}" onclick="toggleComments(${postId})">
         <i class="far fa-comment"></i>
         <span>Comment</span>
       </button>
@@ -684,8 +711,8 @@ async function createPostElement(post, profile, postIdStr) {
       </button>
     </div>
     
-    <div class="comments-section" id="comments-${post.id}">
-      <div class="comments-list" id="comments-list-${post.id}"></div>
+    <div class="comments-section" id="comments-${postId}">
+      <div class="comments-list" id="comments-list-${postId}"></div>
       <div class="comment-form">
         <div class="post-input-avatar" style="width:32px;height:32px;">
           ${currentProfile?.avatar_url 
@@ -693,8 +720,8 @@ async function createPostElement(post, profile, postIdStr) {
             : `<span class="avatar-initial" style="width:32px;height:32px;font-size:14px;display:flex;align-items:center;justify-content:center;">${(currentProfile?.username || 'U').charAt(0).toUpperCase()}</span>`
           }
         </div>
-        <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Write a comment..." onkeypress="if(event.key === 'Enter') submitComment('${post.id}')">
-        <button class="btn btn-primary btn-sm" onclick="submitComment('${post.id}')">Post</button>
+        <input type="text" class="comment-input" id="comment-input-${postId}" placeholder="Write a comment..." onkeypress="if(event.key === 'Enter') submitComment(${postId})">
+        <button class="btn btn-primary btn-sm" onclick="submitComment(${postId})">Post</button>
       </div>
     </div>
   `;
