@@ -16,9 +16,42 @@ let msgSub = null;
 let isPosting = false; // Flag to prevent duplicate posts
 
 /* ===========================================================
-   HELPER
+   HELPER FUNCTIONS
 =========================================================== */
 function el(id) { return document.getElementById(id); }
+
+// Format relative time (e.g., "2 hours ago")
+function formatRelativeTime(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  
+  if (diffSec < 60) return "just now";
+  if (diffMin < 60) return `${diffMin} min${diffMin > 1 ? 's' : ''} ago`;
+  if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+  if (diffDay < 7) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+  
+  // For older posts, show actual date
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: diffDay > 365 ? 'numeric' : undefined
+  });
+}
+
+// Format message time (e.g., "2:30 PM")
+function formatMessageTime(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
+}
 
 /* ===========================================================
    LOAD USER + PROFILE
@@ -69,6 +102,79 @@ async function loadProfilePanel() {
     img.src = url;
     el("profileAvatar").innerHTML = ""; // Clear initial
     el("profileAvatar").appendChild(img);
+  }
+}
+
+/* ===========================================================
+   USERNAME EDITING
+=========================================================== */
+function openEditUsername() {
+  const currentName = el("profileUsername").textContent;
+  el("newUsername").value = currentName;
+  updateCharCount();
+  el("editUsernameBox").classList.remove("hidden");
+}
+
+function closeEditUsername() {
+  el("editUsernameBox").classList.add("hidden");
+}
+
+function updateCharCount() {
+  const input = el("newUsername");
+  const count = input.value.length;
+  const charCount = el("usernameCharCount");
+  
+  charCount.textContent = `${count}/30`;
+  
+  if (count >= 25) {
+    charCount.classList.add("warning");
+    charCount.classList.remove("error");
+  } else if (count >= 30) {
+    charCount.classList.add("error");
+    charCount.classList.remove("warning");
+  } else {
+    charCount.classList.remove("warning", "error");
+  }
+}
+
+// Add event listener for character count
+if (el("newUsername")) {
+  el("newUsername").addEventListener("input", updateCharCount);
+}
+
+async function saveUsername() {
+  const newUsername = el("newUsername").value.trim();
+  
+  if (!newUsername) {
+    return alert("Username cannot be empty");
+  }
+  
+  if (newUsername.length > 30) {
+    return alert("Username must be 30 characters or less");
+  }
+  
+  const btn = el("saveUsernameBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  
+  try {
+    const { error } = await sb
+      .from("profiles")
+      .update({ username: newUsername })
+      .eq("id", currentUser.id);
+    
+    if (error) throw error;
+    
+    el("profileUsername").textContent = newUsername;
+    el("avatarInitial").textContent = newUsername.charAt(0).toUpperCase();
+    closeEditUsername();
+    loadPosts(); // Refresh posts to show updated username
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update username. Please try again.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
   }
 }
 
@@ -172,7 +278,7 @@ function toggleCreatePost() {
 }
 
 /* ===========================================================
-   LOAD POSTS (FIXED CLASS NAME)
+   LOAD POSTS WITH TIMESTAMPS
 =========================================================== */
 async function loadUserLikes() {
   const { data } = await sb.from("post_likes")
@@ -200,27 +306,33 @@ async function loadPosts() {
       .eq("id", post.user_id)
       .maybeSingle();
 
-    const avatarUrl = prof.data?.avatar_url || null;
-    const username = prof.data?.username || post.user_name;
+    const avatarUrl = prof?.avatar_url || null;
+    const username = prof?.username || post.user_name;
+    const timestamp = formatRelativeTime(post.created_at);
 
     const div = document.createElement("div");
     div.className = "post";
 
     // Use "avatar" class for CSS consistency (Circle shape)
     const avatarHTML = avatarUrl
-      ? `<div class="avatar"><img src="${avatarUrl}"></div>`
+      ? `<div class="avatar"><img src="${avatarUrl}" alt="${username}"></div>`
       : `<div class="avatar"><span style="font-size:16px;">${username.charAt(0).toUpperCase()}</span></div>`;
 
     let mediaHTML = "";
     if (post.media_type === "image")
-      mediaHTML = `<img src="${post.media_url}">`;
+      mediaHTML = `<img src="${post.media_url}" alt="Post image">`;
     if (post.media_type === "video")
       mediaHTML = `<video src="${post.media_url}" controls></video>`;
 
     div.innerHTML = `
       <div class="post-header">
-        ${avatarHTML}
-        <strong>${username}</strong>
+        <div class="post-user">
+          ${avatarHTML}
+          <div>
+            <strong>${username}</strong>
+            <div class="post-time">${timestamp}</div>
+          </div>
+        </div>
       </div>
       <div class="post-content">
         <p>${post.caption || ""}</p>
@@ -253,10 +365,17 @@ async function loadPosts() {
    INTERACTIONS
 =========================================================== */
 async function likePost(postId, likes) {
-  if (userLikes.has(postId)) return alert("Already liked");
-
-  await sb.from("post_likes").insert({ post_id: postId, user_id: currentUser.id });
-  await sb.from("posts").update({ likes: likes + 1 }).eq("id", postId);
+  if (userLikes.has(postId)) {
+    // Unlike post
+    await sb.from("post_likes").delete()
+      .eq("post_id", postId)
+      .eq("user_id", currentUser.id);
+    await sb.from("posts").update({ likes: likes - 1 }).eq("id", postId);
+  } else {
+    // Like post
+    await sb.from("post_likes").insert({ post_id: postId, user_id: currentUser.id });
+    await sb.from("posts").update({ likes: likes + 1 }).eq("id", postId);
+  }
 
   loadUserLikes();
   loadPosts();
@@ -290,8 +409,17 @@ async function loadComments(postId) {
 
   for (const c of data) {
     const div = document.createElement("div");
-    div.style.marginBottom = "4px";
-    div.innerHTML = `<strong>${c.user_name}:</strong> <span>${c.comment}</span>`;
+    div.style.marginBottom = "8px";
+    div.style.padding = "8px";
+    div.style.background = "var(--hover)";
+    div.style.borderRadius = "8px";
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+        <strong>${c.user_name}</strong>
+        <span style="font-size:11px; color:var(--muted);">${formatRelativeTime(c.created_at)}</span>
+      </div>
+      <span>${c.comment}</span>
+    `;
     container.appendChild(div);
   }
 }
@@ -360,7 +488,7 @@ function capturePhoto() {
 }
 
 /* ===========================================================
-   MESSENGER SYSTEM
+   MODERN MESSENGER SYSTEM
 =========================================================== */
 if (el("inboxBtn")) el("inboxBtn").addEventListener("click", openMessenger);
 
@@ -388,49 +516,103 @@ async function loadUserList() {
 
   data.forEach(u => {
     const row = document.createElement("div");
-    // Styling handled in CSS but flex layout inline for specifics
-    row.style.display = "flex";
-    row.style.alignItems = "center";
-    row.style.gap = "10px";
-    row.style.padding = "10px";
-    row.style.cursor = "pointer";
-    row.onmouseover = () => row.style.background = "#f0f0f0";
-    row.onmouseout = () => row.style.background = "transparent";
-    
-    const initial = u.username.charAt(0).toUpperCase();
-    const avatarImg = u.avatar_url 
-        ? `<img src="${u.avatar_url}" style="width:100%;height:100%;object-fit:cover;">` 
-        : initial;
-
-    row.innerHTML = `
-      <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:#4a90e2;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        ${avatarImg}
-      </div>
-      <strong>${u.username}</strong>
-    `;
-
+    row.className = "user-item";
     row.onclick = () => openChat(u);
+    
+    // Get last message for preview
+    getLastMessage(u.id).then(lastMsg => {
+      const avatarHTML = u.avatar_url 
+        ? `<img src="${u.avatar_url}" alt="${u.username}">` 
+        : u.username.charAt(0).toUpperCase();
+      
+      const lastMsgPreview = lastMsg 
+        ? `<p>${lastMsg.message.length > 30 ? lastMsg.message.substring(0, 30) + '...' : lastMsg.message}</p>`
+        : '<p>No messages yet</p>';
+      
+      row.innerHTML = `
+        <div class="user-avatar">
+          ${avatarHTML}
+        </div>
+        <div class="user-info">
+          <h4>${u.username}</h4>
+          ${lastMsgPreview}
+        </div>
+        <div class="user-status online"></div>
+      `;
+    });
+    
     list.appendChild(row);
   });
 }
 
+async function getLastMessage(userId) {
+  const { data } = await sb
+    .from("messages")
+    .select("*")
+    .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  
+  return data?.[0] || null;
+}
+
 async function openChat(user) {
   activeChatUser = user;
+  
+  // Update chat header
+  el("chatUserName").textContent = user.username;
+  el("chatUserStatus").textContent = "Online";
+  
+  const avatarHTML = user.avatar_url 
+    ? `<img src="${user.avatar_url}" alt="${user.username}">` 
+    : user.username.charAt(0).toUpperCase();
+  
+  el("chatAvatar").innerHTML = avatarHTML;
+  
+  // Clear and load messages
   el("messagesList").innerHTML = "";
-
+  
   const { data } = await sb
     .from("messages")
     .select("*")
     .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${user.id}),and(sender_id.eq.${user.id},receiver_id.eq.${currentUser.id})`)
     .order("created_at", { ascending: true });
 
-  if (data) data.forEach(renderMessage);
+  if (data && data.length > 0) {
+    data.forEach(renderMessage);
+  } else {
+    el("messagesList").innerHTML = `
+      <div class="welcome-message" style="text-align:center;padding:40px 20px;color:var(--muted);">
+        <i class="fas fa-comments" style="font-size:48px;margin-bottom:16px;opacity:0.5;"></i>
+        <h3 style="margin:0 0 8px 0;">No messages yet</h3>
+        <p>Send your first message to ${user.username}</p>
+      </div>
+    `;
+  }
+  
+  // Mark user as active in list
+  document.querySelectorAll('.user-item').forEach(item => {
+    item.classList.remove('active');
+    if (item.querySelector('h4')?.textContent === user.username) {
+      item.classList.add('active');
+    }
+  });
 }
 
 function renderMessage(msg) {
+  const welcomeMsg = document.querySelector('.welcome-message');
+  if (welcomeMsg) welcomeMsg.remove();
+  
   const div = document.createElement("div");
-  div.className = "msg" + (msg.sender_id === currentUser.id ? " me" : "");
-  div.textContent = msg.message;
+  div.className = "msg" + (msg.sender_id === currentUser.id ? " me" : " other");
+  
+  const time = formatMessageTime(msg.created_at);
+  
+  div.innerHTML = `
+    <div>${msg.message}</div>
+    <div class="msg-time">${time}</div>
+  `;
+  
   el("messagesList").appendChild(div);
   el("messagesList").scrollTop = el("messagesList").scrollHeight;
 }
@@ -440,13 +622,31 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text || !activeChatUser) return;
 
-  await sb.from("messages").insert({
-    sender_id: currentUser.id,
-    receiver_id: activeChatUser.id,
-    message: text
-  });
+  const btn = input.nextElementSibling;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-  input.value = "";
+  try {
+    const { error } = await sb.from("messages").insert({
+      sender_id: currentUser.id,
+      receiver_id: activeChatUser.id,
+      message: text
+    });
+
+    if (error) throw error;
+
+    input.value = "";
+    input.style.height = 'auto';
+    
+    // Refresh user list to update last message preview
+    loadUserList();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to send message. Please try again.");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+  }
 }
 
 function subscribeMessages() {
@@ -455,17 +655,53 @@ function subscribeMessages() {
   msgSub = sb.channel("messages")
     .on("postgres_changes",
       { event: "INSERT", schema: "public", table: "messages" },
-      payload => {
+      async (payload) => {
         const msg = payload.new;
-        if (!activeChatUser) return;
+        if (!activeChatUser) {
+          // Refresh user list for new message indicators
+          loadUserList();
+          return;
+        }
         
         const isBetween =
           (msg.sender_id === currentUser.id && msg.receiver_id === activeChatUser.id) ||
           (msg.sender_id === activeChatUser.id && msg.receiver_id === currentUser.id);
 
-        if (isBetween) renderMessage(msg);
+        if (isBetween) {
+          renderMessage(msg);
+        }
       })
     .subscribe();
+}
+
+// Auto-resize textarea
+if (el("messageInput")) {
+  el("messageInput").addEventListener("input", function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+  });
+  
+  // Send message on Enter (but allow Shift+Enter for new line)
+  el("messageInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+}
+
+// Contact search functionality
+if (el("searchContacts")) {
+  el("searchContacts").addEventListener("input", function() {
+    const searchTerm = this.value.toLowerCase();
+    const users = document.querySelectorAll('.user-item');
+    
+    users.forEach(user => {
+      const username = user.querySelector('h4')?.textContent.toLowerCase() || '';
+      const shouldShow = username.includes(searchTerm);
+      user.style.display = shouldShow ? 'flex' : 'none';
+    });
+  });
 }
 
 /* ===========================================================
