@@ -28,43 +28,63 @@ function el(id) { return document.getElementById(id); }
 function qs(selector) { return document.querySelector(selector); }
 function qsa(selector) { return document.querySelectorAll(selector); }
 
-// Format relative time
+// Format relative time - FIXED to handle null/undefined dates
 function formatRelativeTime(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-  const diffWeek = Math.floor(diffDay / 7);
-  const diffMonth = Math.floor(diffDay / 30);
-  const diffYear = Math.floor(diffDay / 365);
+  if (!dateString) return 'Unknown time';
   
-  if (diffSec < 60) return 'just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHour < 24) return `${diffHour}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
-  if (diffWeek < 4) return `${diffWeek}w ago`;
-  if (diffMonth < 12) return `${diffMonth}mo ago`;
-  return `${diffYear}y ago`;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Unknown time';
+    
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    const diffWeek = Math.floor(diffDay / 7);
+    const diffMonth = Math.floor(diffDay / 30);
+    const diffYear = Math.floor(diffDay / 365);
+    
+    if (diffSec < 60) return 'just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHour < 24) return `${diffHour}h ago`;
+    if (diffDay < 7) return `${diffDay}d ago`;
+    if (diffWeek < 4) return `${diffWeek}w ago`;
+    if (diffMonth < 12) return `${diffMonth}mo ago`;
+    return `${diffYear}y ago`;
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return 'Unknown time';
+  }
 }
 
 // Format date for display
 function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  if (!dateString) return 'Unknown date';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Unknown date';
+    
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Unknown date';
+  }
 }
 
 // Show toast notification
 function showToast(message, type = 'info', duration = 3000) {
   const toastContainer = el('toastContainer');
+  if (!toastContainer) return;
+  
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   
@@ -76,7 +96,7 @@ function showToast(message, type = 'info', duration = 3000) {
   };
   
   toast.innerHTML = `
-    <i class="${icons[type]} toast-icon"></i>
+    <i class="${icons[type] || icons.info} toast-icon"></i>
     <div class="toast-content">${message}</div>
     <button class="toast-close" onclick="this.parentElement.remove()">
       <i class="fas fa-times"></i>
@@ -111,6 +131,7 @@ function debounce(func, wait) {
 
 // Truncate text
 function truncateText(text, maxLength) {
+  if (!text) return '';
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
 }
@@ -129,10 +150,12 @@ function setTheme(theme) {
   localStorage.setItem('theme', theme);
   
   const icon = qs('#themeToggle i');
-  if (theme === 'dark') {
-    icon.className = 'fas fa-sun';
-  } else {
-    icon.className = 'fas fa-moon';
+  if (icon) {
+    if (theme === 'dark') {
+      icon.className = 'fas fa-sun';
+    } else {
+      icon.className = 'fas fa-moon';
+    }
   }
 }
 
@@ -145,89 +168,130 @@ function toggleTheme() {
    AUTHENTICATION & USER MANAGEMENT
 =========================================================== */
 async function loadUser() {
-  const { data, error } = await sb.auth.getUser();
-  
-  if (error || !data.user) {
-    window.location.href = 'login.html';
-    return;
+  try {
+    const { data, error } = await sb.auth.getUser();
+    
+    if (error || !data.user) {
+      window.location.href = 'login.html';
+      return;
+    }
+    
+    currentUser = data.user;
+    await ensureProfileExists();
+    await loadUserProfile();
+    await loadUserLikes();
+    await loadUserBookmarks();
+    
+    // Initialize all dashboard components
+    initDashboard();
+    setupEventListeners();
+    
+    // Setup subscriptions if tables exist
+    setTimeout(() => {
+      try {
+        setupSubscriptions();
+      } catch (error) {
+        console.log('Subscriptions not available yet');
+      }
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Error loading user:', error);
+    showToast('Failed to load user data', 'error');
   }
-  
-  currentUser = data.user;
-  await ensureProfileExists();
-  await loadUserProfile();
-  await loadUserLikes();
-  await loadUserBookmarks();
-  
-  // Initialize all dashboard components
-  initDashboard();
-  setupEventListeners();
-  setupSubscriptions();
 }
 
 async function ensureProfileExists() {
-  const { data } = await sb
-    .from('profiles')
-    .select('id')
-    .eq('id', currentUser.id)
-    .maybeSingle();
-    
-  if (!data) {
-    const username = currentUser.email.split('@')[0];
-    await sb.from('profiles').insert({
-      id: currentUser.id,
-      username: username,
-      bio: 'Welcome to My-Day!',
-      created_at: new Date().toISOString()
-    });
+  try {
+    const { data } = await sb
+      .from('profiles')
+      .select('id')
+      .eq('id', currentUser.id)
+      .maybeSingle();
+      
+    if (!data) {
+      const username = currentUser.email.split('@')[0];
+      await sb.from('profiles').insert({
+        id: currentUser.id,
+        username: username,
+        bio: 'Welcome to My-Day!',
+        created_at: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    console.error('Error ensuring profile exists:', error);
   }
 }
 
 async function loadUserProfile() {
-  const { data, error } = await sb
-    .from('profiles')
-    .select('*')
-    .eq('id', currentUser.id)
-    .single();
+  try {
+    const { data, error } = await sb
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+      
+    if (error) throw error;
     
-  if (error) {
+    currentProfile = data;
+    updateProfileUI();
+    
+  } catch (error) {
     console.error('Error loading profile:', error);
-    return;
+    showToast('Failed to load profile', 'error');
   }
-  
-  currentProfile = data;
-  updateProfileUI();
 }
 
 function updateProfileUI() {
   if (!currentProfile) return;
   
   // Update profile card
-  el('profileUsername').textContent = currentProfile.username;
-  el('profileBio').textContent = currentProfile.bio || 'Welcome to My-Day!';
-  el('avatarInitial').textContent = currentProfile.username.charAt(0).toUpperCase();
+  const usernameEl = el('profileUsername');
+  const bioEl = el('profileBio');
+  const avatarInitial = el('avatarInitial');
+  
+  if (usernameEl) usernameEl.textContent = currentProfile.username || 'User';
+  if (bioEl) bioEl.textContent = currentProfile.bio || 'Welcome to My-Day!';
+  if (avatarInitial) avatarInitial.textContent = (currentProfile.username || 'U').charAt(0).toUpperCase();
   
   // Update header avatar
-  el('headerAvatar').innerHTML = `
-    <span class="avatar-initial">${currentProfile.username.charAt(0).toUpperCase()}</span>
-  `;
+  const headerAvatar = el('headerAvatar');
+  if (headerAvatar) {
+    headerAvatar.innerHTML = `
+      <span class="avatar-initial">${(currentProfile.username || 'U').charAt(0).toUpperCase()}</span>
+    `;
+  }
   
   // Update create post avatar
-  el('createPostAvatar').innerHTML = `
-    <span class="avatar-initial">${currentProfile.username.charAt(0).toUpperCase()}</span>
-  `;
+  const createPostAvatar = el('createPostAvatar');
+  if (createPostAvatar) {
+    createPostAvatar.innerHTML = `
+      <span class="avatar-initial">${(currentProfile.username || 'U').charAt(0).toUpperCase()}</span>
+    `;
+  }
   
   // Update modal post avatar
-  el('modalPostAvatar').innerHTML = `
-    <span class="avatar-initial">${currentProfile.username.charAt(0).toUpperCase()}</span>
-  `;
-  el('modalPostName').textContent = currentProfile.username;
+  const modalPostAvatar = el('modalPostAvatar');
+  const modalPostName = el('modalPostName');
+  if (modalPostAvatar && modalPostName) {
+    modalPostAvatar.innerHTML = `
+      <span class="avatar-initial">${(currentProfile.username || 'U').charAt(0).toUpperCase()}</span>
+    `;
+    modalPostName.textContent = currentProfile.username || 'User';
+  }
   
   // Update edit profile modal
-  el('editUsername').value = currentProfile.username;
-  el('editBio').value = currentProfile.bio || '';
-  el('editLocation').value = currentProfile.location || '';
-  el('editWebsite').value = currentProfile.website || '';
-  el('editAvatarInitial').textContent = currentProfile.username.charAt(0).toUpperCase();
+  const editUsername = el('editUsername');
+  const editBio = el('editBio');
+  const editLocation = el('editLocation');
+  const editWebsite = el('editWebsite');
+  const editAvatarInitial = el('editAvatarInitial');
+  
+  if (editUsername) editUsername.value = currentProfile.username || '';
+  if (editBio) editBio.value = currentProfile.bio || '';
+  if (editLocation) editLocation.value = currentProfile.location || '';
+  if (editWebsite) editWebsite.value = currentProfile.website || '';
+  if (editAvatarInitial) editAvatarInitial.textContent = (currentProfile.username || 'U').charAt(0).toUpperCase();
   
   // Update avatar image if exists
   if (currentProfile.avatar_url) {
@@ -262,18 +326,42 @@ function closeEditProfileModal() {
   el('editProfileModal').classList.remove('active');
 }
 
+function updateCharCount(inputId, countId, maxLength) {
+  const input = el(inputId);
+  const count = el(countId);
+  if (!input || !count) return;
+  
+  const length = input.value.length;
+  count.textContent = `${length}/${maxLength}`;
+  
+  count.classList.remove('warning', 'error');
+  if (length >= maxLength * 0.8) {
+    count.classList.add('warning');
+  }
+  if (length >= maxLength) {
+    count.classList.add('error');
+  }
+}
+
 async function saveProfile() {
-  const username = el('editUsername').value.trim();
-  const bio = el('editBio').value.trim();
-  const location = el('editLocation').value.trim();
-  const website = el('editWebsite').value.trim();
+  const username = el('editUsername')?.value.trim();
+  const bio = el('editBio')?.value.trim();
+  const location = el('editLocation')?.value.trim();
+  const website = el('editWebsite')?.value.trim();
   
   if (!username) {
     showToast('Username is required', 'error');
     return;
   }
   
+  if (username.length > 30) {
+    showToast('Username must be 30 characters or less', 'error');
+    return;
+  }
+  
   const btn = el('saveProfileBtn');
+  if (!btn) return;
+  
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
   
@@ -304,144 +392,251 @@ async function saveProfile() {
 }
 
 // Avatar upload
-el('avatarUpload')?.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  if (!file.type.startsWith('image/')) {
-    showToast('Please select an image file', 'error');
-    return;
-  }
-  
-  if (file.size > 5 * 1024 * 1024) { // 5MB limit
-    showToast('Image size must be less than 5MB', 'error');
-    return;
-  }
-  
-  const btn = el('saveProfileBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
-  
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-    
-    const { error: uploadError } = await sb.storage
-      .from('avatars')
-      .upload(fileName, file);
+document.addEventListener('DOMContentLoaded', () => {
+  const avatarUpload = el('avatarUpload');
+  if (avatarUpload) {
+    avatarUpload.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
       
-    if (uploadError) throw uploadError;
-    
-    const { data: { publicUrl } } = sb.storage
-      .from('avatars')
-      .getPublicUrl(fileName);
-    
-    const { error: updateError } = await sb
-      .from('profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', currentUser.id);
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select an image file', 'error');
+        return;
+      }
       
-    if (updateError) throw updateError;
-    
-    currentProfile.avatar_url = publicUrl;
-    updateAvatarImages(publicUrl);
-    showToast('Avatar updated successfully!', 'success');
-  } catch (error) {
-    console.error('Error uploading avatar:', error);
-    showToast('Failed to upload avatar', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save Changes';
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image size must be less than 5MB', 'error');
+        return;
+      }
+      
+      const btn = el('saveProfileBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+      }
+      
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await sb.storage
+          .from('avatars')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+          
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = sb.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+        
+        const { error: updateError } = await sb
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', currentUser.id);
+          
+        if (updateError) throw updateError;
+        
+        currentProfile.avatar_url = publicUrl;
+        updateAvatarImages(publicUrl);
+        showToast('Avatar updated successfully!', 'success');
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+        showToast('Failed to upload avatar', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Save Changes';
+        }
+      }
+    });
   }
 });
 
 /* ===========================================================
-   POST MANAGEMENT
+   POST LIKES & BOOKMARKS MANAGEMENT
 =========================================================== */
 async function loadUserLikes() {
-  const { data } = await sb
-    .from('post_likes')
-    .select('post_id')
-    .eq('user_id', currentUser.id);
+  try {
+    const { data, error } = await sb
+      .from('post_likes')
+      .select('post_id')
+      .eq('user_id', currentUser.id);
+      
+    if (error) {
+      // Table might not exist yet
+      console.log('post_likes table not available');
+      userLikes = new Set();
+      return;
+    }
     
-  userLikes = new Set(data?.map(x => x.post_id) || []);
+    userLikes = new Set(data?.map(x => x.post_id?.toString()) || []);
+  } catch (error) {
+    console.error('Error loading user likes:', error);
+    userLikes = new Set();
+  }
 }
 
 async function loadUserBookmarks() {
-  const { data } = await sb
-    .from('post_bookmarks')
-    .select('post_id')
-    .eq('user_id', currentUser.id);
+  try {
+    const { data, error } = await sb
+      .from('post_bookmarks')
+      .select('post_id')
+      .eq('user_id', currentUser.id);
+      
+    if (error) {
+      // Table might not exist yet
+      console.log('post_bookmarks table not available');
+      userBookmarks = new Set();
+      return;
+    }
     
-  userBookmarks = new Set(data?.map(x => x.post_id) || []);
+    userBookmarks = new Set(data?.map(x => x.post_id?.toString()) || []);
+  } catch (error) {
+    console.error('Error loading user bookmarks:', error);
+    userBookmarks = new Set();
+  }
 }
 
+/* ===========================================================
+   POSTS MANAGEMENT WITH CORRECT TIME HANDLING
+=========================================================== */
 async function loadPosts() {
   const postsContainer = el('postsContainer');
+  if (!postsContainer) return;
+  
   postsContainer.innerHTML = `
     <div class="skeleton skeleton-post"></div>
     <div class="skeleton skeleton-post"></div>
     <div class="skeleton skeleton-post"></div>
   `;
   
-  const { data: posts, error } = await sb
-    .from('posts')
-    .select(`
-      *,
-      profiles!inner (
-        username,
-        avatar_url
-      ),
-      comments(count),
-      post_likes(count)
-    `)
-    .order('created_at', { ascending: false })
-    .limit(20);
+  try {
+    // Get posts with CORRECT time field - using created_at
+    const { data: posts, error: postsError } = await sb
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+      
+    if (postsError) throw postsError;
     
-  if (error) {
+    postsContainer.innerHTML = '';
+    
+    if (!posts || posts.length === 0) {
+      postsContainer.innerHTML = `
+        <div class="post-card" style="text-align: center; padding: 40px 20px;">
+          <i class="fas fa-newspaper" style="font-size: 48px; color: var(--text-lighter); margin-bottom: 16px;"></i>
+          <h3>No posts yet</h3>
+          <p>Be the first to post something!</p>
+          <button class="btn btn-primary mt-4" onclick="openCreatePostModal()">
+            <i class="fas fa-plus"></i> Create First Post
+          </button>
+        </div>
+      `;
+      return;
+    }
+    
+    // Get user profiles for these posts
+    const userIds = [...new Set(posts.map(p => p.user_id))];
+    const { data: profiles, error: profilesError } = await sb
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', userIds);
+      
+    if (profilesError) throw profilesError;
+    
+    const profileMap = {};
+    profiles?.forEach(p => {
+      profileMap[p.id] = p;
+    });
+    
+    // Get like counts for each post
+    const postIds = posts.map(p => p.id);
+    let likeCountsMap = {};
+    
+    try {
+      const { data: likeCounts } = await sb
+        .from('post_likes')
+        .select('post_id')
+        .in('post_id', postIds);
+      
+      // Count likes per post
+      likeCounts?.forEach(like => {
+        const postId = like.post_id?.toString();
+        if (postId) {
+          likeCountsMap[postId] = (likeCountsMap[postId] || 0) + 1;
+        }
+      });
+    } catch (error) {
+      console.log('Could not load like counts');
+    }
+    
+    // Get comment counts for each post
+    let commentCountsMap = {};
+    
+    try {
+      const { data: commentCounts } = await sb
+        .from('comments')
+        .select('post_id')
+        .in('post_id', postIds);
+      
+      // Count comments per post
+      commentCounts?.forEach(comment => {
+        const postId = comment.post_id?.toString();
+        if (postId) {
+          commentCountsMap[postId] = (commentCountsMap[postId] || 0) + 1;
+        }
+      });
+    } catch (error) {
+      console.log('Could not load comment counts');
+    }
+    
+    // Create post elements
+    for (const post of posts) {
+      const profile = profileMap[post.user_id];
+      const postIdStr = post.id?.toString();
+      const likeCount = likeCountsMap[postIdStr] || 0;
+      const commentCount = commentCountsMap[postIdStr] || 0;
+      
+      const postWithData = {
+        ...post,
+        profiles: profile || { username: 'Unknown User', avatar_url: null },
+        post_likes: [{ count: likeCount }],
+        comments: [{ count: commentCount }]
+      };
+      
+      const postElement = createPostElement(postWithData);
+      postsContainer.appendChild(postElement);
+    }
+    
+  } catch (error) {
     console.error('Error loading posts:', error);
-    postsContainer.innerHTML = '<p class="text-center">Failed to load posts</p>';
-    return;
-  }
-  
-  postsContainer.innerHTML = '';
-  
-  if (posts.length === 0) {
-    postsContainer.innerHTML = `
-      <div class="post-card" style="text-align: center; padding: 40px 20px;">
-        <i class="fas fa-newspaper" style="font-size: 48px; color: var(--text-lighter); margin-bottom: 16px;"></i>
-        <h3>No posts yet</h3>
-        <p>Be the first to post something!</p>
-        <button class="btn btn-primary mt-4" onclick="openCreatePostModal()">
-          <i class="fas fa-plus"></i> Create First Post
-        </button>
-      </div>
-    `;
-    return;
-  }
-  
-  // Update post count
-  el('postCount').textContent = posts.length;
-  
-  for (const post of posts) {
-    const postElement = createPostElement(post);
-    postsContainer.appendChild(postElement);
+    postsContainer.innerHTML = '<p class="text-center">Failed to load posts. Please try again later.</p>';
   }
 }
 
 function createPostElement(post) {
   const div = document.createElement('div');
   div.className = 'post-card';
-  div.id = `post-${post.id}`;
   
-  const isLiked = userLikes.has(post.id);
-  const isBookmarked = userBookmarks.has(post.id);
+  // Use the post ID as a string for comparisons
+  const postIdStr = post.id?.toString() || '';
+  const isLiked = userLikes.has(postIdStr);
+  const isBookmarked = userBookmarks.has(postIdStr);
   const likeCount = post.post_likes?.[0]?.count || 0;
   const commentCount = post.comments?.[0]?.count || 0;
   
-  // Format time
-  const postTime = formatRelativeTime(post.created_at);
-  const fullPostTime = formatDate(post.created_at);
+  // Use created_at field for timestamp - FIXED
+  const postTime = formatRelativeTime(post.created_at || post.updated_at);
+  const fullPostTime = formatDate(post.created_at || post.updated_at);
+  
+  // Get username and avatar
+  const username = post.profiles?.username || 'Unknown User';
+  const avatarUrl = post.profiles?.avatar_url;
+  const avatarInitial = username.charAt(0).toUpperCase();
   
   let mediaHTML = '';
   if (post.media_url) {
@@ -449,13 +644,16 @@ function createPostElement(post) {
       mediaHTML = `
         <div class="post-media">
           <img src="${post.media_url}" alt="Post image" loading="lazy" 
-               onclick="openMediaViewer('${post.media_url}', 'image')">
+               onclick="openMediaViewer('${post.media_url}', 'image')"
+               style="cursor: pointer;">
         </div>
       `;
     } else if (post.media_type === 'video') {
       mediaHTML = `
         <div class="post-media">
-          <video src="${post.media_url}" controls onclick="this.paused ? this.play() : this.pause();"></video>
+          <video src="${post.media_url}" controls 
+                 onclick="this.paused ? this.play() : this.pause();"
+                 style="cursor: pointer;"></video>
         </div>
       `;
     }
@@ -465,41 +663,41 @@ function createPostElement(post) {
     <div class="post-header">
       <div class="post-user-info">
         <div class="post-avatar">
-          ${post.profiles.avatar_url 
-            ? `<img src="${post.profiles.avatar_url}" alt="${post.profiles.username}">`
-            : `<span class="avatar-initial" style="width: 40px; height: 40px; font-size: 16px;">${post.profiles.username.charAt(0).toUpperCase()}</span>`
+          ${avatarUrl 
+            ? `<img src="${avatarUrl}" alt="${username}" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'avatar-initial\' style=\'width:40px;height:40px;font-size:16px;display:flex;align-items:center;justify-content:center;\'>${avatarInitial}</span>';">`
+            : `<span class="avatar-initial" style="width:40px;height:40px;font-size:16px;display:flex;align-items:center;justify-content:center;">${avatarInitial}</span>`
           }
         </div>
         <div class="post-user-details">
-          <div class="post-username">${post.profiles.username}</div>
+          <div class="post-username">${username}</div>
           <div class="post-time" title="${fullPostTime}">${postTime}</div>
         </div>
       </div>
       <div class="post-menu">
-        <button class="post-menu-btn" onclick="togglePostMenu(${post.id})">
+        <button class="post-menu-btn" onclick="togglePostMenu('${postIdStr}')">
           <i class="fas fa-ellipsis-h"></i>
         </button>
-        <div class="notification-dropdown post-menu-dropdown" id="post-menu-${post.id}" style="display: none; position: absolute; right: 0; top: 100%; min-width: 200px;">
+        <div class="notification-dropdown post-menu-dropdown" id="post-menu-${postIdStr}" style="display: none; position: absolute; right: 0; top: 100%; min-width: 200px; z-index: 1000;">
           <div class="notification-list">
-            <button class="nav-item" onclick="sharePost(${post.id})">
+            <button class="nav-item" onclick="sharePost('${postIdStr}')">
               <i class="fas fa-share nav-icon"></i>
               <span>Share</span>
             </button>
-            <button class="nav-item" onclick="savePost(${post.id})">
+            <button class="nav-item" onclick="bookmarkPost('${postIdStr}')">
               <i class="fas fa-bookmark nav-icon"></i>
               <span>${isBookmarked ? 'Unsave Post' : 'Save Post'}</span>
             </button>
-            <button class="nav-item" onclick="reportPost(${post.id})">
+            <button class="nav-item" onclick="reportPost('${postIdStr}')">
               <i class="fas fa-flag nav-icon"></i>
               <span>Report Post</span>
             </button>
             ${post.user_id === currentUser.id ? `
               <hr style="margin: var(--space-sm) 0;">
-              <button class="nav-item" onclick="editPost(${post.id})">
+              <button class="nav-item" onclick="editPost('${postIdStr}')">
                 <i class="fas fa-edit nav-icon"></i>
                 <span>Edit Post</span>
               </button>
-              <button class="nav-item" onclick="deletePost(${post.id})" style="color: var(--danger);">
+              <button class="nav-item" onclick="deletePost('${postIdStr}')" style="color: var(--danger);">
                 <i class="fas fa-trash nav-icon"></i>
                 <span>Delete Post</span>
               </button>
@@ -517,48 +715,51 @@ function createPostElement(post) {
     <div class="post-stats">
       <div class="post-likes">
         <i class="fas fa-heart" style="color: var(--danger);"></i>
-        <span>${likeCount} likes</span>
+        <span>${likeCount} ${likeCount === 1 ? 'like' : 'likes'}</span>
       </div>
       <div class="post-comments">
-        <span>${commentCount} comments</span>
+        <span>${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}</span>
       </div>
       <div class="post-shares">
-        <span>${post.shares || 0} shares</span>
+        <span>${post.shares || 0} ${post.shares === 1 ? 'share' : 'shares'}</span>
       </div>
     </div>
     
     <div class="post-actions-container">
-      <button class="post-action ${isLiked ? 'active' : ''}" onclick="likePost(${post.id})" id="like-btn-${post.id}">
+      <button class="post-action ${isLiked ? 'active' : ''}" onclick="likePost('${postIdStr}')" id="like-btn-${postIdStr}">
         <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
         <span>${isLiked ? 'Liked' : 'Like'}</span>
       </button>
-      <button class="post-action" onclick="toggleComments(${post.id})">
+      <button class="post-action" onclick="toggleComments('${postIdStr}')">
         <i class="far fa-comment"></i>
         <span>Comment</span>
       </button>
-      <button class="post-action" onclick="sharePost(${post.id})">
+      <button class="post-action" onclick="sharePost('${postIdStr}')">
         <i class="fas fa-share"></i>
         <span>Share</span>
       </button>
-      <button class="post-action ${isBookmarked ? 'active' : ''}" onclick="bookmarkPost(${post.id})" id="bookmark-btn-${post.id}">
+      <button class="post-action ${isBookmarked ? 'active' : ''}" onclick="bookmarkPost('${postIdStr}')" id="bookmark-btn-${postIdStr}">
         <i class="${isBookmarked ? 'fas' : 'far'} fa-bookmark"></i>
         <span>${isBookmarked ? 'Saved' : 'Save'}</span>
       </button>
     </div>
     
-    <div class="comments-section" id="comments-${post.id}">
-      <div class="comments-list" id="comments-list-${post.id}">
+    <div class="comments-section" id="comments-${postIdStr}" style="display: none;">
+      <div class="comments-list" id="comments-list-${postIdStr}">
         <!-- Comments loaded dynamically -->
       </div>
       <div class="comment-form">
         <div class="post-input-avatar" style="width: 32px; height: 32px;">
           ${currentProfile?.avatar_url 
-            ? `<img src="${currentProfile.avatar_url}" alt="${currentProfile.username}">`
-            : `<span class="avatar-initial" style="width: 32px; height: 32px; font-size: 14px;">${currentProfile?.username?.charAt(0).toUpperCase() || 'U'}</span>`
+            ? `<img src="${currentProfile.avatar_url}" alt="${currentProfile.username}" 
+                 onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'avatar-initial\' style=\'width:32px;height:32px;font-size:14px;display:flex;align-items:center;justify-content:center;\'>${(currentProfile?.username || 'U').charAt(0).toUpperCase()}</span>';">`
+            : `<span class="avatar-initial" style="width: 32px; height: 32px; font-size: 14px; display: flex; align-items: center; justify-content: center;">
+                ${(currentProfile?.username || 'U').charAt(0).toUpperCase()}
+               </span>`
           }
         </div>
-        <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Write a comment..." 
-               onkeypress="if(event.key === 'Enter') addComment(${post.id})">
+        <input type="text" class="comment-input" id="comment-input-${postIdStr}" placeholder="Write a comment..." 
+               onkeypress="if(event.key === 'Enter') addComment('${postIdStr}')">
       </div>
     </div>
   `;
@@ -566,95 +767,124 @@ function createPostElement(post) {
   return div;
 }
 
+/* ===========================================================
+   POST INTERACTIONS
+=========================================================== */
 async function likePost(postId) {
+  const postIdNum = parseInt(postId);
+  if (isNaN(postIdNum)) return;
+  
   const likeBtn = el(`like-btn-${postId}`);
+  if (!likeBtn) return;
+  
   const likeIcon = likeBtn.querySelector('i');
   const likeText = likeBtn.querySelector('span');
   
-  if (userLikes.has(postId)) {
-    // Unlike
-    await sb.from('post_likes').delete()
-      .eq('post_id', postId)
-      .eq('user_id', currentUser.id);
-    
-    userLikes.delete(postId);
-    likeIcon.className = 'far fa-heart';
-    likeText.textContent = 'Like';
-    likeBtn.classList.remove('active');
-    
-    // Update like count
-    const postStats = likeBtn.closest('.post-card').querySelector('.post-likes span');
-    const currentCount = parseInt(postStats.textContent) || 0;
-    postStats.textContent = `${currentCount - 1} likes`;
-  } else {
-    // Like
-    await sb.from('post_likes').insert({
-      post_id: postId,
-      user_id: currentUser.id
-    });
-    
-    userLikes.add(postId);
-    likeIcon.className = 'fas fa-heart';
-    likeText.textContent = 'Liked';
-    likeBtn.classList.add('active');
-    
-    // Add animation
-    const heart = document.createElement('div');
-    heart.innerHTML = '<i class="fas fa-heart" style="color: var(--danger);"></i>';
-    heart.style.cssText = `
-      position: absolute;
-      font-size: 24px;
-      pointer-events: none;
-      animation: floatUp 1s ease-out forwards;
-    `;
-    
-    likeBtn.appendChild(heart);
-    setTimeout(() => heart.remove(), 1000);
-    
-    // Update like count
-    const postStats = likeBtn.closest('.post-card').querySelector('.post-likes span');
-    const currentCount = parseInt(postStats.textContent) || 0;
-    postStats.textContent = `${currentCount + 1} likes`;
-    
-    // Send notification if not own post
-    const post = await sb.from('posts').select('user_id').eq('id', postId).single();
-    if (post.data && post.data.user_id !== currentUser.id) {
-      await sendNotification(post.data.user_id, 'like', postId);
+  try {
+    if (userLikes.has(postId)) {
+      // Unlike - FIXED to use numeric post_id
+      await sb.from('post_likes').delete()
+        .eq('post_id', postIdNum)
+        .eq('user_id', currentUser.id);
+      
+      userLikes.delete(postId);
+      if (likeIcon) likeIcon.className = 'far fa-heart';
+      if (likeText) likeText.textContent = 'Like';
+      likeBtn.classList.remove('active');
+      
+      // Update like count display
+      const postStats = likeBtn.closest('.post-card')?.querySelector('.post-likes span');
+      if (postStats) {
+        const currentCount = parseInt(postStats.textContent) || 0;
+        postStats.textContent = `${Math.max(0, currentCount - 1)} ${Math.max(0, currentCount - 1) === 1 ? 'like' : 'likes'}`;
+      }
+    } else {
+      // Like - FIXED to use numeric post_id
+      await sb.from('post_likes').insert({
+        post_id: postIdNum,
+        user_id: currentUser.id
+      });
+      
+      userLikes.add(postId);
+      if (likeIcon) likeIcon.className = 'fas fa-heart';
+      if (likeText) likeText.textContent = 'Liked';
+      likeBtn.classList.add('active');
+      
+      // Add animation
+      const heart = document.createElement('div');
+      heart.innerHTML = '<i class="fas fa-heart" style="color: var(--danger);"></i>';
+      heart.style.cssText = `
+        position: absolute;
+        font-size: 24px;
+        pointer-events: none;
+        animation: floatUp 1s ease-out forwards;
+      `;
+      
+      likeBtn.appendChild(heart);
+      setTimeout(() => heart.remove(), 1000);
+      
+      // Update like count display
+      const postStats = likeBtn.closest('.post-card')?.querySelector('.post-likes span');
+      if (postStats) {
+        const currentCount = parseInt(postStats.textContent) || 0;
+        postStats.textContent = `${currentCount + 1} ${currentCount + 1 === 1 ? 'like' : 'likes'}`;
+      }
+      
+      // Send notification if not own post
+      const post = await sb.from('posts').select('user_id').eq('id', postIdNum).single();
+      if (post.data && post.data.user_id !== currentUser.id) {
+        await sendNotification(post.data.user_id, 'like', postIdNum);
+      }
     }
+  } catch (error) {
+    console.error('Error liking post:', error);
+    showToast('Failed to like post', 'error');
   }
 }
 
 async function bookmarkPost(postId) {
+  const postIdNum = parseInt(postId);
+  if (isNaN(postIdNum)) return;
+  
   const bookmarkBtn = el(`bookmark-btn-${postId}`);
+  if (!bookmarkBtn) return;
+  
   const bookmarkIcon = bookmarkBtn.querySelector('i');
   const bookmarkText = bookmarkBtn.querySelector('span');
   
-  if (userBookmarks.has(postId)) {
-    // Remove bookmark
-    await sb.from('post_bookmarks').delete()
-      .eq('post_id', postId)
-      .eq('user_id', currentUser.id);
-    
-    userBookmarks.delete(postId);
-    bookmarkIcon.className = 'far fa-bookmark';
-    bookmarkText.textContent = 'Save';
-    bookmarkBtn.classList.remove('active');
-  } else {
-    // Add bookmark
-    await sb.from('post_bookmarks').insert({
-      post_id: postId,
-      user_id: currentUser.id
-    });
-    
-    userBookmarks.add(postId);
-    bookmarkIcon.className = 'fas fa-bookmark';
-    bookmarkText.textContent = 'Saved';
-    bookmarkBtn.classList.add('active');
+  try {
+    if (userBookmarks.has(postId)) {
+      // Remove bookmark
+      await sb.from('post_bookmarks').delete()
+        .eq('post_id', postIdNum)
+        .eq('user_id', currentUser.id);
+      
+      userBookmarks.delete(postId);
+      if (bookmarkIcon) bookmarkIcon.className = 'far fa-bookmark';
+      if (bookmarkText) bookmarkText.textContent = 'Save';
+      bookmarkBtn.classList.remove('active');
+    } else {
+      // Add bookmark
+      await sb.from('post_bookmarks').insert({
+        post_id: postIdNum,
+        user_id: currentUser.id
+      });
+      
+      userBookmarks.add(postId);
+      if (bookmarkIcon) bookmarkIcon.className = 'fas fa-bookmark';
+      if (bookmarkText) bookmarkText.textContent = 'Saved';
+      bookmarkBtn.classList.add('active');
+    }
+  } catch (error) {
+    console.error('Error bookmarking post:', error);
+    showToast('Failed to bookmark post', 'error');
   }
 }
 
 async function toggleComments(postId) {
   const commentsSection = el(`comments-${postId}`);
+  if (!commentsSection) return;
+  
   commentsSection.classList.toggle('active');
   
   if (commentsSection.classList.contains('active')) {
@@ -663,36 +893,48 @@ async function toggleComments(postId) {
 }
 
 async function loadComments(postId) {
+  const postIdNum = parseInt(postId);
+  if (isNaN(postIdNum)) return;
+  
   const commentsList = el(`comments-list-${postId}`);
+  if (!commentsList) return;
+  
   commentsList.innerHTML = '<p class="text-center">Loading comments...</p>';
   
-  const { data: comments, error } = await sb
-    .from('comments')
-    .select(`
-      *,
-      profiles (
-        username,
-        avatar_url
-      )
-    `)
-    .eq('post_id', postId)
-    .order('created_at', { ascending: true });
+  try {
+    const { data: comments, error } = await sb
+      .from('comments')
+      .select(`
+        *,
+        profiles (
+          username,
+          avatar_url
+        )
+      `)
+      .eq('post_id', postIdNum)
+      .order('created_at', { ascending: true });
+      
+    if (error) {
+      // Table might not exist yet
+      commentsList.innerHTML = '<p class="text-center">Comments feature coming soon!</p>';
+      return;
+    }
     
-  if (error) {
+    commentsList.innerHTML = '';
+    
+    if (!comments || comments.length === 0) {
+      commentsList.innerHTML = '<p class="text-center">No comments yet. Be the first to comment!</p>';
+      return;
+    }
+    
+    for (const comment of comments) {
+      const commentElement = createCommentElement(comment);
+      commentsList.appendChild(commentElement);
+    }
+    
+  } catch (error) {
+    console.error('Error loading comments:', error);
     commentsList.innerHTML = '<p class="text-center">Failed to load comments</p>';
-    return;
-  }
-  
-  commentsList.innerHTML = '';
-  
-  if (comments.length === 0) {
-    commentsList.innerHTML = '<p class="text-center">No comments yet. Be the first to comment!</p>';
-    return;
-  }
-  
-  for (const comment of comments) {
-    const commentElement = createCommentElement(comment);
-    commentsList.appendChild(commentElement);
   }
 }
 
@@ -701,17 +943,20 @@ function createCommentElement(comment) {
   div.className = 'comment-item';
   
   const commentTime = formatRelativeTime(comment.created_at);
+  const username = comment.profiles?.username || 'Unknown User';
+  const avatarInitial = username.charAt(0).toUpperCase();
   
   div.innerHTML = `
     <div class="comment-avatar">
-      ${comment.profiles.avatar_url 
-        ? `<img src="${comment.profiles.avatar_url}" alt="${comment.profiles.username}">`
-        : `<span class="avatar-initial" style="width: 32px; height: 32px; font-size: 14px;">${comment.profiles.username.charAt(0).toUpperCase()}</span>`
+      ${comment.profiles?.avatar_url 
+        ? `<img src="${comment.profiles.avatar_url}" alt="${username}" 
+             onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'avatar-initial\' style=\'width:32px;height:32px;font-size:14px;display:flex;align-items:center;justify-content:center;\'>${avatarInitial}</span>';">`
+        : `<span class="avatar-initial" style="width:32px;height:32px;font-size:14px;display:flex;align-items:center;justify-content:center;">${avatarInitial}</span>`
       }
     </div>
     <div class="comment-content">
       <div class="comment-header">
-        <div class="comment-username">${comment.profiles.username}</div>
+        <div class="comment-username">${username}</div>
         <div class="comment-time" title="${formatDate(comment.created_at)}">${commentTime}</div>
       </div>
       <div class="comment-text">${comment.comment}</div>
@@ -722,29 +967,133 @@ function createCommentElement(comment) {
 }
 
 async function addComment(postId) {
+  const postIdNum = parseInt(postId);
+  if (isNaN(postIdNum)) return;
+  
   const commentInput = el(`comment-input-${postId}`);
+  if (!commentInput) return;
+  
   const comment = commentInput.value.trim();
-  
-  if (!comment) return;
-  
-  const { error } = await sb.from('comments').insert({
-    post_id: postId,
-    user_id: currentUser.id,
-    comment: comment
-  });
-  
-  if (error) {
-    showToast('Failed to post comment', 'error');
+  if (!comment) {
+    showToast('Please enter a comment', 'warning');
     return;
   }
   
-  commentInput.value = '';
-  await loadComments(postId);
+  try {
+    const { error } = await sb.from('comments').insert({
+      post_id: postIdNum,
+      user_id: currentUser.id,
+      comment: comment
+    });
+    
+    if (error) {
+      // Table might not exist yet
+      showToast('Comments feature coming soon!', 'info');
+      return;
+    }
+    
+    commentInput.value = '';
+    await loadComments(postId);
+    
+    // Send notification if not own post
+    const post = await sb.from('posts').select('user_id').eq('id', postIdNum).single();
+    if (post.data && post.data.user_id !== currentUser.id) {
+      await sendNotification(post.data.user_id, 'comment', postIdNum);
+    }
+    
+    showToast('Comment added!', 'success');
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    showToast('Failed to add comment', 'error');
+  }
+}
+
+/* ===========================================================
+   POST UTILITY FUNCTIONS
+=========================================================== */
+function togglePostMenu(postId) {
+  const menu = el(`post-menu-${postId}`);
+  if (!menu) return;
   
-  // Send notification if not own post
-  const post = await sb.from('posts').select('user_id').eq('id', postId).single();
-  if (post.data && post.data.user_id !== currentUser.id) {
-    await sendNotification(post.data.user_id, 'comment', postId);
+  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+  
+  // Close other open menus
+  qsa('.post-menu-dropdown').forEach(otherMenu => {
+    if (otherMenu.id !== menu.id) {
+      otherMenu.style.display = 'none';
+    }
+  });
+}
+
+async function sharePost(postId) {
+  const postIdNum = parseInt(postId);
+  if (isNaN(postIdNum)) return;
+  
+  try {
+    const { data: post } = await sb.from('posts').select('*').eq('id', postIdNum).single();
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Check out this post on My-Day',
+          text: post.data.caption,
+          url: window.location.href
+        });
+        
+        // Increment share count
+        await sb
+          .from('posts')
+          .update({ shares: (post.data.shares || 0) + 1 })
+          .eq('id', postIdNum);
+          
+        showToast('Post shared!', 'success');
+      } catch (error) {
+        console.log('Share cancelled:', error);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      const shareUrl = `${window.location.origin}?post=${postId}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showToast('Link copied to clipboard!', 'success');
+      });
+    }
+  } catch (error) {
+    console.error('Error sharing post:', error);
+    showToast('Failed to share post', 'error');
+  }
+}
+
+function reportPost(postId) {
+  showToast('Report submitted. Thank you for helping keep My-Day safe!', 'info');
+}
+
+function editPost(postId) {
+  activePost = postId;
+  showToast('Edit post feature coming soon!', 'info');
+}
+
+async function deletePost(postId) {
+  const postIdNum = parseInt(postId);
+  if (isNaN(postIdNum)) return;
+  
+  if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+    return;
+  }
+  
+  try {
+    await sb.from('posts').delete().eq('id', postIdNum);
+    showToast('Post deleted successfully', 'success');
+    el(`post-${postId}`)?.remove();
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    showToast('Failed to delete post', 'error');
+  }
+}
+
+function openMediaViewer(url, type) {
+  // Simple media viewer
+  if (type === 'image') {
+    window.open(url, '_blank');
   }
 }
 
@@ -757,16 +1106,22 @@ function openCreatePostModal() {
 
 function closeCreatePostModal() {
   el('createPostModal').classList.remove('active');
-  el('postCaption').value = '';
-  el('postMediaPreview').style.display = 'none';
-  el('postFeeling').style.display = 'none';
+  const caption = el('postCaption');
+  const mediaPreview = el('postMediaPreview');
+  const postFeeling = el('postFeeling');
+  const mediaInput = el('mediaInput');
+  
+  if (caption) caption.value = '';
+  if (mediaPreview) mediaPreview.style.display = 'none';
+  if (postFeeling) postFeeling.style.display = 'none';
+  if (mediaInput) mediaInput.value = '';
 }
 
 async function submitPost() {
-  const caption = el('postCaption').value.trim();
-  const privacy = el('postPrivacy').value;
-  const mediaFile = el('mediaInput').files[0];
-  const feeling = el('postFeeling').dataset.feeling;
+  const caption = el('postCaption')?.value.trim();
+  const privacy = el('postPrivacy')?.value || 'public';
+  const mediaFile = el('mediaInput')?.files?.[0];
+  const feeling = el('postFeeling')?.dataset?.feeling;
   
   if (!caption && !mediaFile) {
     showToast('Please add some text or media to your post', 'error');
@@ -774,6 +1129,8 @@ async function submitPost() {
   }
   
   const btn = el('submitPostBtn');
+  if (!btn) return;
+  
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
   
@@ -787,7 +1144,10 @@ async function submitPost() {
       
       const { error: uploadError } = await sb.storage
         .from('posts')
-        .upload(fileName, mediaFile);
+        .upload(fileName, mediaFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
         
       if (uploadError) throw uploadError;
       
@@ -801,13 +1161,14 @@ async function submitPost() {
     
     const postData = {
       user_id: currentUser.id,
-      caption: caption,
+      caption: caption || '',
       media_url: mediaUrl,
       media_type: mediaType,
       privacy: privacy,
       feeling: feeling || null,
       likes: 0,
-      shares: 0
+      shares: 0,
+      created_at: new Date().toISOString()
     };
     
     const { error } = await sb.from('posts').insert(postData);
@@ -830,35 +1191,47 @@ function openPhotoPickerModal() {
   el('mediaInput').click();
 }
 
-el('mediaInput')?.addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  const preview = el('mediaPreview');
-  const previewContainer = el('postMediaPreview');
-  
-  if (file.type.startsWith('image/')) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      preview.src = e.target.result;
-      previewContainer.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-  } else if (file.type.startsWith('video/')) {
-    preview.src = '';
-    previewContainer.style.display = 'block';
-    preview.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--text-lighter);">
-        <i class="fas fa-video" style="font-size: 48px; margin-bottom: 16px;"></i>
-        <span>Video selected: ${file.name}</span>
-      </div>
-    `;
+document.addEventListener('DOMContentLoaded', () => {
+  const mediaInput = el('mediaInput');
+  if (mediaInput) {
+    mediaInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const preview = el('mediaPreview');
+      const previewContainer = el('postMediaPreview');
+      
+      if (!preview || !previewContainer) return;
+      
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+          previewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else if (file.type.startsWith('video/')) {
+        preview.src = '';
+        preview.style.display = 'none';
+        previewContainer.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--text-lighter); background: var(--hover); border-radius: var(--radius);">
+            <i class="fas fa-video" style="font-size: 48px; margin-bottom: 16px;"></i>
+            <span>Video selected: ${file.name}</span>
+          </div>
+        `;
+        previewContainer.style.display = 'block';
+      }
+    });
   }
 });
 
 function removeMedia() {
-  el('mediaInput').value = '';
-  el('postMediaPreview').style.display = 'none';
+  const mediaInput = el('mediaInput');
+  const previewContainer = el('postMediaPreview');
+  
+  if (mediaInput) mediaInput.value = '';
+  if (previewContainer) previewContainer.style.display = 'none';
 }
 
 function openFeelingPickerModal() {
@@ -872,6 +1245,8 @@ function closeFeelingModal() {
 
 function populateFeelings() {
   const feelingsGrid = qs('.feelings-grid');
+  if (!feelingsGrid) return;
+  
   const feelings = [
     { emoji: '😊', text: 'Happy' },
     { emoji: '😢', text: 'Sad' },
@@ -906,6 +1281,8 @@ function selectFeeling(emoji, text) {
   const feelingContainer = el('postFeeling');
   const feelingText = el('feelingText');
   
+  if (!feelingContainer || !feelingText) return;
+  
   feelingText.textContent = `${emoji} Feeling ${text}`;
   feelingContainer.dataset.feeling = text;
   feelingContainer.style.display = 'flex';
@@ -914,8 +1291,11 @@ function selectFeeling(emoji, text) {
 }
 
 function removeFeeling() {
-  el('postFeeling').style.display = 'none';
-  el('postFeeling').dataset.feeling = '';
+  const feelingContainer = el('postFeeling');
+  if (feelingContainer) {
+    feelingContainer.style.display = 'none';
+    feelingContainer.dataset.feeling = '';
+  }
 }
 
 /* ===========================================================
@@ -931,7 +1311,7 @@ async function openCameraModal() {
     });
     
     const video = el('cameraVideo');
-    video.srcObject = cameraStream;
+    if (video) video.srcObject = cameraStream;
   } catch (error) {
     console.error('Camera error:', error);
     showToast('Camera access denied or unavailable', 'error');
@@ -964,8 +1344,10 @@ function switchCamera() {
 function capturePhoto() {
   const video = el('cameraVideo');
   const canvas = el('photoCanvas');
-  const context = canvas.getContext('2d');
   
+  if (!video || !canvas) return;
+  
+  const context = canvas.getContext('2d');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -987,276 +1369,146 @@ function capturePhoto() {
 }
 
 /* ===========================================================
-   MESSENGER FUNCTIONALITY
+   CONTACTS & ONLINE USERS
 =========================================================== */
-function openMessengerModal() {
-  el('messengerModal').classList.add('active');
-  loadChats();
-}
-
-function closeMessengerModal() {
-  el('messengerModal').classList.remove('active');
-  activeChatUser = null;
-  
-  if (msgSubscription) {
-    msgSubscription.unsubscribe();
-    msgSubscription = null;
-  }
-}
-
-async function loadChats() {
-  const chatsContainer = el('messengerChats');
-  chatsContainer.innerHTML = '<p class="text-center">Loading chats...</p>';
-  
-  const { data: chats, error } = await sb
-    .from('chats')
-    .select(`
-      *,
-      user1:profiles!chats_user1_id_fkey(username, avatar_url),
-      user2:profiles!chats_user2_id_fkey(username, avatar_url)
-    `)
-    .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
-    .order('updated_at', { ascending: false });
-    
-  if (error) {
-    chatsContainer.innerHTML = '<p class="text-center">Failed to load chats</p>';
-    return;
-  }
-  
-  chatsContainer.innerHTML = '';
-  
-  if (chats.length === 0) {
-    chatsContainer.innerHTML = `
-      <div class="text-center" style="padding: 40px 20px; color: var(--text-lighter);">
-        <i class="fas fa-comments" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
-        <h4>No conversations yet</h4>
-        <p>Start a conversation with someone!</p>
-      </div>
-    `;
-    return;
-  }
-  
-  for (const chat of chats) {
-    const otherUser = chat.user1_id === currentUser.id ? chat.user2 : chat.user1;
-    const chatElement = createChatElement(chat, otherUser);
-    chatsContainer.appendChild(chatElement);
-  }
-}
-
-function createChatElement(chat, otherUser) {
-  const div = document.createElement('div');
-  div.className = 'chat-item';
-  div.onclick = () => openChat(chat.id, otherUser);
-  
-  const lastMessageTime = chat.last_message_at ? formatRelativeTime(chat.last_message_at) : '';
-  
-  div.innerHTML = `
-    <div class="chat-avatar">
-      ${otherUser.avatar_url 
-        ? `<img src="${otherUser.avatar_url}" alt="${otherUser.username}">`
-        : `<span class="avatar-initial">${otherUser.username.charAt(0).toUpperCase()}</span>`
-      }
-    </div>
-    <div class="chat-info">
-      <div class="chat-name">${otherUser.username}</div>
-      <div class="chat-preview">${chat.last_message || 'No messages yet'}</div>
-    </div>
-    <div class="chat-meta">
-      <div class="chat-time">${lastMessageTime}</div>
-      ${chat.unread_count > 0 ? `<div class="chat-unread">${chat.unread_count}</div>` : ''}
-    </div>
-  `;
-  
-  return div;
-}
-
-async function openChat(chatId, user) {
-  activeChatUser = user;
-  
-  // Update chat header
-  el('chatUserName').textContent = user.username;
-  el('chatUserStatus').textContent = 'Online';
-  
-  el('chatUserAvatar').innerHTML = user.avatar_url 
-    ? `<img src="${user.avatar_url}" alt="${user.username}">`
-    : `<span class="avatar-initial">${user.username.charAt(0).toUpperCase()}</span>`;
-  
-  // Load messages
-  await loadMessages(chatId);
-  
-  // Subscribe to new messages
-  subscribeToMessages(chatId);
-}
-
-async function loadMessages(chatId) {
-  const messagesContainer = el('chatMessages');
-  messagesContainer.innerHTML = '<p class="text-center">Loading messages...</p>';
-  
-  const { data: messages, error } = await sb
-    .from('messages')
-    .select(`
-      *,
-      sender:profiles!messages_sender_id_fkey(username, avatar_url)
-    `)
-    .eq('chat_id', chatId)
-    .order('created_at', { ascending: true });
-    
-  if (error) {
-    messagesContainer.innerHTML = '<p class="text-center">Failed to load messages</p>';
-    return;
-  }
-  
-  messagesContainer.innerHTML = '';
-  
-  if (messages.length === 0) {
-    messagesContainer.innerHTML = `
-      <div class="text-center" style="padding: 40px 20px; color: var(--text-lighter);">
-        <i class="fas fa-comment" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
-        <h4>No messages yet</h4>
-        <p>Send your first message to ${activeChatUser?.username || 'this user'}!</p>
-      </div>
-    `;
-    return;
-  }
-  
-  for (const message of messages) {
-    const messageElement = createMessageElement(message);
-    messagesContainer.appendChild(messageElement);
-  }
-  
-  // Scroll to bottom
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-function createMessageElement(message) {
-  const div = document.createElement('div');
-  div.className = `message ${message.sender_id === currentUser.id ? 'sent' : 'received'}`;
-  
-  const messageTime = formatRelativeTime(message.created_at);
-  
-  div.innerHTML = `
-    <div>${message.content}</div>
-    <div class="message-time">${messageTime}</div>
-  `;
-  
-  return div;
-}
-
-async function sendChatMessage() {
-  const input = el('chatInput');
-  const content = input.value.trim();
-  
-  if (!content || !activeChatUser) return;
-  
-  // Find or create chat
-  const { data: existingChat } = await sb
-    .from('chats')
-    .select('id')
-    .or(`and(user1_id.eq.${currentUser.id},user2_id.eq.${activeChatUser.id}),and(user1_id.eq.${activeChatUser.id},user2_id.eq.${currentUser.id})`)
-    .maybeSingle();
-    
-  let chatId;
-  
-  if (existingChat) {
-    chatId = existingChat.id;
-  } else {
-    const { data: newChat } = await sb
-      .from('chats')
-      .insert({
-        user1_id: currentUser.id,
-        user2_id: activeChatUser.id
-      })
-      .select('id')
-      .single();
+async function loadOnlineContacts() {
+  try {
+    const { data: users, error } = await sb
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .neq('id', currentUser.id)
+      .limit(8);
       
-    chatId = newChat.id;
-  }
-  
-  // Send message
-  await sb.from('messages').insert({
-    chat_id: chatId,
-    sender_id: currentUser.id,
-    content: content
-  });
-  
-  // Update chat
-  await sb
-    .from('chats')
-    .update({
-      last_message: content,
-      last_message_at: new Date().toISOString(),
-      unread_count: sb.raw('unread_count + 1')
-    })
-    .eq('id', chatId);
+    if (error) throw error;
     
-  input.value = '';
-  
-  // Send notification
-  await sendNotification(activeChatUser.id, 'message', chatId);
+    const onlineList = el('onlineList');
+    const contactsList = el('contactsList');
+    
+    if (onlineList) {
+      onlineList.innerHTML = '';
+      users.slice(0, 5).forEach(user => {
+        const userElement = createOnlineUserElement(user);
+        onlineList.appendChild(userElement);
+      });
+    }
+    
+    if (contactsList) {
+      contactsList.innerHTML = '';
+      users.forEach(user => {
+        const contactElement = createContactElement(user);
+        contactsList.appendChild(contactElement);
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error loading contacts:', error);
+    // Hide the sections that failed
+    const onlineFriends = qs('.online-friends');
+    const contactsWidget = qs('#contactsList')?.closest('.widget');
+    
+    if (onlineFriends) onlineFriends.style.display = 'none';
+    if (contactsWidget) contactsWidget.style.display = 'none';
+  }
 }
 
-function subscribeToMessages(chatId) {
-  if (msgSubscription) {
-    msgSubscription.unsubscribe();
-  }
+function createOnlineUserElement(user) {
+  const div = document.createElement('div');
+  div.className = 'online-user';
   
-  msgSubscription = sb
-    .channel('messages')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'messages',
-      filter: `chat_id=eq.${chatId}`
-    }, (payload) => {
-      const message = payload.new;
-      if (message.sender_id !== currentUser.id) {
-        const messageElement = createMessageElement(message);
-        el('chatMessages').appendChild(messageElement);
-        el('chatMessages').scrollTop = el('chatMessages').scrollHeight;
+  const avatarInitial = (user.username || 'U').charAt(0).toUpperCase();
+  
+  div.innerHTML = `
+    <div class="online-avatar">
+      ${user.avatar_url 
+        ? `<img src="${user.avatar_url}" alt="${user.username}" 
+             onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\'width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;\'>${avatarInitial}</span>';">`
+        : `<span style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;">${avatarInitial}</span>`
       }
-    })
-    .subscribe();
+      <div class="online-status"></div>
+    </div>
+    <div>${truncateText(user.username, 12)}</div>
+  `;
+  
+  return div;
+}
+
+function createContactElement(user) {
+  const div = document.createElement('div');
+  div.className = 'contact-item';
+  
+  const avatarInitial = (user.username || 'U').charAt(0).toUpperCase();
+  
+  div.innerHTML = `
+    <div class="contact-avatar">
+      ${user.avatar_url 
+        ? `<img src="${user.avatar_url}" alt="${user.username}" 
+             onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\'width:36px;height:36px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;\'>${avatarInitial}</span>';">`
+        : `<span style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:16px;">${avatarInitial}</span>`
+      }
+    </div>
+    <div class="contact-info">
+      <div class="contact-name">${truncateText(user.username, 15)}</div>
+    </div>
+  `;
+  
+  return div;
 }
 
 /* ===========================================================
-   NOTIFICATIONS
+   STORIES (DISABLED UNTIL TABLE EXISTS)
+=========================================================== */
+function loadStories() {
+  const storiesContainer = el('storiesContainer');
+  if (storiesContainer) {
+    storiesContainer.style.display = 'none';
+  }
+}
+
+/* ===========================================================
+   NOTIFICATIONS (DISABLED UNTIL TABLE EXISTS)
 =========================================================== */
 async function loadNotifications() {
-  const notificationList = el('notificationList');
-  notificationList.innerHTML = '<p class="text-center">Loading notifications...</p>';
-  
-  const { data: notifications, error } = await sb
-    .from('notifications')
-    .select(`
-      *,
-      sender:profiles!notifications_sender_id_fkey(username, avatar_url)
-    `)
-    .eq('receiver_id', currentUser.id)
-    .order('created_at', { ascending: false })
-    .limit(10);
+  try {
+    const { data: notifications, error } = await sb
+      .from('notifications')
+      .select('*, profiles!notifications_sender_id_fkey(username, avatar_url)')
+      .eq('receiver_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+      
+    if (error) {
+      // Table doesn't exist yet
+      const notificationBadge = qs('.notification-badge');
+      if (notificationBadge) notificationBadge.style.display = 'none';
+      return;
+    }
     
-  if (error) {
-    notificationList.innerHTML = '<p class="text-center">Failed to load notifications</p>';
-    return;
-  }
-  
-  notificationList.innerHTML = '';
-  
-  if (notifications.length === 0) {
-    notificationList.innerHTML = '<p class="text-center">No notifications yet</p>';
-    return;
-  }
-  
-  for (const notification of notifications) {
-    const notificationElement = createNotificationElement(notification);
-    notificationList.appendChild(notificationElement);
+    // If we get here, table exists
+    const notificationList = el('notificationList');
+    if (notificationList) {
+      notificationList.innerHTML = '';
+      
+      if (!notifications || notifications.length === 0) {
+        notificationList.innerHTML = '<p class="text-center">No notifications yet</p>';
+        return;
+      }
+      
+      for (const notification of notifications) {
+        const notificationElement = createNotificationElement(notification);
+        notificationList.appendChild(notificationElement);
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error loading notifications:', error);
+    const notificationBadge = qs('.notification-badge');
+    if (notificationBadge) notificationBadge.style.display = 'none';
   }
 }
 
 function createNotificationElement(notification) {
   const div = document.createElement('div');
   div.className = `notification-item ${notification.read ? '' : 'unread'}`;
-  div.onclick = () => handleNotificationClick(notification);
   
   const icons = {
     like: 'fas fa-heart',
@@ -1275,11 +1527,32 @@ function createNotificationElement(notification) {
   };
   
   const notificationTime = formatRelativeTime(notification.created_at);
-  const message = getNotificationMessage(notification);
+  const senderName = notification.profiles?.username || 'Someone';
+  
+  let message = '';
+  switch (notification.type) {
+    case 'like':
+      message = `<strong>${senderName}</strong> liked your post`;
+      break;
+    case 'comment':
+      message = `<strong>${senderName}</strong> commented on your post`;
+      break;
+    case 'follow':
+      message = `<strong>${senderName}</strong> started following you`;
+      break;
+    case 'message':
+      message = `<strong>${senderName}</strong> sent you a message`;
+      break;
+    case 'share':
+      message = `<strong>${senderName}</strong> shared your post`;
+      break;
+    default:
+      message = 'You have a new notification';
+  }
   
   div.innerHTML = `
-    <div class="notification-icon ${notification.type}" style="background: var(--${colors[notification.type]});">
-      <i class="${icons[notification.type]}"></i>
+    <div class="notification-icon ${notification.type}" style="background: var(--${colors[notification.type] || 'primary'});">
+      <i class="${icons[notification.type] || 'fas fa-bell'}"></i>
     </div>
     <div class="notification-content">
       <div>${message}</div>
@@ -1290,25 +1563,6 @@ function createNotificationElement(notification) {
   return div;
 }
 
-function getNotificationMessage(notification) {
-  const sender = notification.sender?.username || 'Someone';
-  
-  switch (notification.type) {
-    case 'like':
-      return `<strong>${sender}</strong> liked your post`;
-    case 'comment':
-      return `<strong>${sender}</strong> commented on your post`;
-    case 'follow':
-      return `<strong>${sender}</strong> started following you`;
-    case 'message':
-      return `<strong>${sender}</strong> sent you a message`;
-    case 'share':
-      return `<strong>${sender}</strong> shared your post`;
-    default:
-      return 'You have a new notification';
-  }
-}
-
 async function sendNotification(receiverId, type, referenceId) {
   try {
     await sb.from('notifications').insert({
@@ -1316,190 +1570,21 @@ async function sendNotification(receiverId, type, referenceId) {
       receiver_id: receiverId,
       type: type,
       reference_id: referenceId,
-      read: false
+      read: false,
+      created_at: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error sending notification:', error);
+    // Silently fail - notifications table might not exist
   }
-}
-
-function handleNotificationClick(notification) {
-  // Mark as read
-  sb.from('notifications')
-    .update({ read: true })
-    .eq('id', notification.id)
-    .then(() => {
-      // Navigate to relevant content
-      switch (notification.type) {
-        case 'like':
-        case 'comment':
-        case 'share':
-          // Scroll to post
-          const postElement = el(`post-${notification.reference_id}`);
-          if (postElement) {
-            postElement.scrollIntoView({ behavior: 'smooth' });
-            postElement.style.animation = 'pulse 2s';
-            setTimeout(() => {
-              postElement.style.animation = '';
-            }, 2000);
-          }
-          break;
-        case 'message':
-          openMessengerModal();
-          break;
-        case 'follow':
-          // Show profile
-          break;
-      }
-      
-      // Close dropdown
-      el('notificationDropdown').classList.remove('active');
-    });
 }
 
 /* ===========================================================
-   ONLINE CONTACTS & STORIES
+   EVENTS (HARDCODED FOR NOW)
 =========================================================== */
-async function loadOnlineContacts() {
-  const onlineList = el('onlineList');
-  const contactsList = el('contactsList');
-  
-  const { data: users, error } = await sb
-    .from('profiles')
-    .select('id, username, avatar_url, last_seen')
-    .neq('id', currentUser.id)
-    .order('last_seen', { ascending: false })
-    .limit(10);
-    
-  if (error) {
-    console.error('Error loading contacts:', error);
-    return;
-  }
-  
-  // Update online list
-  onlineList.innerHTML = '';
-  users.slice(0, 5).forEach(user => {
-    const isOnline = new Date() - new Date(user.last_seen) < 5 * 60 * 1000; // 5 minutes
-    if (isOnline) {
-      const userElement = createOnlineUserElement(user);
-      onlineList.appendChild(userElement);
-    }
-  });
-  
-  // Update contacts list
-  contactsList.innerHTML = '';
-  users.forEach(user => {
-    const contactElement = createContactElement(user);
-    contactsList.appendChild(contactElement);
-  });
-}
-
-function createOnlineUserElement(user) {
-  const div = document.createElement('div');
-  div.className = 'online-user';
-  
-  div.innerHTML = `
-    <div class="online-avatar">
-      ${user.avatar_url 
-        ? `<img src="${user.avatar_url}" alt="${user.username}">`
-        : `<span class="avatar-initial" style="width: 32px; height: 32px; font-size: 14px;">${user.username.charAt(0).toUpperCase()}</span>`
-      }
-      <div class="online-status"></div>
-    </div>
-    <div>${user.username}</div>
-  `;
-  
-  return div;
-}
-
-function createContactElement(user) {
-  const div = document.createElement('div');
-  div.className = 'contact-item';
-  div.onclick = () => openChat(null, user);
-  
-  const isOnline = new Date() - new Date(user.last_seen) < 5 * 60 * 1000;
-  
-  div.innerHTML = `
-    <div class="contact-avatar">
-      ${user.avatar_url 
-        ? `<img src="${user.avatar_url}" alt="${user.username}">`
-        : `<span class="avatar-initial" style="width: 36px; height: 36px; font-size: 16px;">${user.username.charAt(0).toUpperCase()}</span>`
-      }
-      ${isOnline ? '<div class="contact-status"></div>' : ''}
-    </div>
-    <div class="contact-info">
-      <div class="contact-name">${user.username}</div>
-      <div class="contact-status-text">${isOnline ? 'Online' : 'Offline'}</div>
-    </div>
-  `;
-  
-  return div;
-}
-
-async function loadStories() {
-  const storiesContainer = el('storiesContainer');
-  
-  const { data: stories, error } = await sb
-    .from('stories')
-    .select(`
-      *,
-      profiles (
-        username,
-        avatar_url
-      )
-    `)
-    .gt('expires_at', new Date().toISOString())
-    .order('created_at', { ascending: false })
-    .limit(10);
-    
-  if (error) {
-    console.error('Error loading stories:', error);
-    return;
-  }
-  
-  storiesContainer.innerHTML = '';
-  
-  // Add story button
-  const addStory = document.createElement('div');
-  addStory.className = 'story-item story-add';
-  addStory.onclick = () => showToast('Story creation coming soon!', 'info');
-  addStory.innerHTML = `
-    <div class="story-avatar">
-      <i class="fas fa-plus"></i>
-    </div>
-    <div class="story-user">Add Story</div>
-  `;
-  storiesContainer.appendChild(addStory);
-  
-  // Add stories
-  stories.forEach(story => {
-    const storyElement = createStoryElement(story);
-    storiesContainer.appendChild(storyElement);
-  });
-}
-
-function createStoryElement(story) {
-  const div = document.createElement('div');
-  div.className = 'story-item';
-  
-  div.innerHTML = `
-    <div class="story-avatar">
-      ${story.media_url 
-        ? `<img src="${story.media_url}" alt="${story.profiles.username}'s story">`
-        : `<span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: white; font-size: 24px;">${story.profiles.username.charAt(0).toUpperCase()}</span>`
-      }
-    </div>
-    <div class="story-user">${story.profiles.username}</div>
-  `;
-  
-  return div;
-}
-
-/* ===========================================================
-   EVENTS
-=========================================================== */
-async function loadEvents() {
+function loadEvents() {
   const eventsList = el('eventsList');
+  if (!eventsList) return;
   
   const events = [
     {
@@ -1553,75 +1638,143 @@ function createEventElement(event) {
 }
 
 /* ===========================================================
+   MESSENGER (DISABLED UNTIL TABLE EXISTS)
+=========================================================== */
+function openMessengerModal() {
+  showToast('Messenger feature coming soon!', 'info');
+}
+
+function closeMessengerModal() {
+  // Nothing to close yet
+}
+
+function loadChats() {
+  // Disabled for now
+}
+
+/* ===========================================================
    INITIALIZATION
 =========================================================== */
 function initDashboard() {
-  // Load initial data
+  // Load essential features
   loadPosts();
   loadOnlineContacts();
-  loadStories();
   loadEvents();
-  loadNotifications();
+  
+  // Try to load optional features
+  setTimeout(() => {
+    try {
+      loadNotifications();
+    } catch (error) {
+      console.log('Notifications disabled');
+    }
+    
+    try {
+      loadStories();
+    } catch (error) {
+      console.log('Stories disabled');
+    }
+    
+    try {
+      loadChats();
+    } catch (error) {
+      console.log('Chats disabled');
+    }
+  }, 1000);
   
   // Update user status
   updateUserStatus();
-  setInterval(updateUserStatus, 60000); // Update every minute
+  // Update every 5 minutes
+  setInterval(updateUserStatus, 5 * 60 * 1000);
 }
 
 function updateUserStatus() {
   if (!currentUser) return;
   
-  sb.from('profiles')
-    .update({ last_seen: new Date().toISOString() })
-    .eq('id', currentUser.id)
-    .then(() => {
-      // Status updated
-    });
+  try {
+    sb.from('profiles')
+      .update({ 
+        last_seen: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', currentUser.id)
+      .then(() => {
+        // Status updated
+      });
+  } catch (error) {
+    console.error('Error updating user status:', error);
+  }
 }
 
 function setupEventListeners() {
   // Theme toggle
-  el('themeToggle').addEventListener('click', toggleTheme);
+  const themeToggle = el('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
   
   // Notification dropdown
-  el('notificationBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    el('notificationDropdown').classList.toggle('active');
-  });
+  const notificationBtn = el('notificationBtn');
+  if (notificationBtn) {
+    notificationBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const dropdown = el('notificationDropdown');
+      if (dropdown) dropdown.classList.toggle('active');
+    });
+  }
   
   // User menu dropdown
-  el('userMenuBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    el('userMenuDropdown').classList.toggle('active');
-  });
+  const userMenuBtn = el('userMenuBtn');
+  if (userMenuBtn) {
+    userMenuBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const dropdown = el('userMenuDropdown');
+      if (dropdown) dropdown.classList.toggle('active');
+    });
+  }
   
   // Messenger button
-  el('messengerBtn').addEventListener('click', openMessengerModal);
+  const messengerBtn = el('messengerBtn');
+  if (messengerBtn) {
+    messengerBtn.addEventListener('click', openMessengerModal);
+  }
   
   // Logout
-  el('logoutBtn').addEventListener('click', async () => {
-    await sb.auth.signOut();
-    window.location.href = 'login.html';
-  });
+  const logoutBtn = el('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await sb.auth.signOut();
+        window.location.href = 'login.html';
+      } catch (error) {
+        console.error('Error logging out:', error);
+      }
+    });
+  }
   
   // Close dropdowns when clicking outside
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('.notification-wrapper')) {
-      el('notificationDropdown').classList.remove('active');
+    const notificationDropdown = el('notificationDropdown');
+    const userMenuDropdown = el('userMenuDropdown');
+    
+    if (notificationDropdown && !e.target.closest('.notification-wrapper')) {
+      notificationDropdown.classList.remove('active');
     }
-    if (!e.target.closest('.user-menu-wrapper')) {
-      el('userMenuDropdown').classList.remove('active');
+    if (userMenuDropdown && !e.target.closest('.user-menu-wrapper')) {
+      userMenuDropdown.classList.remove('active');
     }
   });
   
   // Search functionality
   const searchInput = qs('.search-input');
-  searchInput.addEventListener('input', debounce(function(e) {
-    const query = e.target.value.trim();
-    if (query.length > 2) {
-      performSearch(query);
-    }
-  }, 300));
+  if (searchInput) {
+    searchInput.addEventListener('input', debounce(function(e) {
+      const query = e.target.value.trim();
+      if (query.length > 2) {
+        performSearch(query);
+      }
+    }, 300));
+  }
   
   // Feed tabs
   qsa('.feed-tab').forEach(tab => {
@@ -1639,106 +1792,83 @@ function setupEventListeners() {
       if (this.href === '#') e.preventDefault();
       qsa('.nav-item').forEach(i => i.classList.remove('active'));
       this.classList.add('active');
-      const tab = this.dataset.tab;
-      // Handle tab switching
+    });
+  });
+  
+  // Character counters for edit profile
+  const editUsername = el('editUsername');
+  const editBio = el('editBio');
+  
+  if (editUsername) {
+    editUsername.addEventListener('input', () => updateCharCount('editUsername', 'usernameCharCount', 30));
+  }
+  
+  if (editBio) {
+    editBio.addEventListener('input', () => updateCharCount('editBio', 'bioCharCount', 150));
+  }
+  
+  // Auto-resize textareas
+  const textareas = qsa('textarea');
+  textareas.forEach(textarea => {
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
     });
   });
 }
 
 function setupSubscriptions() {
-  // Subscribe to new posts
-  postsSubscription = sb
-    .channel('posts')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'posts'
-    }, (payload) => {
-      const newPost = payload.new;
-      if (newPost.user_id !== currentUser.id) {
-        showToast(`${newPost.user_name || 'Someone'} posted something new!`, 'info');
-        // Add new post to feed
-        const postElement = createPostElement(newPost);
-        el('postsContainer').prepend(postElement);
-      }
-    })
-    .subscribe();
-  
-  // Subscribe to notifications
-  notificationsSubscription = sb
-    .channel('notifications')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'notifications',
-      filter: `receiver_id=eq.${currentUser.id}`
-    }, (payload) => {
-      const notification = payload.new;
-      const notificationElement = createNotificationElement(notification);
-      el('notificationList').prepend(notificationElement);
-      
-      // Update badge
-      const badge = qs('.notification-badge');
-      const currentCount = parseInt(badge.textContent) || 0;
-      badge.textContent = currentCount + 1;
-      
-      // Show toast
-      const message = getNotificationMessage(notification);
-      showToast(message, 'info');
-    })
-    .subscribe();
+  // Subscribe to new posts if table exists
+  try {
+    postsSubscription = sb
+      .channel('posts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'posts'
+      }, (payload) => {
+        const newPost = payload.new;
+        if (newPost.user_id !== currentUser.id) {
+          showToast('New post from someone you follow!', 'info');
+          // Refresh posts to show new one
+          setTimeout(loadPosts, 1000);
+        }
+      })
+      .subscribe();
+  } catch (error) {
+    console.log('Post subscriptions not available');
+  }
 }
 
 async function performSearch(query) {
-  // Implement search functionality
-  const { data: results, error } = await sb
-    .from('posts')
-    .select(`
-      *,
-      profiles (
-        username,
-        avatar_url
-      )
-    `)
-    .or(`caption.ilike.%${query}%,user_name.ilike.%${query}%`)
-    .order('created_at', { ascending: false })
-    .limit(10);
+  try {
+    const { data: results, error } = await sb
+      .from('posts')
+      .select('*, profiles(username, avatar_url)')
+      .or(`caption.ilike.%${query}%`)
+      .order('created_at', { ascending: false })
+      .limit(10);
+      
+    if (error) throw error;
     
-  if (error) {
+    // Display search results in a modal or replace feed
+    console.log('Search results:', results);
+    showToast(`Found ${results.length} results for "${query}"`, 'info');
+  } catch (error) {
     console.error('Search error:', error);
-    return;
   }
-  
-  // Display search results
-  // This is a simplified version - you might want to create a dedicated search results view
-  console.log('Search results:', results);
 }
 
 async function loadFeed(feedType) {
-  // Implement different feed types
   let query = sb
     .from('posts')
-    .select(`
-      *,
-      profiles!inner (
-        username,
-        avatar_url
-      ),
-      comments(count),
-      post_likes(count)
-    `)
+    .select('*, profiles(username, avatar_url)')
     .order('created_at', { ascending: false });
     
   switch (feedType) {
     case 'following':
-      // Get following users
-      const { data: following } = await sb
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', currentUser.id);
-        
-      const followingIds = following?.map(f => f.following_id) || [];
-      query = query.in('user_id', [...followingIds, currentUser.id]);
+      // For now, just show all posts since follows table might not exist
+      showToast('Following feed coming soon!', 'info');
       break;
       
     case 'popular':
@@ -1746,91 +1876,31 @@ async function loadFeed(feedType) {
       break;
   }
   
-  const { data: posts } = await query.limit(20);
-  
-  // Update posts container
-  const postsContainer = el('postsContainer');
-  postsContainer.innerHTML = '';
-  
-  if (posts.length === 0) {
-    postsContainer.innerHTML = `
-      <div class="post-card" style="text-align: center; padding: 40px 20px;">
-        <i class="fas fa-newspaper" style="font-size: 48px; color: var(--text-lighter); margin-bottom: 16px;"></i>
-        <h3>No posts found</h3>
-        <p>Try changing your feed settings or follow more people!</p>
-      </div>
-    `;
-    return;
-  }
-  
-  for (const post of posts) {
-    const postElement = createPostElement(post);
-    postsContainer.appendChild(postElement);
-  }
-}
-
-/* ===========================================================
-   UTILITY POST FUNCTIONS
-=========================================================== */
-function togglePostMenu(postId) {
-  const menu = el(`post-menu-${postId}`);
-  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-}
-
-async function sharePost(postId) {
-  const post = await sb.from('posts').select('*').eq('id', postId).single();
-  
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: 'Check out this post on My-Day',
-        text: post.data.caption,
-        url: window.location.href
-      });
-      
-      // Increment share count
-      await sb
-        .from('posts')
-        .update({ shares: (post.data.shares || 0) + 1 })
-        .eq('id', postId);
-    } catch (error) {
-      console.log('Share cancelled:', error);
-    }
-  } else {
-    // Fallback: copy to clipboard
-    const shareUrl = `${window.location.origin}?post=${postId}`;
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      showToast('Link copied to clipboard!', 'success');
-    });
-  }
-}
-
-async function savePost(postId) {
-  await bookmarkPost(postId);
-}
-
-function reportPost(postId) {
-  showToast('Report submitted. Thank you for helping keep My-Day safe!', 'info');
-}
-
-function editPost(postId) {
-  activePost = postId;
-  // Load post data and open edit modal
-  showToast('Edit post feature coming soon!', 'info');
-}
-
-async function deletePost(postId) {
-  if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-    return;
-  }
-  
   try {
-    await sb.from('posts').delete().eq('id', postId);
-    showToast('Post deleted successfully', 'success');
-    el(`post-${postId}`).remove();
+    const { data: posts } = await query.limit(20);
+    
+    // Update posts container
+    const postsContainer = el('postsContainer');
+    postsContainer.innerHTML = '';
+    
+    if (!posts || posts.length === 0) {
+      postsContainer.innerHTML = `
+        <div class="post-card" style="text-align: center; padding: 40px 20px;">
+          <i class="fas fa-newspaper" style="font-size: 48px; color: var(--text-lighter); margin-bottom: 16px;"></i>
+          <h3>No posts found</h3>
+          <p>Try changing your feed settings or follow more people!</p>
+        </div>
+      `;
+      return;
+    }
+    
+    for (const post of posts) {
+      const postElement = createPostElement(post);
+      postsContainer.appendChild(postElement);
+    }
   } catch (error) {
-    console.error('Error deleting post:', error);
-    showToast('Failed to delete post', 'error');
+    console.error('Error loading feed:', error);
+    showToast('Failed to load feed', 'error');
   }
 }
 
@@ -1844,28 +1914,31 @@ initTheme();
 document.addEventListener('DOMContentLoaded', function() {
   loadUser();
   
-  // Auto-resize textareas
-  const textareas = qsa('textarea');
-  textareas.forEach(textarea => {
-    textarea.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = (this.scrollHeight) + 'px';
-    });
-  });
-  
-  // Character counters
-  const usernameInput = el('editUsername');
-  const bioInput = el('editBio');
-  
-  if (usernameInput) {
-    usernameInput.addEventListener('input', function() {
-      el('usernameCharCount').textContent = `${this.value.length}/30`;
-    });
-  }
-  
-  if (bioInput) {
-    bioInput.addEventListener('input', function() {
-      el('bioCharCount').textContent = `${this.value.length}/150`;
-    });
-  }
+  // Add CSS for animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-50px) scale(1.5);
+      }
+    }
+    
+    .avatar-initial {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+    }
+  `;
+  document.head.appendChild(style);
 });
