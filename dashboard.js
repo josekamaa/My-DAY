@@ -16,7 +16,6 @@ let userBookmarks = new Set();
 let activeChatUser = null;
 let activeChatId = null;
 let msgSubscription = null;
-let notificationsSubscription = null;
 let cameraStream = null;
 let currentTheme = 'light';
 
@@ -363,7 +362,7 @@ async function loadUserBookmarks() {
 }
 
 /* ===========================================================
-   POSTS MANAGEMENT
+   POSTS MANAGEMENT - FIXED QUERIES
 =========================================================== */
 async function loadPosts() {
   const postsContainer = el('postsContainer');
@@ -375,16 +374,10 @@ async function loadPosts() {
   `;
   
   try {
-    // Get posts with user profiles
+    // Get posts - SIMPLIFIED QUERY
     const { data: posts, error } = await sb
       .from('posts')
-      .select(`
-        *,
-        profiles (
-          username,
-          avatar_url
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(20);
       
@@ -406,11 +399,22 @@ async function loadPosts() {
       return;
     }
     
-    // Get like and comment counts
-    const postIds = posts.map(p => p.id);
+    // Get user profiles for these posts
+    const userIds = [...new Set(posts.map(p => p.user_id))];
+    const { data: profiles, error: profilesError } = await sb
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', userIds);
+      
+    const profileMap = {};
+    profiles?.forEach(p => {
+      profileMap[p.id] = p;
+    });
     
     // Get like counts
+    const postIds = posts.map(p => p.id);
     let likeCounts = {};
+    
     try {
       const { data: likes } = await sb
         .from('post_likes')
@@ -429,6 +433,7 @@ async function loadPosts() {
     
     // Get comment counts
     let commentCounts = {};
+    
     try {
       const { data: comments } = await sb
         .from('comments')
@@ -451,15 +456,18 @@ async function loadPosts() {
     // Create post elements
     for (const post of posts) {
       const postIdStr = post.id.toString();
-      const postWithCounts = {
+      const profile = profileMap[post.user_id] || { username: 'Unknown User', avatar_url: null };
+      
+      const postData = {
         ...post,
+        profiles: profile,
         likeCount: likeCounts[postIdStr] || 0,
         commentCount: commentCounts[postIdStr] || 0,
         isLiked: userLikes.has(postIdStr),
         isBookmarked: userBookmarks.has(postIdStr)
       };
       
-      const postElement = createPostElement(postWithCounts);
+      const postElement = createPostElement(postData);
       postsContainer.appendChild(postElement);
     }
     
@@ -553,7 +561,7 @@ function createPostElement(post) {
       </button>
     </div>
     
-    <div class="comments-section" id="comments-${postIdStr}">
+    <div class="comments-section" id="comments-${postIdStr}" style="display: none;">
       <div class="comments-list" id="comments-list-${postIdStr}">
         <!-- Comments loaded dynamically -->
       </div>
@@ -675,7 +683,7 @@ async function bookmarkPost(postId) {
 }
 
 /* ===========================================================
-   COMMENTS SYSTEM - FIXED
+   COMMENTS SYSTEM - SIMPLIFIED
 =========================================================== */
 async function toggleComments(postId) {
   const commentsSection = el(`comments-${postId}`);
@@ -699,20 +707,14 @@ async function loadComments(postId) {
   commentsList.innerHTML = '<p class="text-center">Loading comments...</p>';
   
   try {
+    // First get comments
     const { data: comments, error } = await sb
       .from('comments')
-      .select(`
-        *,
-        profiles (
-          username,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('post_id', postIdNum)
       .order('created_at', { ascending: true });
       
     if (error) {
-      // Table might not exist yet
       commentsList.innerHTML = '<p class="text-center">No comments yet</p>';
       return;
     }
@@ -724,8 +726,26 @@ async function loadComments(postId) {
       return;
     }
     
+    // Get user profiles for comments
+    const userIds = [...new Set(comments.map(c => c.user_id))];
+    const { data: profiles } = await sb
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', userIds);
+    
+    const profileMap = {};
+    profiles?.forEach(p => {
+      profileMap[p.id] = p;
+    });
+    
     for (const comment of comments) {
-      const commentElement = createCommentElement(comment);
+      const profile = profileMap[comment.user_id] || { username: 'Unknown User', avatar_url: null };
+      const commentWithProfile = {
+        ...comment,
+        profiles: profile
+      };
+      
+      const commentElement = createCommentElement(commentWithProfile);
       commentsList.appendChild(commentElement);
     }
     
@@ -1044,11 +1064,7 @@ async function loadChats() {
     // Get chats where current user is either user1 or user2
     const { data: chats, error } = await sb
       .from('chats')
-      .select(`
-        *,
-        user1:profiles!chats_user1_id_fkey(*),
-        user2:profiles!chats_user2_id_fkey(*)
-      `)
+      .select('*')
       .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
       .order('updated_at', { ascending: false });
       
@@ -1071,13 +1087,31 @@ async function loadChats() {
       return;
     }
     
+    // Get user details for each chat
+    const chatPromises = chats.map(async (chat) => {
+      const otherUserId = chat.user1_id === currentUser.id ? chat.user2_id : chat.user1_id;
+      
+      // Get other user's profile
+      const { data: otherUser } = await sb
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', otherUserId)
+        .single();
+      
+      return {
+        ...chat,
+        otherUser: otherUser || { username: 'Unknown User', avatar_url: null }
+      };
+    });
+    
+    const chatsWithUsers = await Promise.all(chatPromises);
+    
     // Update message badge count
     const totalUnread = chats.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
     el('messageBadge').textContent = totalUnread > 0 ? totalUnread : '0';
     
-    for (const chat of chats) {
-      const otherUser = chat.user1_id === currentUser.id ? chat.user2 : chat.user1;
-      const chatElement = createChatElement(chat, otherUser);
+    for (const chat of chatsWithUsers) {
+      const chatElement = createChatElement(chat, chat.otherUser);
       chatsContainer.appendChild(chatElement);
     }
     
@@ -1160,10 +1194,7 @@ async function loadMessages(chatId) {
   try {
     const { data: messages, error } = await sb
       .from('messages')
-      .select(`
-        *,
-        sender:profiles!messages_sender_id_fkey(username, avatar_url)
-      `)
+      .select('*')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: true });
       
@@ -1185,8 +1216,26 @@ async function loadMessages(chatId) {
       return;
     }
     
+    // Get sender profiles for messages
+    const userIds = [...new Set(messages.map(m => m.sender_id))];
+    const { data: profiles } = await sb
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', userIds);
+    
+    const profileMap = {};
+    profiles?.forEach(p => {
+      profileMap[p.id] = p;
+    });
+    
     for (const message of messages) {
-      const messageElement = createMessageElement(message);
+      const senderProfile = profileMap[message.sender_id] || { username: 'Unknown User', avatar_url: null };
+      const messageWithProfile = {
+        ...message,
+        sender: senderProfile
+      };
+      
+      const messageElement = createMessageElement(messageWithProfile);
       messagesContainer.appendChild(messageElement);
     }
     
@@ -1330,10 +1379,23 @@ function subscribeToMessages(chatId) {
       schema: 'public',
       table: 'messages',
       filter: `chat_id=eq.${chatId}`
-    }, (payload) => {
+    }, async (payload) => {
       const message = payload.new;
+      
+      // Get sender profile
+      const { data: sender } = await sb
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', message.sender_id)
+        .single();
+      
+      const messageWithProfile = {
+        ...message,
+        sender: sender || { username: 'Unknown User', avatar_url: null }
+      };
+      
       if (message.sender_id !== currentUser.id) {
-        const messageElement = createMessageElement(message);
+        const messageElement = createMessageElement(messageWithProfile);
         el('chatMessages').appendChild(messageElement);
         el('chatMessages').scrollTop = el('chatMessages').scrollHeight;
       }
@@ -1342,16 +1404,13 @@ function subscribeToMessages(chatId) {
 }
 
 /* ===========================================================
-   NOTIFICATIONS
+   NOTIFICATIONS - SIMPLIFIED
 =========================================================== */
 async function loadNotifications() {
   try {
     const { data: notifications, error } = await sb
       .from('notifications')
-      .select(`
-        *,
-        sender:profiles!notifications_sender_id_fkey(username, avatar_url)
-      `)
+      .select('*')
       .eq('receiver_id', currentUser.id)
       .order('created_at', { ascending: false })
       .limit(10);
@@ -1375,6 +1434,18 @@ async function loadNotifications() {
       return;
     }
     
+    // Get sender profiles
+    const senderIds = [...new Set(notifications.map(n => n.sender_id))];
+    const { data: profiles } = await sb
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', senderIds);
+    
+    const profileMap = {};
+    profiles?.forEach(p => {
+      profileMap[p.id] = p;
+    });
+    
     const unreadCount = notifications.filter(n => !n.read).length;
     el('notificationBadge').textContent = unreadCount;
     el('sidebarNotificationBadge').textContent = unreadCount;
@@ -1385,7 +1456,13 @@ async function loadNotifications() {
     }
     
     for (const notification of notifications) {
-      const notificationElement = createNotificationElement(notification);
+      const senderProfile = profileMap[notification.sender_id] || { username: 'Someone', avatar_url: null };
+      const notificationWithProfile = {
+        ...notification,
+        sender: senderProfile
+      };
+      
+      const notificationElement = createNotificationElement(notificationWithProfile);
       notificationList.appendChild(notificationElement);
     }
     
@@ -1446,12 +1523,6 @@ function createNotificationElement(notification) {
     // Handle notification click
     if (notification.type === 'message') {
       openMessenger();
-    } else if (notification.type === 'like' || notification.type === 'comment') {
-      // Scroll to post
-      const postElement = el(`post-${notification.reference_id}`);
-      if (postElement) {
-        postElement.scrollIntoView({ behavior: 'smooth' });
-      }
     }
     
     // Close dropdown
