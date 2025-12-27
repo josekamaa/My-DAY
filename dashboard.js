@@ -1,3 +1,5 @@
+[file name]: dashboard.js
+[file content begin]
 /* ===========================================================
    SUPABASE CLIENT
 =========================================================== */
@@ -18,6 +20,7 @@ let activeChatId = null;
 let msgSubscription = null;
 let cameraStream = null;
 let currentTheme = 'light';
+let isMobile = window.innerWidth < 768;
 
 /* ===========================================================
    HELPER FUNCTIONS
@@ -30,24 +33,28 @@ function qsa(selector) { return document.querySelectorAll(selector); }
 function formatRelativeTime(dateString) {
   if (!dateString) return 'Just now';
   
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-  
-  if (diffSec < 60) return 'Just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHour < 24) return `${diffHour}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
-  
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric',
-    year: diffDay > 365 ? 'numeric' : undefined
-  });
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    
+    if (diffSec < 60) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHour < 24) return `${diffHour}h ago`;
+    if (diffDay < 7) return `${diffDay}d ago`;
+    
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: diffDay > 365 ? 'numeric' : undefined
+    });
+  } catch (e) {
+    return 'Just now';
+  }
 }
 
 // Show toast notification
@@ -67,7 +74,7 @@ function showToast(message, type = 'info', duration = 3000) {
   
   toast.innerHTML = `
     <i class="${icons[type] || icons.info}"></i>
-    <div>${message}</div>
+    <div style="flex: 1;">${message}</div>
     <button class="btn-icon" onclick="this.parentElement.remove()">
       <i class="fas fa-times"></i>
     </button>
@@ -78,6 +85,20 @@ function showToast(message, type = 'info', duration = 3000) {
   setTimeout(() => {
     if (toast.parentElement) toast.remove();
   }, duration);
+}
+
+// Check if table exists
+async function tableExists(tableName) {
+  try {
+    const { data, error } = await sb
+      .from(tableName)
+      .select('*')
+      .limit(1);
+    
+    return !error;
+  } catch (error) {
+    return false;
+  }
 }
 
 /* ===========================================================
@@ -105,6 +126,70 @@ function toggleTheme() {
 }
 
 /* ===========================================================
+   MOBILE MENU HANDLING
+=========================================================== */
+function initMobileMenu() {
+  const mobileMenuBtn = el('mobileMenuBtn');
+  const closeMobileMenu = el('closeMobileMenu');
+  const mobileSidebarOverlay = el('mobileSidebarOverlay');
+  const mobileSidebar = el('mobileSidebar');
+  
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileSidebarOverlay.classList.add('active');
+      mobileSidebar.classList.add('active');
+      loadMobileSidebarContent();
+    });
+  }
+  
+  if (closeMobileMenu) {
+    closeMobileMenu.addEventListener('click', closeMobileMenuFunc);
+  }
+  
+  if (mobileSidebarOverlay) {
+    mobileSidebarOverlay.addEventListener('click', closeMobileMenuFunc);
+  }
+  
+  // Close mobile menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!mobileSidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+      closeMobileMenuFunc();
+    }
+  });
+}
+
+function closeMobileMenuFunc() {
+  const mobileSidebarOverlay = el('mobileSidebarOverlay');
+  const mobileSidebar = el('mobileSidebar');
+  
+  if (mobileSidebarOverlay) mobileSidebarOverlay.classList.remove('active');
+  if (mobileSidebar) mobileSidebar.classList.remove('active');
+}
+
+function loadMobileSidebarContent() {
+  const mobileSidebar = el('mobileSidebar');
+  if (!mobileSidebar) return;
+  
+  // Clone desktop sidebar content for mobile
+  const desktopSidebar = document.querySelector('.sidebar');
+  if (!desktopSidebar) return;
+  
+  const sidebarContent = desktopSidebar.innerHTML;
+  mobileSidebar.innerHTML = `
+    <div class="mobile-sidebar-header">
+      <h3>Menu</h3>
+      <button class="btn-icon" id="closeMobileMenu">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    ${sidebarContent}
+  `;
+  
+  // Reattach event listeners
+  document.getElementById('closeMobileMenu').addEventListener('click', closeMobileMenuFunc);
+}
+
+/* ===========================================================
    AUTHENTICATION & USER MANAGEMENT
 =========================================================== */
 async function loadUser() {
@@ -124,6 +209,10 @@ async function loadUser() {
     
     initDashboard();
     setupEventListeners();
+    initMobileMenu();
+    
+    // Update mobile badges
+    updateMobileBadges();
     
   } catch (error) {
     console.error('Error loading user:', error);
@@ -140,13 +229,17 @@ async function ensureProfileExists() {
       .maybeSingle();
       
     if (!data) {
-      const username = currentUser.email.split('@')[0];
-      await sb.from('profiles').insert({
+      const username = currentUser.email?.split('@')[0] || 'user';
+      const { error } = await sb.from('profiles').insert({
         id: currentUser.id,
         username: username,
         bio: 'Welcome to My-Day!',
         created_at: new Date().toISOString()
       });
+      
+      if (error) {
+        console.error('Error creating profile:', error);
+      }
     }
   } catch (error) {
     console.error('Error ensuring profile exists:', error);
@@ -177,18 +270,19 @@ function updateProfileUI() {
   // Update profile card
   el('profileUsername').textContent = currentProfile.username || 'User';
   el('profileBio').textContent = currentProfile.bio || 'Welcome to My-Day!';
-  el('avatarInitial').textContent = (currentProfile.username || 'U').charAt(0).toUpperCase();
-  el('editAvatarInitial').textContent = (currentProfile.username || 'U').charAt(0).toUpperCase();
+  const initial = (currentProfile.username || 'U').charAt(0).toUpperCase();
+  el('avatarInitial').textContent = initial;
+  el('editAvatarInitial').textContent = initial;
   
   // Update header avatar
   const headerAvatar = el('headerAvatar');
   if (headerAvatar) {
-    headerAvatar.innerHTML = `<span class="avatar-initial">${(currentProfile.username || 'U').charAt(0).toUpperCase()}</span>`;
+    headerAvatar.innerHTML = `<span class="avatar-initial">${initial}</span>`;
   }
   
   // Update other avatars
-  el('createPostAvatar').innerHTML = `<span class="avatar-initial">${(currentProfile.username || 'U').charAt(0).toUpperCase()}</span>`;
-  el('modalPostAvatar').innerHTML = `<span class="avatar-initial">${(currentProfile.username || 'U').charAt(0).toUpperCase()}</span>`;
+  el('createPostAvatar').innerHTML = `<span class="avatar-initial">${initial}</span>`;
+  el('modalPostAvatar').innerHTML = `<span class="avatar-initial">${initial}</span>`;
   el('modalPostName').textContent = currentProfile.username || 'User';
   
   // Update edit profile form
@@ -209,11 +303,30 @@ function updateAvatarImages(avatarUrl) {
     img.src = avatarUrl;
     img.alt = currentProfile.username;
     img.onerror = () => {
-      avatar.innerHTML = `<span class="avatar-initial">${(currentProfile.username || 'U').charAt(0).toUpperCase()}</span>`;
+      const initial = (currentProfile.username || 'U').charAt(0).toUpperCase();
+      avatar.innerHTML = `<span class="avatar-initial">${initial}</span>`;
     };
     avatar.innerHTML = '';
     avatar.appendChild(img);
   });
+}
+
+function updateMobileBadges() {
+  // Sync badges with mobile navigation
+  const messageBadge = el('messageBadge');
+  const notificationBadge = el('notificationBadge');
+  const mobileMessageBadge = el('mobileMessageBadge');
+  const mobileNotificationBadge = el('mobileNotificationBadge');
+  
+  if (messageBadge && mobileMessageBadge) {
+    mobileMessageBadge.textContent = messageBadge.textContent;
+    mobileMessageBadge.style.display = messageBadge.textContent === '0' ? 'none' : 'block';
+  }
+  
+  if (notificationBadge && mobileNotificationBadge) {
+    mobileNotificationBadge.textContent = notificationBadge.textContent;
+    mobileNotificationBadge.style.display = notificationBadge.textContent === '0' ? 'none' : 'block';
+  }
 }
 
 /* ===========================================================
@@ -221,6 +334,7 @@ function updateAvatarImages(avatarUrl) {
 =========================================================== */
 function openEditProfile() {
   el('editProfileModal').classList.add('active');
+  if (isMobile) closeMobileMenuFunc();
 }
 
 function closeEditProfileModal() {
@@ -323,13 +437,19 @@ document.addEventListener('DOMContentLoaded', () => {
 =========================================================== */
 async function loadUserLikes() {
   try {
+    const exists = await tableExists('post_likes');
+    if (!exists) {
+      userLikes = new Set();
+      return;
+    }
+    
     const { data, error } = await sb
       .from('post_likes')
       .select('post_id')
       .eq('user_id', currentUser.id);
       
     if (error) {
-      console.log('post_likes table not available');
+      console.log('Error loading likes:', error);
       userLikes = new Set();
       return;
     }
@@ -343,13 +463,19 @@ async function loadUserLikes() {
 
 async function loadUserBookmarks() {
   try {
+    const exists = await tableExists('post_bookmarks');
+    if (!exists) {
+      userBookmarks = new Set();
+      return;
+    }
+    
     const { data, error } = await sb
       .from('post_bookmarks')
       .select('post_id')
       .eq('user_id', currentUser.id);
       
     if (error) {
-      console.log('post_bookmarks table not available');
+      console.log('Error loading bookmarks:', error);
       userBookmarks = new Set();
       return;
     }
@@ -362,7 +488,7 @@ async function loadUserBookmarks() {
 }
 
 /* ===========================================================
-   POSTS MANAGEMENT - FIXED QUERIES
+   POSTS MANAGEMENT
 =========================================================== */
 async function loadPosts() {
   const postsContainer = el('postsContainer');
@@ -374,7 +500,7 @@ async function loadPosts() {
   `;
   
   try {
-    // Get posts - SIMPLIFIED QUERY
+    // Get posts
     const { data: posts, error } = await sb
       .from('posts')
       .select('*')
@@ -401,7 +527,7 @@ async function loadPosts() {
     
     // Get user profiles for these posts
     const userIds = [...new Set(posts.map(p => p.user_id))];
-    const { data: profiles, error: profilesError } = await sb
+    const { data: profiles } = await sb
       .from('profiles')
       .select('id, username, avatar_url')
       .in('id', userIds);
@@ -416,17 +542,20 @@ async function loadPosts() {
     let likeCounts = {};
     
     try {
-      const { data: likes } = await sb
-        .from('post_likes')
-        .select('post_id')
-        .in('post_id', postIds);
-      
-      likes?.forEach(like => {
-        const postId = like.post_id?.toString();
-        if (postId) {
-          likeCounts[postId] = (likeCounts[postId] || 0) + 1;
-        }
-      });
+      const exists = await tableExists('post_likes');
+      if (exists) {
+        const { data: likes } = await sb
+          .from('post_likes')
+          .select('post_id')
+          .in('post_id', postIds);
+        
+        likes?.forEach(like => {
+          const postId = like.post_id?.toString();
+          if (postId) {
+            likeCounts[postId] = (likeCounts[postId] || 0) + 1;
+          }
+        });
+      }
     } catch (error) {
       console.log('Could not load like counts');
     }
@@ -435,17 +564,20 @@ async function loadPosts() {
     let commentCounts = {};
     
     try {
-      const { data: comments } = await sb
-        .from('comments')
-        .select('post_id')
-        .in('post_id', postIds);
-      
-      comments?.forEach(comment => {
-        const postId = comment.post_id?.toString();
-        if (postId) {
-          commentCounts[postId] = (commentCounts[postId] || 0) + 1;
-        }
-      });
+      const exists = await tableExists('comments');
+      if (exists) {
+        const { data: comments } = await sb
+          .from('comments')
+          .select('post_id')
+          .in('post_id', postIds);
+        
+        comments?.forEach(comment => {
+          const postId = comment.post_id?.toString();
+          if (postId) {
+            commentCounts[postId] = (commentCounts[postId] || 0) + 1;
+          }
+        });
+      }
     } catch (error) {
       console.log('Could not load comment counts');
     }
@@ -585,7 +717,6 @@ function togglePostMenu(postId) {
   // Simple menu - show options in alert for now
   const options = ['Share Post', 'Save Post', 'Report Post'];
   if (confirm('What would you like to do?')) {
-    // In a real app, you would show a proper dropdown
     showToast('Feature coming soon!', 'info');
   }
 }
@@ -601,6 +732,12 @@ async function likePost(postId) {
   const likeText = likeBtn.querySelector('span');
   
   try {
+    const exists = await tableExists('post_likes');
+    if (!exists) {
+      showToast('Likes feature not available', 'error');
+      return;
+    }
+    
     if (userLikes.has(postId)) {
       // Unlike
       await sb.from('post_likes').delete()
@@ -654,6 +791,12 @@ async function bookmarkPost(postId) {
   const bookmarkText = bookmarkBtn.querySelector('span');
   
   try {
+    const exists = await tableExists('post_bookmarks');
+    if (!exists) {
+      showToast('Bookmarks feature not available', 'error');
+      return;
+    }
+    
     if (userBookmarks.has(postId)) {
       // Remove bookmark
       await sb.from('post_bookmarks').delete()
@@ -683,7 +826,7 @@ async function bookmarkPost(postId) {
 }
 
 /* ===========================================================
-   COMMENTS SYSTEM - SIMPLIFIED
+   COMMENTS SYSTEM
 =========================================================== */
 async function toggleComments(postId) {
   const commentsSection = el(`comments-${postId}`);
@@ -707,7 +850,12 @@ async function loadComments(postId) {
   commentsList.innerHTML = '<p class="text-center">Loading comments...</p>';
   
   try {
-    // First get comments
+    const exists = await tableExists('comments');
+    if (!exists) {
+      commentsList.innerHTML = '<p class="text-center">No comments yet</p>';
+      return;
+    }
+    
     const { data: comments, error } = await sb
       .from('comments')
       .select('*')
@@ -796,6 +944,12 @@ async function addComment(postId) {
   }
   
   try {
+    const exists = await tableExists('comments');
+    if (!exists) {
+      showToast('Comments feature not available', 'error');
+      return;
+    }
+    
     const { error } = await sb.from('comments').insert({
       post_id: postIdNum,
       user_id: currentUser.id,
@@ -823,6 +977,10 @@ async function addComment(postId) {
 =========================================================== */
 function openCreatePostModal() {
   el('createPostModal').classList.add('active');
+  if (isMobile) {
+    // Hide bottom nav when modal is open
+    document.querySelector('.bottom-nav')?.style.display = 'none';
+  }
 }
 
 function closeCreatePostModal() {
@@ -831,6 +989,11 @@ function closeCreatePostModal() {
   el('postMediaPreview').style.display = 'none';
   el('postFeeling').style.display = 'none';
   el('mediaInput').value = '';
+  
+  if (isMobile) {
+    // Show bottom nav when modal is closed
+    document.querySelector('.bottom-nav')?.style.display = 'flex';
+  }
 }
 
 async function submitPost() {
@@ -957,7 +1120,7 @@ async function loadContacts() {
     if (onlineList) {
       onlineList.innerHTML = '';
       users.slice(0, 5).forEach(user => {
-        const isOnline = new Date() - new Date(user.last_seen) < 5 * 60 * 1000;
+        const isOnline = user.last_seen && (new Date() - new Date(user.last_seen) < 5 * 60 * 1000);
         if (isOnline) {
           const userElement = createOnlineUserElement(user);
           onlineList.appendChild(userElement);
@@ -1009,7 +1172,7 @@ function createContactElement(user) {
   div.className = 'contact-item';
   
   const avatarInitial = (user.username || 'U').charAt(0).toUpperCase();
-  const isOnline = new Date() - new Date(user.last_seen) < 5 * 60 * 1000;
+  const isOnline = user.last_seen && (new Date() - new Date(user.last_seen) < 5 * 60 * 1000);
   
   div.innerHTML = `
     <div class="contact-avatar">
@@ -1036,11 +1199,15 @@ function refreshContacts() {
 }
 
 /* ===========================================================
-   MESSENGER / INBOX - WORKING VERSION
+   MESSENGER / INBOX - FIXED VERSION
 =========================================================== */
 function openMessenger() {
   el('messengerModal').classList.add('active');
   loadChats();
+  if (isMobile) {
+    // Hide bottom nav when messenger is open
+    document.querySelector('.bottom-nav')?.style.display = 'none';
+  }
 }
 
 function closeMessenger() {
@@ -1052,6 +1219,39 @@ function closeMessenger() {
     msgSubscription.unsubscribe();
     msgSubscription = null;
   }
+  
+  if (isMobile) {
+    // Show bottom nav when messenger is closed
+    document.querySelector('.bottom-nav')?.style.display = 'flex';
+  }
+}
+
+async function ensureChatsTable() {
+  try {
+    // Check if chats table exists
+    const { data, error } = await sb
+      .from('chats')
+      .select('id')
+      .limit(1);
+    
+    return !error;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function ensureMessagesTable() {
+  try {
+    // Check if messages table exists
+    const { data, error } = await sb
+      .from('messages')
+      .select('id')
+      .limit(1);
+    
+    return !error;
+  } catch (error) {
+    return false;
+  }
 }
 
 async function loadChats() {
@@ -1061,6 +1261,18 @@ async function loadChats() {
   chatsContainer.innerHTML = '<p class="text-center">Loading chats...</p>';
   
   try {
+    const chatsExist = await ensureChatsTable();
+    if (!chatsExist) {
+      chatsContainer.innerHTML = `
+        <div class="text-center" style="padding: 40px 20px; color: var(--muted);">
+          <i class="fas fa-comments" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+          <h4>No conversations yet</h4>
+          <p>Start a conversation with someone!</p>
+        </div>
+      `;
+      return;
+    }
+    
     // Get chats where current user is either user1 or user2
     const { data: chats, error } = await sb
       .from('chats')
@@ -1069,7 +1281,7 @@ async function loadChats() {
       .order('updated_at', { ascending: false });
       
     if (error) {
-      // Table might not exist yet
+      console.error('Error loading chats:', error);
       chatsContainer.innerHTML = '<p class="text-center">No conversations yet</p>';
       return;
     }
@@ -1109,6 +1321,7 @@ async function loadChats() {
     // Update message badge count
     const totalUnread = chats.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
     el('messageBadge').textContent = totalUnread > 0 ? totalUnread : '0';
+    updateMobileBadges();
     
     for (const chat of chatsWithUsers) {
       const chatElement = createChatElement(chat, chat.otherUser);
@@ -1183,6 +1396,12 @@ async function openChat(chatId, user) {
       item.classList.add('active');
     }
   });
+  
+  // On mobile, hide sidebar when chat is open
+  if (isMobile && window.innerWidth < 768) {
+    document.querySelector('.messenger-sidebar').style.display = 'none';
+    document.querySelector('.messenger-content').style.display = 'flex';
+  }
 }
 
 async function loadMessages(chatId) {
@@ -1192,6 +1411,12 @@ async function loadMessages(chatId) {
   messagesContainer.innerHTML = '<p class="text-center">Loading messages...</p>';
   
   try {
+    const messagesExist = await ensureMessagesTable();
+    if (!messagesExist) {
+      messagesContainer.innerHTML = '<p class="text-center">No messages yet</p>';
+      return;
+    }
+    
     const { data: messages, error } = await sb
       .from('messages')
       .select('*')
@@ -1199,6 +1424,7 @@ async function loadMessages(chatId) {
       .order('created_at', { ascending: true });
       
     if (error) {
+      console.error('Error loading messages:', error);
       messagesContainer.innerHTML = '<p class="text-center">No messages yet</p>';
       return;
     }
@@ -1253,7 +1479,6 @@ function createMessageElement(message) {
   div.className = `message ${message.sender_id === currentUser.id ? 'sent' : 'received'}`;
   
   const messageTime = formatRelativeTime(message.created_at);
-  const senderName = message.sender?.username || 'Unknown User';
   
   div.innerHTML = `
     <div>${message.content}</div>
@@ -1278,6 +1503,12 @@ async function sendChatMessage() {
   }
   
   try {
+    const messagesExist = await ensureMessagesTable();
+    if (!messagesExist) {
+      showToast('Messaging feature not available', 'error');
+      return;
+    }
+    
     // Send message
     const { error } = await sb.from('messages').insert({
       chat_id: activeChatId,
@@ -1286,19 +1517,32 @@ async function sendChatMessage() {
       created_at: new Date().toISOString()
     });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error sending message:', error);
+      
+      // If error is about missing column, try to create it
+      if (error.message.includes('chat_id')) {
+        showToast('Messaging system needs setup', 'error');
+        return;
+      }
+      
+      throw error;
+    }
     
     // Update chat
     await sb
       .from('chats')
       .update({
-        last_message: content,
+        last_message: content.length > 50 ? content.substring(0, 47) + '...' : content,
         last_message_at: new Date().toISOString(),
         unread_count: sb.raw('unread_count + 1')
       })
       .eq('id', activeChatId);
     
     input.value = '';
+    
+    // Clear and re-focus input
+    input.focus();
     
     // Reload messages
     await loadMessages(activeChatId);
@@ -1314,6 +1558,12 @@ async function sendChatMessage() {
 
 async function startChatWithUser(user) {
   try {
+    const chatsExist = await ensureChatsTable();
+    if (!chatsExist) {
+      showToast('Messaging feature not available', 'error');
+      return;
+    }
+    
     // Check if chat already exists
     const { data: existingChat } = await sb
       .from('chats')
@@ -1332,7 +1582,11 @@ async function startChatWithUser(user) {
         .insert({
           user1_id: currentUser.id,
           user2_id: user.id,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          last_message: 'Chat started',
+          last_message_at: new Date().toISOString(),
+          unread_count: 0
         })
         .select('id')
         .single();
@@ -1342,15 +1596,23 @@ async function startChatWithUser(user) {
     }
     
     // Open messenger and the chat
-    openMessenger();
-    setTimeout(() => {
+    if (!el('messengerModal').classList.contains('active')) {
+      openMessenger();
+      setTimeout(() => {
+        openChat(chatId, user);
+      }, 100);
+    } else {
       openChat(chatId, user);
-    }, 100);
+    }
     
   } catch (error) {
     console.error('Error starting chat:', error);
     showToast('Failed to start conversation', 'error');
   }
+}
+
+function startNewChat() {
+  showToast('Start new chat feature coming soon!', 'info');
 }
 
 async function markChatAsRead(chatId) {
@@ -1372,42 +1634,59 @@ function subscribeToMessages(chatId) {
     msgSubscription.unsubscribe();
   }
   
-  msgSubscription = sb
-    .channel('messages')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'messages',
-      filter: `chat_id=eq.${chatId}`
-    }, async (payload) => {
-      const message = payload.new;
-      
-      // Get sender profile
-      const { data: sender } = await sb
-        .from('profiles')
-        .select('username, avatar_url')
-        .eq('id', message.sender_id)
-        .single();
-      
-      const messageWithProfile = {
-        ...message,
-        sender: sender || { username: 'Unknown User', avatar_url: null }
-      };
-      
-      if (message.sender_id !== currentUser.id) {
-        const messageElement = createMessageElement(messageWithProfile);
-        el('chatMessages').appendChild(messageElement);
-        el('chatMessages').scrollTop = el('chatMessages').scrollHeight;
-      }
-    })
-    .subscribe();
+  // Only subscribe if messages table exists
+  ensureMessagesTable().then(exists => {
+    if (!exists) return;
+    
+    msgSubscription = sb
+      .channel('messages')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `chat_id=eq.${chatId}`
+      }, async (payload) => {
+        const message = payload.new;
+        
+        // Don't show our own messages twice
+        if (message.sender_id !== currentUser.id) {
+          // Get sender profile
+          const { data: sender } = await sb
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', message.sender_id)
+            .single();
+          
+          const messageWithProfile = {
+            ...message,
+            sender: sender || { username: 'Unknown User', avatar_url: null }
+          };
+          
+          const messageElement = createMessageElement(messageWithProfile);
+          el('chatMessages').appendChild(messageElement);
+          el('chatMessages').scrollTop = el('chatMessages').scrollHeight;
+          
+          // Update chat list
+          await loadChats();
+        }
+      })
+      .subscribe();
+  });
 }
 
 /* ===========================================================
-   NOTIFICATIONS - SIMPLIFIED
+   NOTIFICATIONS
 =========================================================== */
 async function loadNotifications() {
   try {
+    const exists = await tableExists('notifications');
+    if (!exists) {
+      el('notificationBadge').style.display = 'none';
+      el('sidebarNotificationBadge').style.display = 'none';
+      updateMobileBadges();
+      return;
+    }
+    
     const { data: notifications, error } = await sb
       .from('notifications')
       .select('*')
@@ -1416,9 +1695,9 @@ async function loadNotifications() {
       .limit(10);
       
     if (error) {
-      // Table might not exist yet
       el('notificationBadge').style.display = 'none';
       el('sidebarNotificationBadge').style.display = 'none';
+      updateMobileBadges();
       return;
     }
     
@@ -1431,6 +1710,7 @@ async function loadNotifications() {
       notificationList.innerHTML = '<p class="text-center">No notifications yet</p>';
       el('notificationBadge').style.display = 'none';
       el('sidebarNotificationBadge').style.display = 'none';
+      updateMobileBadges();
       return;
     }
     
@@ -1449,10 +1729,14 @@ async function loadNotifications() {
     const unreadCount = notifications.filter(n => !n.read).length;
     el('notificationBadge').textContent = unreadCount;
     el('sidebarNotificationBadge').textContent = unreadCount;
+    updateMobileBadges();
     
     if (unreadCount === 0) {
       el('notificationBadge').style.display = 'none';
       el('sidebarNotificationBadge').style.display = 'none';
+    } else {
+      el('notificationBadge').style.display = 'flex';
+      el('sidebarNotificationBadge').style.display = 'flex';
     }
     
     for (const notification of notifications) {
@@ -1470,6 +1754,7 @@ async function loadNotifications() {
     console.error('Error loading notifications:', error);
     el('notificationBadge').style.display = 'none';
     el('sidebarNotificationBadge').style.display = 'none';
+    updateMobileBadges();
   }
 }
 
@@ -1479,6 +1764,15 @@ function createNotificationElement(notification) {
   div.style.padding = '12px 16px';
   div.style.borderBottom = '1px solid var(--border)';
   div.style.cursor = 'pointer';
+  div.style.transition = 'background 0.2s';
+  
+  div.addEventListener('mouseenter', () => {
+    div.style.background = 'var(--hover)';
+  });
+  
+  div.addEventListener('mouseleave', () => {
+    div.style.background = 'transparent';
+  });
   
   const notificationTime = formatRelativeTime(notification.created_at);
   const senderName = notification.sender?.username || 'Someone';
@@ -1503,11 +1797,11 @@ function createNotificationElement(notification) {
   
   div.innerHTML = `
     <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
         <i class="fas fa-${notification.type === 'like' ? 'heart' : notification.type === 'comment' ? 'comment' : 'bell'}"></i>
       </div>
-      <div style="flex: 1;">
-        <div>${message}</div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="overflow: hidden; text-overflow: ellipsis;">${message}</div>
         <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">${notificationTime}</div>
       </div>
     </div>
@@ -1515,14 +1809,30 @@ function createNotificationElement(notification) {
   
   div.onclick = async () => {
     // Mark as read
-    await sb
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', notification.id);
+    try {
+      await sb
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notification.id);
+      
+      await loadNotifications();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
     
     // Handle notification click
     if (notification.type === 'message') {
       openMessenger();
+    } else if (notification.post_id) {
+      // Scroll to post
+      const postElement = el(`post-${notification.post_id}`);
+      if (postElement) {
+        postElement.scrollIntoView({ behavior: 'smooth' });
+        postElement.style.animation = 'pulse 2s';
+        setTimeout(() => {
+          postElement.style.animation = '';
+        }, 2000);
+      }
     }
     
     // Close dropdown
@@ -1534,6 +1844,12 @@ function createNotificationElement(notification) {
 
 async function markAllNotificationsAsRead() {
   try {
+    const exists = await tableExists('notifications');
+    if (!exists) {
+      showToast('No notifications to mark as read', 'info');
+      return;
+    }
+    
     await sb
       .from('notifications')
       .update({ read: true })
@@ -1591,7 +1907,9 @@ function setupEventListeners() {
   el('notificationBtn').addEventListener('click', (e) => {
     e.stopPropagation();
     el('notificationDropdown').classList.toggle('active');
-    loadNotifications();
+    if (el('notificationDropdown').classList.contains('active')) {
+      loadNotifications();
+    }
   });
   
   // User menu dropdown
@@ -1641,6 +1959,39 @@ function setupEventListeners() {
       }
     });
   }
+  
+  // Close mobile menu when clicking on nav items
+  qsa('.nav-item').forEach(item => {
+    item.addEventListener('click', closeMobileMenuFunc);
+  });
+  
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    isMobile = window.innerWidth < 768;
+  });
+  
+  // Back button for mobile messenger
+  const messengerModal = el('messengerModal');
+  if (messengerModal) {
+    // Add back button to show sidebar on mobile
+    const chatHeader = messengerModal.querySelector('.chat-header');
+    if (chatHeader) {
+      const backBtn = document.createElement('button');
+      backBtn.className = 'btn-icon';
+      backBtn.innerHTML = '<i class="fas fa-arrow-left"></i>';
+      backBtn.style.display = 'none';
+      backBtn.onclick = () => {
+        document.querySelector('.messenger-sidebar').style.display = 'flex';
+        document.querySelector('.messenger-content').style.display = 'none';
+      };
+      chatHeader.insertBefore(backBtn, chatHeader.firstChild);
+      
+      // Show back button on mobile when in chat
+      if (isMobile) {
+        backBtn.style.display = 'block';
+      }
+    }
+  }
 }
 
 /* ===========================================================
@@ -1652,4 +2003,23 @@ initTheme();
 // Load user and initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
   loadUser();
+  
+  // Add CSS for pulse animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(74, 144, 226, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(74, 144, 226, 0); }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Handle back button in messenger on mobile
+  window.addEventListener('popstate', () => {
+    if (el('messengerModal').classList.contains('active')) {
+      closeMessenger();
+    }
+  });
 });
+[file content end]
