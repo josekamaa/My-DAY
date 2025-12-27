@@ -1,4 +1,3 @@
-
 /* ===========================================================
    SUPABASE CLIENT
 =========================================================== */
@@ -151,7 +150,8 @@ function initMobileMenu() {
   
   // Close mobile menu when clicking outside
   document.addEventListener('click', (e) => {
-    if (!mobileSidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+    if (mobileSidebar && !mobileSidebar.contains(e.target) && 
+        mobileMenuBtn && !mobileMenuBtn.contains(e.target)) {
       closeMobileMenuFunc();
     }
   });
@@ -185,7 +185,10 @@ function loadMobileSidebarContent() {
   `;
   
   // Reattach event listeners
-  document.getElementById('closeMobileMenu').addEventListener('click', closeMobileMenuFunc);
+  const closeBtn = document.getElementById('closeMobileMenu');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeMobileMenuFunc);
+  }
 }
 
 /* ===========================================================
@@ -270,8 +273,8 @@ function updateProfileUI() {
   el('profileUsername').textContent = currentProfile.username || 'User';
   el('profileBio').textContent = currentProfile.bio || 'Welcome to My-Day!';
   const initial = (currentProfile.username || 'U').charAt(0).toUpperCase();
-  el('avatarInitial').textContent = initial;
-  el('editAvatarInitial').textContent = initial;
+  if (el('avatarInitial')) el('avatarInitial').textContent = initial;
+  if (el('editAvatarInitial')) el('editAvatarInitial').textContent = initial;
   
   // Update header avatar
   const headerAvatar = el('headerAvatar');
@@ -280,14 +283,19 @@ function updateProfileUI() {
   }
   
   // Update other avatars
-  el('createPostAvatar').innerHTML = `<span class="avatar-initial">${initial}</span>`;
-  el('modalPostAvatar').innerHTML = `<span class="avatar-initial">${initial}</span>`;
-  el('modalPostName').textContent = currentProfile.username || 'User';
+  const createPostAvatar = el('createPostAvatar');
+  if (createPostAvatar) createPostAvatar.innerHTML = `<span class="avatar-initial">${initial}</span>`;
+  
+  const modalPostAvatar = el('modalPostAvatar');
+  if (modalPostAvatar) modalPostAvatar.innerHTML = `<span class="avatar-initial">${initial}</span>`;
+  
+  const modalPostName = el('modalPostName');
+  if (modalPostName) modalPostName.textContent = currentProfile.username || 'User';
   
   // Update edit profile form
-  el('editUsername').value = currentProfile.username || '';
-  el('editBio').value = currentProfile.bio || '';
-  el('editLocation').value = currentProfile.location || '';
+  if (el('editUsername')) el('editUsername').value = currentProfile.username || '';
+  if (el('editBio')) el('editBio').value = currentProfile.bio || '';
+  if (el('editLocation')) el('editLocation').value = currentProfile.location || '';
   
   // Update avatar image if exists
   if (currentProfile.avatar_url) {
@@ -351,6 +359,8 @@ async function saveProfile() {
   }
   
   const btn = el('saveProfileBtn');
+  if (!btn) return;
+  
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
   
@@ -393,6 +403,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       const btn = el('saveProfileBtn');
+      if (!btn) return;
+      
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
       
@@ -582,7 +594,8 @@ async function loadPosts() {
     }
     
     // Update post count
-    el('postCount').textContent = posts.length;
+    const postCountEl = el('postCount');
+    if (postCountEl) postCountEl.textContent = posts.length;
     
     // Create post elements
     for (const post of posts) {
@@ -824,6 +837,18 @@ async function bookmarkPost(postId) {
   }
 }
 
+function sharePost(postId) {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Check out this post!',
+      text: 'I found this interesting post on My-Day',
+      url: window.location.origin + '/post/' + postId
+    });
+  } else {
+    showToast('Share feature not supported on this browser', 'info');
+  }
+}
+
 /* ===========================================================
    COMMENTS SYSTEM
 =========================================================== */
@@ -978,27 +1003,29 @@ function openCreatePostModal() {
   el('createPostModal').classList.add('active');
   if (isMobile) {
     // Hide bottom nav when modal is open
-    document.querySelector('.bottom-nav')?.style.display = 'none';
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
   }
 }
 
 function closeCreatePostModal() {
   el('createPostModal').classList.remove('active');
-  el('postCaption').value = '';
-  el('postMediaPreview').style.display = 'none';
-  el('postFeeling').style.display = 'none';
-  el('mediaInput').value = '';
+  if (el('postCaption')) el('postCaption').value = '';
+  if (el('postMediaPreview')) el('postMediaPreview').style.display = 'none';
+  if (el('postFeeling')) el('postFeeling').style.display = 'none';
+  if (el('mediaInput')) el('mediaInput').value = '';
   
   if (isMobile) {
     // Show bottom nav when modal is closed
-    document.querySelector('.bottom-nav')?.style.display = 'flex';
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'flex';
   }
 }
 
 async function submitPost() {
-  const caption = el('postCaption').value.trim();
-  const privacy = el('postPrivacy').value || 'public';
-  const mediaFile = el('mediaInput').files[0];
+  const caption = el('postCaption') ? el('postCaption').value.trim() : '';
+  const privacy = el('postPrivacy') ? el('postPrivacy').value : 'public';
+  const mediaFile = el('mediaInput') ? el('mediaInput').files[0] : null;
   
   if (!caption && !mediaFile) {
     showToast('Please add some text or media to your post', 'error');
@@ -1006,6 +1033,8 @@ async function submitPost() {
   }
   
   const btn = el('submitPostBtn');
+  if (!btn) return;
+  
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
   
@@ -1059,7 +1088,8 @@ async function submitPost() {
 }
 
 function openPhotoPickerModal() {
-  el('mediaInput').click();
+  const mediaInput = el('mediaInput');
+  if (mediaInput) mediaInput.click();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1095,8 +1125,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function removeMedia() {
-  el('mediaInput').value = '';
-  el('postMediaPreview').style.display = 'none';
+  if (el('mediaInput')) el('mediaInput').value = '';
+  if (el('postMediaPreview')) el('postMediaPreview').style.display = 'none';
 }
 
 /* ===========================================================
@@ -1205,7 +1235,8 @@ function openMessenger() {
   loadChats();
   if (isMobile) {
     // Hide bottom nav when messenger is open
-    document.querySelector('.bottom-nav')?.style.display = 'none';
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
   }
 }
 
@@ -1221,7 +1252,8 @@ function closeMessenger() {
   
   if (isMobile) {
     // Show bottom nav when messenger is closed
-    document.querySelector('.bottom-nav')?.style.display = 'flex';
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'flex';
   }
 }
 
@@ -1319,7 +1351,8 @@ async function loadChats() {
     
     // Update message badge count
     const totalUnread = chats.reduce((sum, chat) => sum + (chat.unread_count || 0), 0);
-    el('messageBadge').textContent = totalUnread > 0 ? totalUnread : '0';
+    const messageBadge = el('messageBadge');
+    if (messageBadge) messageBadge.textContent = totalUnread > 0 ? totalUnread : '0';
     updateMobileBadges();
     
     for (const chat of chatsWithUsers) {
@@ -1371,13 +1404,19 @@ async function openChat(chatId, user) {
   activeChatId = chatId;
   
   // Update chat header
-  el('chatUserName').textContent = user.username || 'Unknown User';
-  el('chatUserStatus').textContent = 'Online';
+  const chatUserName = el('chatUserName');
+  const chatUserStatus = el('chatUserStatus');
+  const chatUserAvatar = el('chatUserAvatar');
+  
+  if (chatUserName) chatUserName.textContent = user.username || 'Unknown User';
+  if (chatUserStatus) chatUserStatus.textContent = 'Online';
   
   const avatarInitial = (user.username || 'U').charAt(0).toUpperCase();
-  el('chatUserAvatar').innerHTML = user.avatar_url 
-    ? `<img src="${user.avatar_url}" alt="${user.username}" onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\'width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;\'>${avatarInitial}</span>';">`
-    : `<span style="width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;">${avatarInitial}</span>`;
+  if (chatUserAvatar) {
+    chatUserAvatar.innerHTML = user.avatar_url 
+      ? `<img src="${user.avatar_url}" alt="${user.username}" onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\'width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;\'>${avatarInitial}</span>';">`
+      : `<span style="width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:18px;">${avatarInitial}</span>`;
+  }
   
   // Load messages
   await loadMessages(chatId);
@@ -1391,15 +1430,18 @@ async function openChat(chatId, user) {
   // Update active state in list
   qsa('.chat-item').forEach(item => item.classList.remove('active'));
   qsa('.chat-item').forEach(item => {
-    if (item.querySelector('.chat-name')?.textContent === user.username) {
+    const chatName = item.querySelector('.chat-name');
+    if (chatName && chatName.textContent === user.username) {
       item.classList.add('active');
     }
   });
   
   // On mobile, hide sidebar when chat is open
   if (isMobile && window.innerWidth < 768) {
-    document.querySelector('.messenger-sidebar').style.display = 'none';
-    document.querySelector('.messenger-content').style.display = 'flex';
+    const messengerSidebar = document.querySelector('.messenger-sidebar');
+    const messengerContent = document.querySelector('.messenger-content');
+    if (messengerSidebar) messengerSidebar.style.display = 'none';
+    if (messengerContent) messengerContent.style.display = 'flex';
   }
 }
 
@@ -1494,6 +1536,8 @@ async function sendChatMessage() {
   }
   
   const input = el('chatInput');
+  if (!input) return;
+  
   const content = input.value.trim();
   
   if (!content) {
@@ -1662,8 +1706,11 @@ function subscribeToMessages(chatId) {
           };
           
           const messageElement = createMessageElement(messageWithProfile);
-          el('chatMessages').appendChild(messageElement);
-          el('chatMessages').scrollTop = el('chatMessages').scrollHeight;
+          const chatMessages = el('chatMessages');
+          if (chatMessages) {
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
           
           // Update chat list
           await loadChats();
@@ -1680,8 +1727,10 @@ async function loadNotifications() {
   try {
     const exists = await tableExists('notifications');
     if (!exists) {
-      el('notificationBadge').style.display = 'none';
-      el('sidebarNotificationBadge').style.display = 'none';
+      const notificationBadge = el('notificationBadge');
+      const sidebarNotificationBadge = el('sidebarNotificationBadge');
+      if (notificationBadge) notificationBadge.style.display = 'none';
+      if (sidebarNotificationBadge) sidebarNotificationBadge.style.display = 'none';
       updateMobileBadges();
       return;
     }
@@ -1694,8 +1743,10 @@ async function loadNotifications() {
       .limit(10);
       
     if (error) {
-      el('notificationBadge').style.display = 'none';
-      el('sidebarNotificationBadge').style.display = 'none';
+      const notificationBadge = el('notificationBadge');
+      const sidebarNotificationBadge = el('sidebarNotificationBadge');
+      if (notificationBadge) notificationBadge.style.display = 'none';
+      if (sidebarNotificationBadge) sidebarNotificationBadge.style.display = 'none';
       updateMobileBadges();
       return;
     }
@@ -1707,8 +1758,10 @@ async function loadNotifications() {
     
     if (!notifications || notifications.length === 0) {
       notificationList.innerHTML = '<p class="text-center">No notifications yet</p>';
-      el('notificationBadge').style.display = 'none';
-      el('sidebarNotificationBadge').style.display = 'none';
+      const notificationBadge = el('notificationBadge');
+      const sidebarNotificationBadge = el('sidebarNotificationBadge');
+      if (notificationBadge) notificationBadge.style.display = 'none';
+      if (sidebarNotificationBadge) sidebarNotificationBadge.style.display = 'none';
       updateMobileBadges();
       return;
     }
@@ -1726,16 +1779,19 @@ async function loadNotifications() {
     });
     
     const unreadCount = notifications.filter(n => !n.read).length;
-    el('notificationBadge').textContent = unreadCount;
-    el('sidebarNotificationBadge').textContent = unreadCount;
+    const notificationBadge = el('notificationBadge');
+    const sidebarNotificationBadge = el('sidebarNotificationBadge');
+    
+    if (notificationBadge) notificationBadge.textContent = unreadCount;
+    if (sidebarNotificationBadge) sidebarNotificationBadge.textContent = unreadCount;
     updateMobileBadges();
     
     if (unreadCount === 0) {
-      el('notificationBadge').style.display = 'none';
-      el('sidebarNotificationBadge').style.display = 'none';
+      if (notificationBadge) notificationBadge.style.display = 'none';
+      if (sidebarNotificationBadge) sidebarNotificationBadge.style.display = 'none';
     } else {
-      el('notificationBadge').style.display = 'flex';
-      el('sidebarNotificationBadge').style.display = 'flex';
+      if (notificationBadge) notificationBadge.style.display = 'flex';
+      if (sidebarNotificationBadge) sidebarNotificationBadge.style.display = 'flex';
     }
     
     for (const notification of notifications) {
@@ -1751,8 +1807,10 @@ async function loadNotifications() {
     
   } catch (error) {
     console.error('Error loading notifications:', error);
-    el('notificationBadge').style.display = 'none';
-    el('sidebarNotificationBadge').style.display = 'none';
+    const notificationBadge = el('notificationBadge');
+    const sidebarNotificationBadge = el('sidebarNotificationBadge');
+    if (notificationBadge) notificationBadge.style.display = 'none';
+    if (sidebarNotificationBadge) sidebarNotificationBadge.style.display = 'none';
     updateMobileBadges();
   }
 }
@@ -1900,43 +1958,67 @@ function updateUserStatus() {
 
 function setupEventListeners() {
   // Theme toggle
-  el('themeToggle').addEventListener('click', toggleTheme);
+  const themeToggle = el('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
   
   // Notification dropdown
-  el('notificationBtn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    el('notificationDropdown').classList.toggle('active');
-    if (el('notificationDropdown').classList.contains('active')) {
-      loadNotifications();
-    }
-  });
+  const notificationBtn = el('notificationBtn');
+  if (notificationBtn) {
+    notificationBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = el('notificationDropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('active');
+        if (dropdown.classList.contains('active')) {
+          loadNotifications();
+        }
+      }
+    });
+  }
   
   // User menu dropdown
-  el('userMenuBtn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    el('userMenuDropdown').classList.toggle('active');
-  });
+  const userMenuBtn = el('userMenuBtn');
+  if (userMenuBtn) {
+    userMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = el('userMenuDropdown');
+      if (dropdown) dropdown.classList.toggle('active');
+    });
+  }
   
   // Messenger button
-  el('messengerBtn').addEventListener('click', openMessenger);
+  const messengerBtn = el('messengerBtn');
+  if (messengerBtn) {
+    messengerBtn.addEventListener('click', openMessenger);
+  }
   
   // Logout
-  el('logoutBtn').addEventListener('click', async () => {
-    try {
-      await sb.auth.signOut();
-      window.location.href = 'login.html';
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  });
+  const logoutBtn = el('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await sb.auth.signOut();
+        window.location.href = 'login.html';
+      } catch (error) {
+        console.error('Error logging out:', error);
+      }
+    });
+  }
   
   // Close dropdowns when clicking outside
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.notification-wrapper')) {
-      el('notificationDropdown').classList.remove('active');
+    const notificationWrapper = e.target.closest('.notification-wrapper');
+    const userMenuWrapper = e.target.closest('.user-menu-wrapper');
+    
+    if (!notificationWrapper) {
+      const dropdown = el('notificationDropdown');
+      if (dropdown) dropdown.classList.remove('active');
     }
-    if (!e.target.closest('.user-menu-wrapper')) {
-      el('userMenuDropdown').classList.remove('active');
+    if (!userMenuWrapper) {
+      const dropdown = el('userMenuDropdown');
+      if (dropdown) dropdown.classList.remove('active');
     }
   });
   
@@ -1980,8 +2062,10 @@ function setupEventListeners() {
       backBtn.innerHTML = '<i class="fas fa-arrow-left"></i>';
       backBtn.style.display = 'none';
       backBtn.onclick = () => {
-        document.querySelector('.messenger-sidebar').style.display = 'flex';
-        document.querySelector('.messenger-content').style.display = 'none';
+        const messengerSidebar = document.querySelector('.messenger-sidebar');
+        const messengerContent = document.querySelector('.messenger-content');
+        if (messengerSidebar) messengerSidebar.style.display = 'flex';
+        if (messengerContent) messengerContent.style.display = 'none';
       };
       chatHeader.insertBefore(backBtn, chatHeader.firstChild);
       
@@ -2016,9 +2100,28 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Handle back button in messenger on mobile
   window.addEventListener('popstate', () => {
-    if (el('messengerModal').classList.contains('active')) {
+    const messengerModal = el('messengerModal');
+    if (messengerModal && messengerModal.classList.contains('active')) {
       closeMessenger();
     }
   });
 });
-[file content end]
+
+// Helper functions for missing features
+function openFeelingPickerModal() {
+  showToast('Feeling picker coming soon!', 'info');
+}
+
+function openCameraModal() {
+  showToast('Camera feature coming soon!', 'info');
+}
+
+function loadFollowingPosts() {
+  showToast('Loading posts from people you follow...', 'info');
+  loadPosts(); // Fallback to all posts for now
+}
+
+function loadPopularPosts() {
+  showToast('Loading popular posts...', 'info');
+  loadPosts(); // Fallback to all posts for now
+}
