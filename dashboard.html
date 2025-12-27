@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>My-Day Dashboard</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,500,600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
 /* =====================================================
@@ -18,6 +19,7 @@
   --text:#222;
   --muted:#777;
   --border:#e5e7eb;
+  --hover:#f0f2f5;
 
   --chat-bg:#f4f6fb;
   --msg-other:#e5e7eb;
@@ -27,6 +29,8 @@
   --unread:#ef4444;
 
   --radius:14px;
+  --shadow:0 4px 14px rgba(0,0,0,.08);
+  --shadow-light:0 2px 10px rgba(0,0,0,.06);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,6 +40,7 @@
     --text:#e5e7eb;
     --muted:#9ca3af;
     --border:#1f2937;
+    --hover:#1e293b;
 
     --chat-bg:#020617;
     --msg-other:#1f2937;
@@ -81,7 +86,15 @@ header h2 {
   background:var(--primary);
   color:#fff;
   font-weight:600;
-  transition: opacity 0.2s;
+  transition: all 0.2s ease;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.btn:hover:not(:disabled) {
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(74, 144, 226, 0.3);
 }
 
 .btn:disabled {
@@ -95,6 +108,15 @@ header h2 {
 
 .btn.ghost:hover {
   background:rgba(255,255,255,.3);
+}
+
+.btn.icon {
+  width:36px;
+  height:36px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 /* =====================================================
@@ -120,8 +142,10 @@ header h2 {
   background:var(--card);
   border-radius:var(--radius);
   padding:18px;
-  box-shadow:0 4px 14px rgba(0,0,0,.08);
+  box-shadow:var(--shadow);
   height: fit-content;
+  position:sticky;
+  top:80px;
 }
 
 /* Story Ring / Avatar Container */
@@ -187,11 +211,34 @@ header h2 {
   object-fit:cover;
 }
 
+.username-container {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:16px;
+}
+
 .username {
   font-size:18px;
   font-weight:600;
-  margin-bottom:16px;
   text-align: center;
+  word-break:break-word;
+}
+
+.btn-edit {
+  background:none;
+  border:none;
+  color:var(--muted);
+  cursor:pointer;
+  padding:4px;
+  border-radius:6px;
+  transition:all 0.2s;
+}
+
+.btn-edit:hover {
+  background:var(--hover);
+  color:var(--text);
 }
 
 .sidebar hr {
@@ -203,21 +250,43 @@ header h2 {
 /* =====================================================
    FEED
 ===================================================== */
-.feed h2 { margin:0 0 14px; }
+.feed h2 { 
+  margin:0 0 14px; 
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.feed h2 i {
+  color:var(--primary);
+}
 
 .post {
   background:var(--card);
   border-radius:var(--radius);
-  box-shadow:0 2px 10px rgba(0,0,0,.06);
+  box-shadow:var(--shadow-light);
   margin-bottom:20px;
   overflow:hidden;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+
+.post:hover {
+  transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(0,0,0,0.1);
 }
 
 .post-header {
   display:flex;
   align-items:center;
+  justify-content:space-between;
   gap:10px;
   padding:14px;
+}
+
+.post-user {
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
 /* Specific styling for small avatars in posts */
@@ -227,6 +296,11 @@ header h2 {
   font-size:16px;
   border:2px solid var(--primary);
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.post-time {
+  font-size:12px;
+  color:var(--muted);
 }
 
 .post-content {
@@ -252,7 +326,7 @@ header h2 {
 }
 
 /* =====================================================
-   MESSENGER OVERLAY
+   MESSENGER OVERLAY - MODERN REDESIGN
 ===================================================== */
 .messenger {
   position:fixed;
@@ -261,6 +335,11 @@ header h2 {
   z-index:3000;
   display:none;
   flex-direction:column;
+  transition:transform 0.3s ease;
+}
+
+.messenger.active {
+  display:flex;
 }
 
 .messenger .topbar {
@@ -268,81 +347,275 @@ header h2 {
   border-bottom:1px solid var(--border);
   display:flex;
   align-items:center;
+  justify-content:space-between;
+  background:var(--card);
+  box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+.topbar-left {
+  display:flex;
+  align-items:center;
   gap:12px;
+}
+
+.topbar-actions {
+  display:flex;
+  gap:8px;
 }
 
 .messenger .content {
   flex:1;
   display:flex;
   min-height:0;
+  height:calc(100vh - 60px);
 }
 
+/* User List - Modern Design */
 .user-list {
-  width:280px;
+  width:320px;
   border-right:1px solid var(--border);
   overflow-y:auto;
-  padding:10px;
-}
-
-.chat-area {
-  flex:1;
+  background:var(--card);
   display:flex;
   flex-direction:column;
 }
 
-.chat-header {
-  padding:12px 14px;
+.user-list-header {
+  padding:16px;
   border-bottom:1px solid var(--border);
+}
+
+.user-list-header h3 {
+  margin:0;
+  font-size:18px;
+}
+
+.search-box {
+  margin-top:12px;
+  position:relative;
+}
+
+.search-box input {
+  width:100%;
+  padding:10px 16px 10px 40px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  background:var(--hover);
+  color:var(--text);
+  font-size:14px;
+}
+
+.search-box i {
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--muted);
+}
+
+.user-item {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  cursor:pointer;
+  transition:background 0.2s;
+  border-bottom:1px solid var(--border);
+}
+
+.user-item:hover, .user-item.active {
+  background:var(--hover);
+}
+
+.user-avatar {
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  overflow:hidden;
+  background:var(--primary);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-weight:600;
+  position:relative;
+}
+
+.user-avatar img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.user-info {
+  flex:1;
+  min-width:0;
+}
+
+.user-info h4 {
+  margin:0 0 4px 0;
+  font-size:15px;
+}
+
+.user-info p {
+  margin:0;
+  font-size:13px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.user-status {
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:10px;
+  background:var(--muted);
+  color:#fff;
+  margin-left:auto;
+}
+
+.user-status.online {
+  background:var(--online);
+}
+
+/* Chat Area */
+.chat-area {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+
+.chat-header {
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--card);
+}
+
+.chat-user {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.chat-user h3 {
+  margin:0;
+  font-size:16px;
+}
+
+.chat-actions {
+  display:flex;
+  gap:8px;
 }
 
 .messages {
   flex:1;
   overflow-y:auto;
-  padding:14px;
+  padding:20px;
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:12px;
   background:var(--chat-bg);
+  scroll-behavior:smooth;
 }
 
 .msg {
-  max-width:72%;
-  padding:8px 12px;
-  border-radius:16px;
+  max-width:70%;
+  padding:12px 16px;
+  border-radius:18px;
   background:var(--msg-other);
   font-size:14px;
+  line-height:1.4;
   position:relative;
+  animation:fadeIn 0.3s ease;
 }
 
 .msg.me {
   align-self:flex-end;
   background:var(--msg-me);
   color:#fff;
+  border-bottom-right-radius:4px;
+}
+
+.msg.other {
+  border-bottom-left-radius:4px;
+}
+
+.msg-time {
+  font-size:11px;
+  color:var(--muted);
+  margin-top:4px;
+  text-align:right;
+}
+
+.msg.me .msg-time {
+  color:rgba(255,255,255,0.8);
 }
 
 .send-box {
   display:flex;
-  gap:8px;
-  padding:12px;
+  gap:10px;
+  padding:16px;
   border-top:1px solid var(--border);
+  background:var(--card);
 }
 
 #messageInput {
   flex:1;
-  padding:10px 12px;
-  border-radius:10px;
+  padding:12px 16px;
+  border-radius:24px;
   border:1px solid var(--border);
+  background:var(--hover);
+  color:var(--text);
+  font-size:15px;
+  resize:none;
+  min-height:44px;
+  max-height:120px;
+}
+
+#messageInput:focus {
+  outline:none;
+  border-color:var(--primary);
 }
 
 @media (max-width:800px){
-  .messenger .content { flex-direction:column; }
+  .messenger .content { 
+    flex-direction:column;
+  }
+  
   .user-list {
     width:100%;
     border-right:none;
     border-bottom:1px solid var(--border);
-    height: 150px; /* limit height on mobile */
+    max-height:40vh;
   }
+  
+  .chat-area {
+    height:60vh;
+  }
+  
+  .msg {
+    max-width:85%;
+  }
+}
+
+@media (max-width:600px){
+  .user-list {
+    width:100%;
+  }
+  
+  .topbar-actions {
+    display:none;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(10px); }
+  to { opacity:1; transform:translateY(0); }
 }
 
 /* =====================================================
@@ -357,16 +630,50 @@ header h2 {
   align-items:center;
   justify-content:center;
   backdrop-filter:blur(5px);
+  animation:fadeIn 0.3s ease;
 }
+
 .hidden { display:none !important; }
 
 .create-box {
   background:var(--card);
-  padding:20px;
+  padding:24px;
   border-radius:var(--radius);
   width:90%;
   max-width:500px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.2);
+  box-shadow:0 20px 40px rgba(0,0,0,0.3);
+}
+
+.create-box h3 {
+  margin:0 0 16px 0;
+  font-size:20px;
+}
+
+.create-box textarea {
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  margin-bottom:16px;
+  font-family:inherit;
+  resize:vertical;
+  min-height:80px;
+}
+
+.create-box input[type="file"] {
+  margin-bottom:16px;
+  width:100%;
+  padding:8px;
+  border:1px dashed var(--border);
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.modal-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-top:20px;
 }
 
 .camera-preview {
@@ -377,17 +684,67 @@ header h2 {
   display:none;
   flex-direction:column;
 }
+
 .camera-preview video {
   flex:1;
   width:100%;
   object-fit:cover;
 }
+
 .camera-controls {
-  padding:20px;
+  padding:24px;
   display:flex;
   justify-content:center;
   gap:20px;
   background:rgba(0,0,0,0.8);
+}
+
+/* Username Edit Modal */
+.edit-username-box {
+  background:var(--card);
+  padding:24px;
+  border-radius:var(--radius);
+  width:90%;
+  max-width:400px;
+  box-shadow:0 20px 40px rgba(0,0,0,0.3);
+}
+
+.edit-username-box h3 {
+  margin:0 0 16px 0;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.edit-username-box input {
+  width:100%;
+  padding:12px 16px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--text);
+  font-size:16px;
+  margin-bottom:8px;
+}
+
+.edit-username-box input:focus {
+  outline:none;
+  border-color:var(--primary);
+}
+
+.char-count {
+  font-size:12px;
+  color:var(--muted);
+  text-align:right;
+  margin-bottom:20px;
+}
+
+.char-count.warning {
+  color:#f59e0b;
+}
+
+.char-count.error {
+  color:#ef4444;
 }
 </style>
 </head>
@@ -397,8 +754,8 @@ header h2 {
 <header>
   <h2>My-Day</h2>
   <div>
-    <button class="btn" id="inboxBtn">Inbox</button>
-    <button class="btn ghost" onclick="toggleCreatePost()">Create Post</button>
+    <button class="btn" id="inboxBtn"><i class="fas fa-inbox"></i> Inbox</button>
+    <button class="btn ghost" onclick="toggleCreatePost()"><i class="fas fa-plus"></i> Create Post</button>
   </div>
 </header>
 
@@ -410,66 +767,140 @@ header h2 {
       <span id="avatarInitial">U</span>
     </div>
   </div>
-  <div class="username" id="profileUsername">Loading…</div>
+  
+  <div class="username-container">
+    <div class="username" id="profileUsername">Loading…</div>
+    <button class="btn-edit" onclick="openEditUsername()" title="Edit username">
+      <i class="fas fa-edit"></i>
+    </button>
+  </div>
 
-  <label class="btn" style="width:100%;text-align:center;display:block;">
-    Change Avatar
+  <label class="btn" style="width:100%;text-align:center;display:block;margin-bottom:12px;">
+    <i class="fas fa-image"></i> Change Avatar
     <input type="file" id="avatarInput" accept="image/*" hidden>
   </label>
 
   <hr>
 
-  <button class="btn" style="width:100%;" onclick="openCamera()">Take Photo</button>
+  <button class="btn" style="width:100%;" onclick="openCamera()">
+    <i class="fas fa-camera"></i> Take Photo
+  </button>
 </aside>
 
 <main class="feed">
-  <h2>Latest Posts</h2>
+  <h2><i class="fas fa-newspaper"></i> Latest Posts</h2>
   <div id="posts"></div>
 </main>
 
 </div>
 
+<!-- Messenger Overlay -->
 <div class="messenger" id="messenger">
   <div class="topbar">
-    <button class="btn ghost" onclick="closeMessenger()">← Back</button>
-    <strong>Inbox</strong>
+    <div class="topbar-left">
+      <button class="btn ghost btn icon" onclick="closeMessenger()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <strong>Messages</strong>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn ghost btn icon" title="Search">
+        <i class="fas fa-search"></i>
+      </button>
+      <button class="btn ghost btn icon" title="New message">
+        <i class="fas fa-edit"></i>
+      </button>
+    </div>
   </div>
 
   <div class="content">
-    <div class="user-list" id="userList"></div>
+    <div class="user-list">
+      <div class="user-list-header">
+        <h3>Contacts</h3>
+        <div class="search-box">
+          <input type="text" id="searchContacts" placeholder="Search contacts...">
+          <i class="fas fa-search"></i>
+        </div>
+      </div>
+      <div id="userList"></div>
+    </div>
 
     <div class="chat-area">
-      <div class="chat-header">Conversation</div>
-      <div class="messages" id="messagesList"></div>
+      <div class="chat-header">
+        <div class="chat-user" id="chatHeaderUser">
+          <div class="user-avatar" id="chatAvatar">
+            <span>U</span>
+          </div>
+          <div>
+            <h3 id="chatUserName">Select a conversation</h3>
+            <p id="chatUserStatus" style="font-size:13px;color:var(--muted);margin:0;">Click on a contact to start chatting</p>
+          </div>
+        </div>
+        <div class="chat-actions">
+          <button class="btn ghost btn icon" title="Voice call">
+            <i class="fas fa-phone"></i>
+          </button>
+          <button class="btn ghost btn icon" title="Video call">
+            <i class="fas fa-video"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="messages" id="messagesList">
+        <div class="welcome-message" style="text-align:center;padding:40px 20px;color:var(--muted);">
+          <i class="fas fa-comments" style="font-size:48px;margin-bottom:16px;opacity:0.5;"></i>
+          <h3 style="margin:0 0 8px 0;">Welcome to Messages</h3>
+          <p>Select a contact from the list to start a conversation</p>
+        </div>
+      </div>
 
       <div class="send-box">
-        <input id="messageInput" placeholder="Write a message..." />
-        <button class="btn" onclick="sendMessage()">Send</button>
+        <textarea id="messageInput" placeholder="Type your message..." rows="1"></textarea>
+        <button class="btn" onclick="sendMessage()" style="border-radius:50%;width:44px;height:44px;padding:0;">
+          <i class="fas fa-paper-plane"></i>
+        </button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Create Post Modal -->
 <div id="createPostBox" class="modal-overlay hidden">
   <div class="create-box">
-    <h3 style="margin-top:0;">Create Post</h3>
-    <textarea id="caption" rows="3" placeholder="What's on your mind?" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;font-family:inherit;"></textarea>
+    <h3><i class="fas fa-pen"></i> Create Post</h3>
+    <textarea id="caption" rows="3" placeholder="What's on your mind?"></textarea>
     
-    <input type="file" id="mediaFile" accept="image/*,video/*" style="margin-bottom:14px;display:block;">
+    <input type="file" id="mediaFile" accept="image/*,video/*">
     
-    <div style="display:flex;justify-content:flex-end;gap:10px;">
-      <button class="btn ghost" style="color:#333;" onclick="toggleCreatePost()">Cancel</button>
-      <button id="postBtn" class="btn" onclick="createPost()">Post</button>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="toggleCreatePost()">Cancel</button>
+      <button id="postBtn" class="btn" onclick="createPost()">Post Now</button>
     </div>
   </div>
 </div>
 
+<!-- Edit Username Modal -->
+<div id="editUsernameBox" class="modal-overlay hidden">
+  <div class="edit-username-box">
+    <h3><i class="fas fa-user-edit"></i> Edit Username</h3>
+    <input type="text" id="newUsername" maxlength="30" placeholder="Enter new username">
+    <div id="usernameCharCount" class="char-count">0/30</div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeEditUsername()">Cancel</button>
+      <button id="saveUsernameBtn" class="btn" onclick="saveUsername()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Camera Preview -->
 <div id="cameraPreview" class="camera-preview">
   <video id="cameraVideo" autoplay playsinline></video>
   <canvas id="photoCanvas" style="display:none;"></canvas>
   <div class="camera-controls">
     <button class="btn ghost" onclick="closeCamera()">Cancel</button>
-    <button class="btn" style="background:#fff;color:#000;border-radius:50%;width:60px;height:60px;font-size:0;" onclick="capturePhoto()">Capture</button>
+    <button class="btn" style="background:#fff;color:#000;border-radius:50%;width:60px;height:60px;font-size:0;" onclick="capturePhoto()">
+      <i class="fas fa-camera" style="font-size:20px;"></i>
+    </button>
   </div>
 </div>
 
@@ -477,6 +908,3 @@ header h2 {
 <script src="dashboard.js"></script>
 </body>
 </html>
-
-
-  
