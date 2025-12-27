@@ -232,7 +232,312 @@ function updateAvatarImages(avatarUrl) {
 }
 
 /* ===========================================================
-   POSTS MANAGEMENT - SIMPLIFIED
+   LIKE SYSTEM
+=========================================================== */
+async function toggleLike(postId) {
+  try {
+    // Check if user already liked this post
+    const { data: existingLike } = await sb
+      .from('post_likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', currentUser.id)
+      .single()
+      .catch(() => ({ data: null }));
+    
+    if (existingLike) {
+      // Unlike
+      const { error } = await sb
+        .from('post_likes')
+        .delete()
+        .eq('id', existingLike.id);
+        
+      if (error) throw error;
+      
+      showToast('Post unliked', 'success');
+      return false;
+    } else {
+      // Like
+      const { error } = await sb
+        .from('post_likes')
+        .insert({
+          post_id: postId,
+          user_id: currentUser.id,
+          created_at: new Date().toISOString()
+        });
+        
+      if (error) {
+        // If table doesn't exist, create it
+        if (error.message.includes('relation "post_likes" does not exist')) {
+          showToast('Like system needs setup. Creating tables...', 'info');
+          await createLikeTables();
+          return await toggleLike(postId);
+        }
+        throw error;
+      }
+      
+      showToast('Post liked!', 'success');
+      return true;
+    }
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    showToast('Failed to update like', 'error');
+    return null;
+  }
+}
+
+async function createLikeTables() {
+  try {
+    // Create post_likes table
+    const { error: likeError } = await sb.rpc('create_post_likes_table');
+    
+    if (likeError) {
+      // If RPC doesn't exist, try direct SQL
+      console.log('RPC not available, attempting manual table creation');
+    }
+  } catch (error) {
+    console.error('Error creating like tables:', error);
+  }
+}
+
+async function getLikeCount(postId) {
+  try {
+    const { count, error } = await sb
+      .from('post_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId);
+      
+    if (error) {
+      // Table might not exist yet
+      if (error.message.includes('relation "post_likes" does not exist')) {
+        return 0;
+      }
+      throw error;
+    }
+    return count || 0;
+  } catch (error) {
+    console.error('Error getting like count:', error);
+    return 0;
+  }
+}
+
+async function getUserLiked(postId) {
+  try {
+    const { data, error } = await sb
+      .from('post_likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', currentUser.id)
+      .single();
+      
+    return !error && data;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function getCommentCount(postId) {
+  try {
+    const { count, error } = await sb
+      .from('post_comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId);
+      
+    if (error) {
+      // Table might not exist yet
+      if (error.message.includes('relation "post_comments" does not exist')) {
+        return 0;
+      }
+      throw error;
+    }
+    return count || 0;
+  } catch (error) {
+    console.error('Error getting comment count:', error);
+    return 0;
+  }
+}
+
+/* ===========================================================
+   COMMENT SYSTEM
+=========================================================== */
+async function toggleComments(postId) {
+  const commentsSection = document.getElementById(`comments-${postId}`);
+  const commentsBtn = document.querySelector(`[data-post="${postId}"] .comment-btn`);
+  
+  if (!commentsSection) return;
+  
+  if (commentsSection.classList.contains('active')) {
+    commentsSection.classList.remove('active');
+    if (commentsBtn) commentsBtn.classList.remove('active');
+  } else {
+    commentsSection.classList.add('active');
+    if (commentsBtn) commentsBtn.classList.add('active');
+    await loadComments(postId);
+  }
+}
+
+async function loadComments(postId) {
+  const commentsList = document.getElementById(`comments-list-${postId}`);
+  if (!commentsList) return;
+  
+  commentsList.innerHTML = '<p class="text-center">Loading comments...</p>';
+  
+  try {
+    const { data: comments, error } = await sb
+      .from('post_comments')
+      .select(`
+        *,
+        profiles:user_id (username, avatar_url)
+      `)
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+      
+    if (error) {
+      // Table might not exist yet
+      if (error.message.includes('relation "post_comments" does not exist')) {
+        commentsList.innerHTML = `
+          <div class="text-center" style="padding: 20px; color: var(--muted);">
+            <i class="fas fa-comment" style="font-size: 24px; margin-bottom: 8px; opacity: 0.5;"></i>
+            <p>No comments yet</p>
+          </div>
+        `;
+        return;
+      }
+      throw error;
+    }
+    
+    commentsList.innerHTML = '';
+    
+    if (!comments || comments.length === 0) {
+      commentsList.innerHTML = `
+        <div class="text-center" style="padding: 20px; color: var(--muted);">
+          <i class="fas fa-comment" style="font-size: 24px; margin-bottom: 8px; opacity: 0.5;"></i>
+          <p>No comments yet</p>
+        </div>
+      `;
+      return;
+    }
+    
+    for (const comment of comments) {
+      const commentElement = createCommentElement(comment);
+      commentsList.appendChild(commentElement);
+    }
+    
+  } catch (error) {
+    console.error('Error loading comments:', error);
+    commentsList.innerHTML = '<p class="text-center">Failed to load comments</p>';
+  }
+}
+
+function createCommentElement(comment) {
+  const div = document.createElement('div');
+  div.className = 'comment-item';
+  
+  const profile = comment.profiles || {};
+  const username = profile.username || 'Unknown User';
+  const avatarInitial = username.charAt(0).toUpperCase();
+  const commentTime = formatRelativeTime(comment.created_at);
+  
+  div.innerHTML = `
+    <div class="comment-avatar">
+      ${profile.avatar_url 
+        ? `<img src="${profile.avatar_url}" alt="${username}">`
+        : `<span style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;">${avatarInitial}</span>`
+      }
+    </div>
+    <div class="comment-content">
+      <div class="comment-header">
+        <div class="comment-username">${username}</div>
+        <div class="comment-time">${commentTime}</div>
+      </div>
+      <div class="comment-text">${comment.content}</div>
+    </div>
+  `;
+  
+  return div;
+}
+
+async function submitComment(postId) {
+  const input = document.getElementById(`comment-input-${postId}`);
+  if (!input) return;
+  
+  const content = input.value.trim();
+  
+  if (!content) {
+    showToast('Please enter a comment', 'warning');
+    return;
+  }
+  
+  try {
+    const { error } = await sb
+      .from('post_comments')
+      .insert({
+        post_id: postId,
+        user_id: currentUser.id,
+        content: content,
+        created_at: new Date().toISOString()
+      });
+      
+    if (error) {
+      // If table doesn't exist, create it
+      if (error.message.includes('relation "post_comments" does not exist')) {
+        showToast('Comment system needs setup. Creating tables...', 'info');
+        await createCommentTables();
+        return await submitComment(postId);
+      }
+      throw error;
+    }
+    
+    input.value = '';
+    showToast('Comment added!', 'success');
+    await loadComments(postId);
+    
+    // Update comment count
+    await updatePostStats(postId);
+    
+  } catch (error) {
+    console.error('Error submitting comment:', error);
+    showToast('Failed to add comment', 'error');
+  }
+}
+
+async function createCommentTables() {
+  try {
+    // Create post_comments table
+    const { error: commentError } = await sb.rpc('create_post_comments_table');
+    
+    if (commentError) {
+      console.log('RPC not available, attempting manual table creation');
+    }
+  } catch (error) {
+    console.error('Error creating comment tables:', error);
+  }
+}
+
+async function updatePostStats(postId) {
+  try {
+    const likeCount = await getLikeCount(postId);
+    const commentCount = await getCommentCount(postId);
+    
+    // Update like count display
+    const likeCountElement = document.getElementById(`like-count-${postId}`);
+    if (likeCountElement) {
+      likeCountElement.textContent = `${likeCount} like${likeCount !== 1 ? 's' : ''}`;
+    }
+    
+    // Update comment count display
+    const commentCountElement = document.getElementById(`comment-count-${postId}`);
+    if (commentCountElement) {
+      commentCountElement.textContent = `${commentCount} comment${commentCount !== 1 ? 's' : ''}`;
+    }
+    
+  } catch (error) {
+    console.error('Error updating post stats:', error);
+  }
+}
+
+/* ===========================================================
+   POSTS MANAGEMENT
 =========================================================== */
 async function loadPosts() {
   const postsContainer = el('postsContainer');
@@ -289,7 +594,7 @@ async function loadPosts() {
       const postIdStr = post.id.toString();
       const profile = profileMap[post.user_id] || { username: 'Unknown User', avatar_url: null };
       
-      const postElement = createPostElement(post, profile, postIdStr);
+      const postElement = await createPostElement(post, profile, postIdStr);
       postsContainer.appendChild(postElement);
     }
     
@@ -299,7 +604,7 @@ async function loadPosts() {
   }
 }
 
-function createPostElement(post, profile, postIdStr) {
+async function createPostElement(post, profile, postIdStr) {
   const div = document.createElement('div');
   div.className = 'post-card';
   div.id = `post-${post.id}`;
@@ -307,6 +612,11 @@ function createPostElement(post, profile, postIdStr) {
   const postTime = formatRelativeTime(post.created_at);
   const username = profile?.username || 'Unknown User';
   const avatarInitial = username.charAt(0).toUpperCase();
+  
+  // Get like and comment counts
+  const likeCount = await getLikeCount(post.id);
+  const commentCount = await getCommentCount(post.id);
+  const userLiked = await getUserLiked(post.id);
   
   let mediaHTML = '';
   if (post.media_url) {
@@ -351,20 +661,20 @@ function createPostElement(post, profile, postIdStr) {
     
     <div class="post-stats">
       <div class="post-likes">
-        <i class="fas fa-heart" style="color: var(--danger);"></i>
-        <span>0 likes</span>
+        <i class="fas fa-heart" style="color: ${userLiked ? 'var(--danger)' : 'var(--muted)'};"></i>
+        <span id="like-count-${post.id}">${likeCount} like${likeCount !== 1 ? 's' : ''}</span>
       </div>
       <div class="post-comments">
-        <span>0 comments</span>
+        <span id="comment-count-${post.id}">${commentCount} comment${commentCount !== 1 ? 's' : ''}</span>
       </div>
     </div>
     
     <div class="post-actions-container">
-      <button class="post-action" onclick="showToast('Like feature coming soon!', 'info')">
-        <i class="far fa-heart"></i>
+      <button class="post-action like-btn ${userLiked ? 'active' : ''}" data-post="${post.id}" onclick="handleLike('${post.id}')">
+        <i class="${userLiked ? 'fas' : 'far'} fa-heart"></i>
         <span>Like</span>
       </button>
-      <button class="post-action" onclick="showToast('Comment feature coming soon!', 'info')">
+      <button class="post-action comment-btn" data-post="${post.id}" onclick="toggleComments('${post.id}')">
         <i class="far fa-comment"></i>
         <span>Comment</span>
       </button>
@@ -373,9 +683,44 @@ function createPostElement(post, profile, postIdStr) {
         <span>Share</span>
       </button>
     </div>
+    
+    <div class="comments-section" id="comments-${post.id}">
+      <div class="comments-list" id="comments-list-${post.id}"></div>
+      <div class="comment-form">
+        <div class="post-input-avatar" style="width:32px;height:32px;">
+          ${currentProfile?.avatar_url 
+            ? `<img src="${currentProfile.avatar_url}" alt="${currentProfile.username}">`
+            : `<span class="avatar-initial" style="width:32px;height:32px;font-size:14px;display:flex;align-items:center;justify-content:center;">${(currentProfile?.username || 'U').charAt(0).toUpperCase()}</span>`
+          }
+        </div>
+        <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Write a comment..." onkeypress="if(event.key === 'Enter') submitComment('${post.id}')">
+        <button class="btn btn-primary btn-sm" onclick="submitComment('${post.id}')">Post</button>
+      </div>
+    </div>
   `;
   
   return div;
+}
+
+async function handleLike(postId) {
+  const liked = await toggleLike(postId);
+  if (liked !== null) {
+    // Update UI immediately
+    const likeBtn = document.querySelector(`[data-post="${postId}"] .like-btn`);
+    const likeIcon = likeBtn.querySelector('i');
+    const likeCountElement = document.getElementById(`like-count-${postId}`);
+    
+    if (liked) {
+      likeBtn.classList.add('active');
+      likeIcon.className = 'fas fa-heart';
+    } else {
+      likeBtn.classList.remove('active');
+      likeIcon.className = 'far fa-heart';
+    }
+    
+    // Update count
+    await updatePostStats(postId);
+  }
 }
 
 /* ===========================================================
@@ -587,7 +932,7 @@ function refreshContacts() {
 }
 
 /* ===========================================================
-   MESSENGER SYSTEM - SIMPLIFIED WORKING VERSION
+   MESSENGER SYSTEM
 =========================================================== */
 function openMessenger() {
   el('messengerModal').classList.add('active');
@@ -1016,6 +1361,52 @@ function showNotifications() {
 
 function openEditProfile() {
   el('editProfileModal').classList.add('active');
+}
+
+function closeEditProfileModal() {
+  el('editProfileModal').classList.remove('active');
+}
+
+async function saveProfile() {
+  const username = el('editUsername').value.trim();
+  const bio = el('editBio').value.trim();
+  const location = el('editLocation').value.trim();
+  
+  if (!username) {
+    showToast('Username is required', 'error');
+    return;
+  }
+  
+  const btn = el('saveProfileBtn');
+  if (!btn) return;
+  
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  
+  try {
+    const { error } = await sb
+      .from('profiles')
+      .update({
+        username: username,
+        bio: bio,
+        location: location,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', currentUser.id);
+      
+    if (error) throw error;
+    
+    showToast('Profile updated successfully!', 'success');
+    closeEditProfileModal();
+    await loadUserProfile();
+    
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    showToast('Failed to update profile', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Changes';
+  }
 }
 
 function markAllNotificationsAsRead() {
