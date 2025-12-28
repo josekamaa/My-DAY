@@ -1,99 +1,310 @@
-<!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Day - Welcome</title>
+    <title>My Day | Experience Joy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #ff6b6b;
+            --primary-glow: rgba(255, 107, 107, 0.4);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            margin: 0;
-            padding: 0;
             height: 100vh;
-            background: url('bgd.jpg') no-repeat center center/cover; /* Replace with your background image file name */
+            background: #050505;
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1200px;
+        }
+
+        /* --- BACKGROUND LAYERS --- */
+        #particle-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .bg-image {
+            position: fixed;
+            inset: 0;
+            background: url('bgd.jpg') no-repeat center center/cover;
+            filter: brightness(0.3) saturate(1.2);
+            transform: scale(1.15);
+            transition: transform 12s cubic-bezier(0.1, 0, 0.1, 1);
+            z-index: 0;
+        }
+        body.loaded .bg-image { transform: scale(1); }
+
+        .cursor-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+        body.loaded .cursor-glow { opacity: 0.5; }
+
+        /* --- MAIN CARD --- */
+        .tilt-box {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 550px;
+            transform-style: preserve-3d;
+        }
+
+        .card {
+            padding: 5rem 2rem;
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            text-align: center;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1.5s ease, transform 1.2s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        body.loaded .card { opacity: 1; transform: translateY(0); }
+
+        .logo {
+            width: 110px;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.5));
+            transform: translateZ(70px);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to bottom, #fff 40%, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transform: translateZ(40px);
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 3.5rem;
+            transform: translateZ(30px);
+        }
+
+        .btn {
+            position: relative;
+            display: inline-block;
+            padding: 1.3rem 4rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 100px;
+            font-weight: 600;
+            transform: translateZ(50px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.3);
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateZ(80px) translateY(-5px) scale(1.05);
+            background: #ff5252;
+            box-shadow: 0 25px 50px rgba(255, 107, 107, 0.5);
+        }
+
+        /* --- ADVANCED LOADER --- */
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: #080808;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-family: 'Arial', sans-serif;
-            color: white;
+            transition: clip-path 1.2s cubic-bezier(0.8, 0, 0.2, 1);
+            clip-path: circle(150% at 50% 50%);
+        }
+        .loader.hidden { clip-path: circle(0% at 50% 50%); }
+
+        .progress-container {
+            width: 250px;
             text-align: center;
         }
-        
-        .overlay {
-            background-color: rgba(0, 0, 0, 0.3); /* Optional dark overlay for better text visibility */
-            position: absolute;
-            top: 0;
-            left: 0;
+
+        .progress-track {
             width: 100%;
-            height: 100%;
-        }
-        
-        .content {
+            height: 2px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
             position: relative;
-            z-index: 1;
-            max-width: 90%;
+            margin-bottom: 15px;
         }
-        
-        .logo {
-            width: 200px; /* Adjust size as needed */
-            margin-bottom: 40px;
-            border-radius: 75px;
+
+        .progress-fill {
+            position: absolute;
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            box-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary);
+            transition: width 2s cubic-bezier(0.65, 0, 0.35, 1);
         }
-        
-        h1 {
-            font-size: 3em;
-            margin: 20px 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+
+        .percent-text {
+            font-size: 0.75rem;
+            letter-spacing: 4px;
+            font-weight: 300;
+            color: var(--primary);
+            text-transform: uppercase;
         }
-        
-        p {
-            font-size: 1.8em;
-            margin-bottom: 50px;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+
+        @keyframes float {
+            0%, 100% { transform: translateZ(70px) translateY(0); }
+            50% { transform: translateZ(70px) translateY(-20px); }
         }
-        
-        .btn {
-            background-color: #ff6b6b; /* Vibrant button color to match the joyful theme */
-            color: white;
-            padding: 15px 40px;
-            font-size: 1.5em;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            text-decoration: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            transition: background-color 0.3s;
-        }
-        
-        .btn:hover {
-            background-color: #ff5252;
-        }
-        
-        @media (max-width: 768px) {
-            .logo {
-                width: 150px;
-            }
-            h1 {
-                font-size: 2.5em;
-            }
-            p {
-                font-size: 1.4em;
-            }
-            .btn {
-                padding: 12px 30px;
-                font-size: 1.2em;
-            }
+
+        @media (max-width: 600px) {
+            .card { padding: 4rem 1.5rem; }
+            h1 { font-size: 2.5rem; }
+            .btn { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="overlay"></div>
-    <div class="content">
-        <img src="lg.png" alt="My Day Logo" class="logo"> <!-- Replace with your logo image file name -->
-        
-        <h1>Create Your Memories.<br>Share Your Joy.</h1>
-        
-        <a href="register.html" class="btn">Get Started</a>
+
+    <div class="loader" id="loader">
+        <div class="progress-container">
+            <div class="progress-track">
+                <div class="progress-fill" id="fill"></div>
+            </div>
+            <div class="percent-text"><span id="count">0</span>% Ready</div>
+        </div>
     </div>
+
+    <div class="cursor-glow" id="glow"></div>
+    <canvas id="particle-canvas"></canvas>
+    <div class="bg-image"></div>
+
+    <div class="tilt-box">
+        <div class="card" id="card">
+            <img src="lg.png" alt="Logo" class="logo">
+            <h1>Capture Your Day.<br>Share Your Soul.</h1>
+            <p>Your journey, beautifully told.</p>
+            <a href="register.html" class="btn">Get Started</a>
+        </div>
+    </div>
+
+    <script>
+        const card = document.getElementById('card');
+        const glow = document.getElementById('glow');
+        const fill = document.getElementById('fill');
+        const count = document.getElementById('count');
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+        // 1. Percentage Counter Logic
+        function startLoading() {
+            let start = 0;
+            const end = 100;
+            const duration = 2000;
+            const stepTime = duration / end;
+
+            fill.style.width = '100%';
+
+            const timer = setInterval(() => {
+                start++;
+                count.innerText = start;
+                if (start === end) clearInterval(timer);
+            }, stepTime);
+        }
+
+        // 2. Mouse Interaction
+        if (!isTouch) {
+            document.addEventListener('mousemove', (e) => {
+                glow.style.left = e.clientX + 'px';
+                glow.style.top = e.clientY + 'px';
+
+                const x = (window.innerWidth / 2 - e.pageX) / 25;
+                const y = (window.innerHeight / 2 - e.pageY) / 25;
+                card.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
+            });
+
+            document.addEventListener('mouseleave', () => {
+                card.style.transition = 'all 0.8s ease';
+                card.style.transform = `rotateY(0deg) rotateX(0deg)`;
+            });
+
+            document.addEventListener('mouseenter', () => {
+                card.style.transition = 'none';
+            });
+        }
+
+        // 3. Background Particles
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initParticles() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for(let i = 0; i < 80; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 1.2 + 0.5,
+                    dx: (Math.random() - 0.5) * 0.4,
+                    dy: (Math.random() - 0.5) * 0.4,
+                    o: Math.random() * 0.4
+                });
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255,255,255,${p.o})`;
+                ctx.fill();
+                p.x += p.dx; p.y += p.dy;
+                if(p.x < 0 || p.x > canvas.width) p.dx *= -1;
+                if(p.y < 0 || p.y > canvas.height) p.dy *= -1;
+            });
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', initParticles);
+        initParticles();
+        draw();
+
+        // 4. Initial Execution
+        window.addEventListener('load', () => {
+            startLoading();
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+                document.body.classList.add('loaded');
+            }, 2500);
+        });
+    </script>
 </body>
-</html>;
+</html>
