@@ -1,74 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>My-Day Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    body { margin:0; font-family:Arial; background:#f4f6fb }
-    header { background:#fff; padding:12px; border-bottom:1px solid #ddd }
-    .layout { display:grid; grid-template-columns: 2fr 1fr; gap:12px; padding:12px }
-    .card { background:#fff; border-radius:6px; padding:10px; margin-bottom:10px }
-    textarea, input { width:100%; padding:6px; margin-top:6px }
-    button { margin-top:6px; padding:6px 10px; cursor:pointer }
-    .user { padding:6px; cursor:pointer }
-    .user:hover { background:#eee }
-    .msg { margin:4px 0 }
-    .me { text-align:right }
-    img { max-width:180px; border-radius:6px; margin-top:4px }
-  </style>
+  <link rel="stylesheet" href="dashboard.css">
 </head>
 
 <body>
 
-<header>
-  <strong>My-Day Dashboard</strong>
+<!-- ================= HEADER ================= -->
+<header class="header">
+  <button class="btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <h2>My-Day</h2>
+
+  <div class="avatar" id="headerAvatar">
+    <span class="avatar-initial" id="headerInitial">U</span>
+  </div>
 </header>
 
-<div class="layout">
+<!-- ============ MOBILE SIDEBAR ============== -->
+<div class="mobile-sidebar-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
 
-  <!-- FEED -->
-  <div>
+<aside class="mobile-sidebar" id="mobileSidebar">
+  <h3>Menu</h3>
 
-    <div class="card">
-      <textarea id="postText" placeholder="What's on your mind?"></textarea>
-      <input type="file" id="postMedia">
-      <button onclick="createPost()">Post</button>
-    </div>
+  <div class="nav-item" onclick="showFeed()">🏠 Feed</div>
+  <div class="nav-item" onclick="openMessenger()">💬 Inbox</div>
+  <div class="nav-item" onclick="logout()">🚪 Logout</div>
+</aside>
 
-    <div id="posts"></div>
+<!-- ================= MAIN ================= -->
+<main class="main">
 
+  <!-- ===== FEED ===== -->
+  <section id="feedSection">
+    <h3>Feed</h3>
+    <div id="postsContainer"></div>
+  </section>
+
+</main>
+
+<!-- ================= MESSENGER ================= -->
+<div class="messenger-overlay" id="messenger">
+
+  <div class="messenger-header">
+    <button class="btn-icon" onclick="closeMessenger()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <h3 id="chatTitle">Inbox</h3>
   </div>
 
-  <!-- INBOX -->
-  <div>
+  <div class="messenger-body">
 
-    <div class="card">
-      <h3>Inbox</h3>
+    <!-- CONTACTS -->
+    <aside class="messenger-sidebar">
+      <h4>Contacts</h4>
+      <div id="contactsList"></div>
+    </aside>
 
-      <strong>Contacts</strong>
-      <div id="contacts"></div>
+    <!-- CHAT -->
+    <section class="messenger-content">
+      <div class="chat-header">
+        <div class="chat-user-info">
+          <div class="chat-avatar" id="chatAvatar"></div>
+          <div>
+            <div id="chatUsername">Select a contact</div>
+          </div>
+        </div>
+      </div>
 
-      <hr>
+      <div class="chat-messages" id="chatMessages"></div>
 
-      <strong>Conversations</strong>
-      <div id="conversations"></div>
-    </div>
-
-    <div class="card" id="chatBox" style="display:none">
-      <h3 id="chatTitle">Chat</h3>
-      <div id="chatMessages" style="max-height:300px; overflow-y:auto"></div>
-
-      <input id="chatText" placeholder="Type a message">
-      <input type="file" id="chatImage">
-      <button onclick="sendMessage()">Send</button>
-    </div>
+      <div class="chat-input-container">
+        <input type="text" id="chatInput" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </section>
 
   </div>
-
 </div>
 
 <script src="dashboard.js"></script>
