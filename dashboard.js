@@ -1,198 +1,160 @@
 /* ================= SUPABASE ================= */
-const sb = supabase.createClient(
-  "https://ojjvkhafgurgondsopeh.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A"
-);
+const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentUser = null;
+/* ================= GLOBAL ================= */
+let currentUser;
+let currentProfile;
 let activeConversationId = null;
+let activeChatUser = null;
+let messageChannel = null;
 
 /* ================= INIT ================= */
-(async function init() {
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadUser();
+  await loadContacts();
+});
+
+/* ================= AUTH ================= */
+async function loadUser() {
   const { data } = await sb.auth.getUser();
-  if (!data.user) location.href = "login.html";
+  if (!data.user) return location.href = "login.html";
 
   currentUser = data.user;
 
-  await ensureProfile();
-  await loadPosts();
-  await loadContacts();
-  await loadConversations();
-})();
-
-/* ================= PROFILE ================= */
-async function ensureProfile() {
-  const { data } = await sb
+  const { data: profile } = await sb
     .from("profiles")
-    .select("id")
-    .eq("id", currentUser.id)
-    .maybeSingle();
-
-  if (!data) {
-    await sb.from("profiles").insert({
-      id: currentUser.id,
-      username: currentUser.email.split("@")[0]
-    });
-  }
-}
-
-/* ================= POSTS ================= */
-async function createPost() {
-  const text = postText.value.trim();
-  const file = postMedia.files[0];
-  if (!text && !file) return;
-
-  let media_url = null;
-
-  if (file) {
-    const path = `${currentUser.id}/${Date.now()}_${file.name}`;
-    await sb.storage.from("posts").upload(path, file);
-    media_url = sb.storage.from("posts").getPublicUrl(path).data.publicUrl;
-  }
-
-  await sb.from("posts").insert({
-    user_id: currentUser.id,
-    caption: text,
-    media_url
-  });
-
-  postText.value = "";
-  postMedia.value = "";
-  loadPosts();
-}
-
-async function loadPosts() {
-  const { data } = await sb
-    .from("posts")
     .select("*")
-    .order("created_at", { ascending: false });
+    .eq("id", currentUser.id)
+    .single();
 
-  posts.innerHTML = "";
+  currentProfile = profile;
+  updateAvatarEverywhere(profile.avatar_url, profile.username);
+}
 
-  data.forEach(p => {
-    posts.innerHTML += `
-      <div class="card">
-        <p>${p.caption || ""}</p>
-        ${p.media_url ? `<img src="${p.media_url}">` : ""}
-      </div>
-    `;
+/* ================= AVATAR ================= */
+function updateAvatarEverywhere(url, username) {
+  const initial = username.charAt(0).toUpperCase();
+
+  document.querySelectorAll(".avatar, .chat-avatar").forEach(el => {
+    el.innerHTML = url
+      ? `<img src="${url}">`
+      : `<span class="avatar-initial">${initial}</span>`;
   });
+
+  document.getElementById("headerInitial").textContent = initial;
+}
+
+/* ================= SIDEBAR ================= */
+function toggleMobileSidebar() {
+  document.getElementById("mobileSidebar").classList.add("active");
+  document.getElementById("mobileOverlay").classList.add("active");
+}
+
+function closeMobileSidebar() {
+  document.getElementById("mobileSidebar").classList.remove("active");
+  document.getElementById("mobileOverlay").classList.remove("active");
 }
 
 /* ================= CONTACTS ================= */
 async function loadContacts() {
-  const { data } = await sb
+  const { data: users } = await sb
     .from("profiles")
-    .select("id, username")
-    .neq("id", currentUser.id);
+    .select("id, username, avatar_url")
+    .neq("id", currentUser.id)
+    .order("username");
 
-  contacts.innerHTML = "";
-  data.forEach(u => {
-    contacts.innerHTML += `
-      <div class="user"
-        onclick="startConversation('${u.id}', '${u.username}')">
-        ${u.username}
+  const list = document.getElementById("contactsList");
+  list.innerHTML = "";
+
+  users.forEach(user => {
+    const div = document.createElement("div");
+    div.className = "contact-item";
+    div.innerHTML = `
+      <div class="contact-avatar">
+        ${user.avatar_url ? `<img src="${user.avatar_url}">` : `<span>${user.username[0]}</span>`}
       </div>
+      <div>${user.username}</div>
     `;
+    div.onclick = () => startChat(user);
+    list.appendChild(div);
   });
 }
 
-/* ================= CONVERSATIONS ================= */
-async function loadConversations() {
-  const { data } = await sb
-    .from("conversations")
-    .select("*")
-    .or(`user_one.eq.${currentUser.id},user_two.eq.${currentUser.id}`)
-    .order("created_at", { ascending:false });
+/* ================= CHAT ================= */
+async function startChat(user) {
+  activeChatUser = user;
 
-  conversations.innerHTML = "";
+  document.getElementById("chatUsername").textContent = user.username;
+  document.getElementById("chatAvatar").innerHTML =
+    user.avatar_url ? `<img src="${user.avatar_url}">` : `<span>${user.username[0]}</span>`;
 
-  data.forEach(c => {
-    const other =
-      c.user_one === currentUser.id ? c.user_two : c.user_one;
+  openMessenger();
 
-    conversations.innerHTML += `
-      <div class="user" onclick="openConversation(${c.id})">
-        Chat ${other.slice(0,8)}
-      </div>
-    `;
+  // find or create conversation
+  const { data: convo } = await sb.rpc("get_or_create_conversation", {
+    user1: currentUser.id,
+    user2: user.id
   });
+
+  activeConversationId = convo;
+  loadMessages();
+  subscribeToMessages();
 }
 
-/* ================= START CHAT ================= */
-async function startConversation(userId, username) {
-  const u1 = currentUser.id < userId ? currentUser.id : userId;
-  const u2 = currentUser.id < userId ? userId : currentUser.id;
-
-  let { data } = await sb
-    .from("conversations")
-    .select("*")
-    .eq("user_one", u1)
-    .eq("user_two", u2)
-    .maybeSingle();
-
-  if (!data) {
-    const res = await sb
-      .from("conversations")
-      .insert({ user_one: u1, user_two: u2 })
-      .select()
-      .single();
-    data = res.data;
-  }
-
-  await loadConversations();
-  openConversation(data.id, username);
-}
-
-/* ================= OPEN CHAT ================= */
-async function openConversation(id, title = "Chat") {
-  activeConversationId = id;
-  chatBox.style.display = "block";
-  chatTitle.textContent = title;
-
+async function loadMessages() {
   const { data } = await sb
     .from("messages")
     .select("*")
-    .eq("conversation_id", id)
+    .eq("conversation_id", activeConversationId)
     .order("created_at");
 
-  chatMessages.innerHTML = "";
+  const box = document.getElementById("chatMessages");
+  box.innerHTML = "";
 
-  data.forEach(m => {
-    chatMessages.innerHTML += `
-      <div class="msg ${m.sender_id === currentUser.id ? "me" : ""}">
-        ${m.content || ""}
-        ${m.image_url ? `<br><img src="${m.image_url}">` : ""}
-      </div>
-    `;
+  data.forEach(msg => {
+    const div = document.createElement("div");
+    div.className = msg.sender_id === currentUser.id ? "message sent" : "message received";
+    div.textContent = msg.content;
+    box.appendChild(div);
   });
 
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  box.scrollTop = box.scrollHeight;
 }
 
-/* ================= SEND MESSAGE ================= */
 async function sendMessage() {
-  if (!activeConversationId) return;
-
-  let image_url = null;
-  const file = chatImage.files[0];
-
-  if (file) {
-    const path = `${currentUser.id}/${Date.now()}_${file.name}`;
-    await sb.storage.from("messages").upload(path, file);
-    image_url = sb.storage.from("messages").getPublicUrl(path).data.publicUrl;
-  }
-
-  if (!chatText.value && !image_url) return;
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (!text) return;
 
   await sb.from("messages").insert({
     conversation_id: activeConversationId,
     sender_id: currentUser.id,
-    content: chatText.value,
-    image_url
+    content: text
   });
 
-  chatText.value = "";
-  chatImage.value = "";
-  openConversation(activeConversationId);
+  input.value = "";
+}
+
+/* ================= REALTIME ================= */
+function subscribeToMessages() {
+  if (messageChannel) sb.removeChannel(messageChannel);
+
+  messageChannel = sb.channel("chat-" + activeConversationId)
+    .on("postgres_changes", {
+      event: "INSERT",
+      schema: "public",
+      table: "messages",
+      filter: `conversation_id=eq.${activeConversationId}`
+    }, loadMessages)
+    .subscribe();
+}
+
+/* ================= MESSENGER UI ================= */
+function openMessenger() {
+  document.getElementById("messenger").classList.add("active");
+}
+function closeMessenger() {
+  document.getElementById("messenger").classList.remove("active");
 }
