@@ -4,22 +4,65 @@
   <meta charset="UTF-8" />
   <title>My-Day | Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <style>
-    body { font-family: Inter, sans-serif; margin:0; background:#f4f6fb; }
-    header { padding:16px; background:#fff; display:flex; justify-content:space-between; }
-    .container { max-width:700px; margin:20px auto; padding:0 12px; }
-    .card { background:#fff; border-radius:10px; padding:16px; margin-bottom:16px; }
-    textarea,input { width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; }
-    button { padding:8px 14px; border:none; border-radius:8px; cursor:pointer; }
-    .btn-primary { background:#4a90e2; color:#fff; }
-    .post { border-top:1px solid #eee; padding-top:12px; }
-    .actions { display:flex; gap:12px; margin-top:8px; }
-    .active { color:#e11d48; }
-    img { max-width:100%; border-radius:8px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f6fb;
+    }
+    header {
+      background: #fff;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #ddd;
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 12px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+    .actions button.active {
+      color: #e11d48;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+    #chatMessages div {
+      padding: 4px 6px;
+      margin: 4px 0;
+      border-radius: 4px;
+    }
   </style>
 </head>
+
 <body>
 
 <header>
@@ -29,13 +72,38 @@
 
 <div class="container">
 
-  <div class="card">
-    <textarea id="postCaption" placeholder="What's on your mind?"></textarea>
-    <input type="file" id="mediaInput">
-    <button class="btn-primary" onclick="submitPost()">Post</button>
+  <!-- FEED COLUMN -->
+  <div>
+
+    <div class="card">
+      <textarea id="postCaption" placeholder="What's on your mind?"></textarea>
+      <input type="file" id="mediaInput" />
+      <button onclick="submitPost()">Post</button>
+    </div>
+
+    <div id="postsContainer"></div>
+
   </div>
 
-  <div id="postsContainer"></div>
+  <!-- INBOX COLUMN -->
+  <div>
+
+    <div class="card">
+      <h3>Inbox</h3>
+      <div id="inboxList"></div>
+    </div>
+
+    <div class="card" id="chatBox" style="display:none">
+      <h3 id="chatTitle">Chat</h3>
+      <div id="chatMessages" style="max-height:300px; overflow-y:auto"></div>
+      <input
+        id="chatInput"
+        placeholder="Type a message..."
+        onkeypress="if(event.key==='Enter') sendMessage()"
+      />
+    </div>
+
+  </div>
 
 </div>
 
