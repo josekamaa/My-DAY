@@ -1,22 +1,20 @@
 /* ================= SUPABASE SETUP ================= */
 const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A"; // <-- put your real anon key
+const SUPABASE_KEY = "YOUR_PUBLIC_ANON_KEY"; // <-- replace
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
+let activeConversationId = null;
 
 /* ================= AUTH ================= */
 async function loadUser() {
-  const { data, error } = await sb.auth.getUser();
-
-  if (error || !data.user) {
-    location.href = "login.html";
-    return;
-  }
+  const { data } = await sb.auth.getUser();
+  if (!data.user) return location.href = "login.html";
 
   currentUser = data.user;
   await ensureProfile();
   await loadPosts();
+  await loadInbox();
 }
 
 async function ensureProfile() {
@@ -34,14 +32,13 @@ async function ensureProfile() {
   }
 }
 
-/* ================= CREATE POST ================= */
+/* ================= POSTS ================= */
 async function submitPost() {
   if (submitPost.loading) return;
   submitPost.loading = true;
 
   const caption = postCaption.value.trim();
   const file = mediaInput.files[0];
-
   if (!caption && !file) {
     submitPost.loading = false;
     return;
@@ -53,13 +50,11 @@ async function submitPost() {
   if (file) {
     const path = `${currentUser.id}/${Date.now()}_${file.name}`;
     const { error } = await sb.storage.from("posts").upload(path, file);
-
     if (error) {
-      alert("Media upload failed");
+      alert("Upload failed");
       submitPost.loading = false;
       return;
     }
-
     media_url = sb.storage.from("posts").getPublicUrl(path).data.publicUrl;
     media_type = file.type.startsWith("video") ? "video" : "image";
   }
@@ -78,32 +73,25 @@ async function submitPost() {
   loadPosts();
 }
 
-/* ================= OPTIMIZED FEED ================= */
+/* ================= FEED ================= */
 async function loadPosts() {
-  const { data: posts, error } = await sb
+  const { data } = await sb
     .from("posts_feed")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Feed error:", error);
-    return;
-  }
-
   postsContainer.innerHTML = "";
 
-  posts.forEach(post => {
+  data.forEach(post => {
     postsContainer.innerHTML += `
-      <div class="card post">
+      <div class="card">
         <p>${post.caption || ""}</p>
-
-        ${post.media_url ? `<img src="${post.media_url}" />` : ""}
+        ${post.media_url ? `<img src="${post.media_url}">` : ""}
 
         <div class="actions">
           <button
             class="${post.liked_by_me ? "active" : ""}"
-            onclick="toggleLike(event, ${post.id})"
-          >
+            onclick="toggleLike(event, ${post.id})">
             ❤️ ${post.like_count}
           </button>
 
@@ -121,32 +109,24 @@ async function loadPosts() {
         <div id="comments-${post.id}" style="display:none">
           <input
             placeholder="Write a comment..."
-            onkeypress="if(event.key==='Enter') addComment(${post.id}, this)"
-          />
+            onkeypress="if(event.key==='Enter') addComment(${post.id}, this)">
         </div>
       </div>
     `;
   });
 }
 
-/* ================= OPTIMISTIC LIKES ================= */
+/* ================= LIKES ================= */
 async function toggleLike(event, postId) {
   const btn = event.target;
   if (btn.disabled) return;
-
   btn.disabled = true;
 
   const liked = btn.classList.contains("active");
   let count = parseInt(btn.textContent.replace("❤️", "").trim(), 10);
 
-  // Optimistic UI
-  if (liked) {
-    btn.classList.remove("active");
-    btn.textContent = `❤️ ${count - 1}`;
-  } else {
-    btn.classList.add("active");
-    btn.textContent = `❤️ ${count + 1}`;
-  }
+  btn.classList.toggle("active");
+  btn.textContent = `❤️ ${liked ? count - 1 : count + 1}`;
 
   const { data } = await sb
     .from("post_likes")
@@ -170,24 +150,17 @@ async function toggleLike(event, postId) {
 /* ================= COMMENTS ================= */
 function toggleComments(postId) {
   const el = document.getElementById(`comments-${postId}`);
-  const visible = el.style.display === "block";
-
-  el.style.display = visible ? "none" : "block";
-
-  if (!visible) {
-    const input = el.querySelector("input");
-    setTimeout(() => input && input.focus(), 0);
-  }
+  el.style.display = el.style.display === "block" ? "none" : "block";
+  if (el.style.display === "block") el.querySelector("input").focus();
 }
 
 async function addComment(postId, input) {
-  const content = input.value.trim();
-  if (!content) return;
+  if (!input.value.trim()) return;
 
   await sb.from("post_comments").insert({
     post_id: postId,
     user_id: currentUser.id,
-    content
+    content: input.value
   });
 
   input.value = "";
@@ -197,9 +170,69 @@ async function addComment(postId, input) {
 /* ================= DELETE POST ================= */
 async function deletePost(postId) {
   if (!confirm("Delete this post?")) return;
-
   await sb.from("posts").delete().eq("id", postId);
   loadPosts();
+}
+
+/* ================= INBOX ================= */
+async function loadInbox() {
+  const { data } = await sb
+    .from("conversations")
+    .select("*")
+    .or(`user_one.eq.${currentUser.id},user_two.eq.${currentUser.id}`)
+    .order("created_at", { ascending: false });
+
+  inboxList.innerHTML = "";
+
+  data.forEach(c => {
+    const other =
+      c.user_one === currentUser.id ? c.user_two : c.user_one;
+
+    inboxList.innerHTML += `
+      <div style="cursor:pointer"
+        onclick="openConversation(${c.id})">
+        Chat with ${other.slice(0, 8)}…
+      </div>
+    `;
+  });
+}
+
+async function openConversation(convoId) {
+  activeConversationId = convoId;
+  chatBox.style.display = "block";
+
+  const { data } = await sb
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", convoId)
+    .order("created_at");
+
+  chatMessages.innerHTML = "";
+
+  data.forEach(m => {
+    chatMessages.innerHTML += `
+      <div style="text-align:${
+        m.sender_id === currentUser.id ? "right" : "left"
+      }">
+        ${m.content}
+      </div>
+    `;
+  });
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function sendMessage() {
+  if (!chatInput.value.trim() || !activeConversationId) return;
+
+  await sb.from("messages").insert({
+    conversation_id: activeConversationId,
+    sender_id: currentUser.id,
+    content: chatInput.value
+  });
+
+  chatInput.value = "";
+  openConversation(activeConversationId);
 }
 
 /* ================= THEME ================= */
