@@ -1,6 +1,6 @@
 /* ================= SUPABASE SETUP ================= */
 const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A"; // <-- put your real anon key
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
@@ -29,18 +29,23 @@ async function ensureProfile() {
   if (!data) {
     await sb.from("profiles").insert({
       id: currentUser.id,
-      username: currentUser.email.split("@")[0],
-      created_at: new Date()
+      username: currentUser.email.split("@")[0]
     });
   }
 }
 
-/* ================= POSTS ================= */
+/* ================= CREATE POST ================= */
 async function submitPost() {
+  if (submitPost.loading) return;
+  submitPost.loading = true;
+
   const caption = postCaption.value.trim();
   const file = mediaInput.files[0];
 
-  if (!caption && !file) return;
+  if (!caption && !file) {
+    submitPost.loading = false;
+    return;
+  }
 
   let media_url = null;
   let media_type = null;
@@ -50,7 +55,8 @@ async function submitPost() {
     const { error } = await sb.storage.from("posts").upload(path, file);
 
     if (error) {
-      alert("Upload failed");
+      alert("Media upload failed");
+      submitPost.loading = false;
       return;
     }
 
@@ -67,6 +73,8 @@ async function submitPost() {
 
   postCaption.value = "";
   mediaInput.value = "";
+  submitPost.loading = false;
+
   loadPosts();
 }
 
@@ -89,16 +97,12 @@ async function loadPosts() {
       <div class="card post">
         <p>${post.caption || ""}</p>
 
-        ${
-          post.media_url
-            ? `<img src="${post.media_url}" />`
-            : ""
-        }
+        ${post.media_url ? `<img src="${post.media_url}" />` : ""}
 
         <div class="actions">
           <button
             class="${post.liked_by_me ? "active" : ""}"
-            onclick="toggleLike(${post.id})"
+            onclick="toggleLike(event, ${post.id})"
           >
             ❤️ ${post.like_count}
           </button>
@@ -125,8 +129,25 @@ async function loadPosts() {
   });
 }
 
-/* ================= LIKES ================= */
-async function toggleLike(postId) {
+/* ================= OPTIMISTIC LIKES ================= */
+async function toggleLike(event, postId) {
+  const btn = event.target;
+  if (btn.disabled) return;
+
+  btn.disabled = true;
+
+  const liked = btn.classList.contains("active");
+  let count = parseInt(btn.textContent.replace("❤️", "").trim(), 10);
+
+  // Optimistic UI
+  if (liked) {
+    btn.classList.remove("active");
+    btn.textContent = `❤️ ${count - 1}`;
+  } else {
+    btn.classList.add("active");
+    btn.textContent = `❤️ ${count + 1}`;
+  }
+
   const { data } = await sb
     .from("post_likes")
     .select("id")
@@ -143,14 +164,20 @@ async function toggleLike(postId) {
     });
   }
 
-  loadPosts();
+  btn.disabled = false;
 }
 
 /* ================= COMMENTS ================= */
 function toggleComments(postId) {
   const el = document.getElementById(`comments-${postId}`);
-  el.style.display = el.style.display === "none" ? "block" : "none";
-  if (el.style.display === "block") el.querySelector("input").focus();
+  const visible = el.style.display === "block";
+
+  el.style.display = visible ? "none" : "block";
+
+  if (!visible) {
+    const input = el.querySelector("input");
+    setTimeout(() => input && input.focus(), 0);
+  }
 }
 
 async function addComment(postId, input) {
@@ -167,7 +194,7 @@ async function addComment(postId, input) {
   loadPosts();
 }
 
-/* ================= DELETE ================= */
+/* ================= DELETE POST ================= */
 async function deletePost(postId) {
   if (!confirm("Delete this post?")) return;
 
