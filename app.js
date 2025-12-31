@@ -1,6 +1,6 @@
 // Initialize Supabase Client
-const SUPABASE_URL = "https://ojjvkhafgurgondsopeh.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qanZraGFmZ3VyZ29uZHNvcGVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MDkzODYsImV4cCI6MjA4MDQ4NTM4Nn0.hOLxBVqnFhJ2S1jjR0mkKUJ_bWDjZbHJD3wV0Rbbf7A";
+const SUPABASE_URL = "https://iklvlffqzkzpbhjeighn.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_OkvtrXKzaUP8D_zmw3XYNA_jZLP65va";
 
 // Correct: create 'client' so no conflict
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
