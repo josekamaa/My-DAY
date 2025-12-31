@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Register</title>
+    <title>Register - Create Account</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -121,13 +122,18 @@
             height: 65px;
         }
 
-        button[type="submit"]:hover {
+        button[type="submit"]:hover:not(:disabled) {
             transform: translateY(-3px);
             box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
         }
 
-        button[type="submit"]:active {
+        button[type="submit"]:active:not(:disabled) {
             transform: translateY(0);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
         .login-prompt {
@@ -193,6 +199,24 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+        }
+
+        .error-message {
+            color: #ff4757;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+            text-align: left;
+            padding-left: 10px;
+        }
+
+        .success-message {
+            color: #2ed573;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+            text-align: left;
+            padding-left: 10px;
         }
 
         /* Mobile-specific optimizations */
@@ -353,64 +377,120 @@
             <div class="input-wrapper">
                 <i class="fas fa-user input-icon"></i>
                 <input type="text" id="name" placeholder="Full Name" required>
+                <div class="error-message" id="nameError"></div>
             </div>
             
             <div class="input-wrapper">
                 <i class="fas fa-envelope input-icon"></i>
                 <input type="email" id="email" placeholder="Email Address" required>
+                <div class="error-message" id="emailError"></div>
             </div>
             
             <div class="input-wrapper">
                 <i class="fas fa-lock input-icon"></i>
-                <input type="password" id="password" placeholder="Create Password" required oninput="updatePasswordStrength()">
+                <input type="password" id="password" placeholder="Create Password (min. 8 characters)" required 
+                       minlength="8" oninput="updatePasswordStrength()">
                 <div class="password-strength">
                     <div class="strength-meter" id="passwordStrength"></div>
                 </div>
+                <div class="error-message" id="passwordError"></div>
+                <div class="success-message" id="passwordSuccess"></div>
             </div>
 
-            <button type="submit">Register</button>
+            <button type="submit" id="submitBtn">Create Account</button>
         </form>
 
         <p class="login-prompt">Already have an account?
-            <a href="login.html">Login</a>
+            <a href="login.html">Login here</a>
         </p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
     <script>
-        // Password strength indicator (optional enhancement)
+        // Password strength indicator
         function updatePasswordStrength() {
             const password = document.getElementById('password').value;
             const strengthMeter = document.getElementById('passwordStrength');
+            const passwordError = document.getElementById('passwordError');
+            const passwordSuccess = document.getElementById('passwordSuccess');
+            
+            // Clear messages
+            passwordError.style.display = 'none';
+            passwordSuccess.style.display = 'none';
             
             let strength = 0;
+            let messages = [];
             
             // Length check
             if (password.length >= 8) strength += 25;
+            else messages.push("At least 8 characters");
+            
             // Contains uppercase
             if (/[A-Z]/.test(password)) strength += 25;
+            else messages.push("One uppercase letter");
+            
             // Contains numbers
             if (/[0-9]/.test(password)) strength += 25;
+            else messages.push("One number");
+            
             // Contains special characters
             if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+            else messages.push("One special character");
             
             // Update meter
             strengthMeter.style.width = strength + '%';
             
-            // Update color
+            // Update color and messages
             if (strength < 50) {
                 strengthMeter.style.background = '#ff4757';
+                if (password.length > 0) {
+                    passwordError.textContent = "Weak password. Needs: " + messages.join(', ');
+                    passwordError.style.display = 'block';
+                }
             } else if (strength < 75) {
                 strengthMeter.style.background = '#ffa502';
+                passwordSuccess.textContent = "Moderate password";
+                passwordSuccess.style.display = 'block';
             } else {
                 strengthMeter.style.background = '#2ed573';
+                passwordSuccess.textContent = "Strong password ✓";
+                passwordSuccess.style.display = 'block';
             }
         }
+        
+        // Form validation
+        document.getElementById('name').addEventListener('blur', function() {
+            const nameError = document.getElementById('nameError');
+            if (this.value.length < 2) {
+                nameError.textContent = "Name must be at least 2 characters";
+                nameError.style.display = 'block';
+            } else {
+                nameError.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('email').addEventListener('blur', function() {
+            const emailError = document.getElementById('emailError');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(this.value)) {
+                emailError.textContent = "Please enter a valid email address";
+                emailError.style.display = 'block';
+            } else {
+                emailError.style.display = 'none';
+            }
+        });
         
         // Initialize password strength on page load
         document.addEventListener('DOMContentLoaded', function() {
             updatePasswordStrength();
+            
+            // Check if user is already logged in
+            const session = localStorage.getItem("supabaseSession");
+            if (session) {
+                // Redirect to dashboard if already logged in
+                window.location.href = "dashboard.html";
+            }
         });
     </script>
 </body>
