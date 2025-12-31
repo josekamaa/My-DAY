@@ -20,7 +20,21 @@ async function registerUser(event) {
     submitBtn.disabled = true;
 
     try {
-        // 1️⃣ Create auth account
+        console.log("Starting registration for:", email);
+        
+        // 1️⃣ First, check if user already exists
+        const { data: existingAuthUser, error: checkError } = await client.auth.signInWithPassword({
+            email: email,
+            password: password,
+        }).catch(() => ({ data: null, error: { message: "User not found" } }));
+
+        if (existingAuthUser?.user) {
+            alert("This email is already registered. Please login instead.");
+            window.location.href = "login.html";
+            return;
+        }
+
+        // 2️⃣ Create auth account
         const { data: signUpData, error: signUpError } = await client.auth.signUp({
             email: email,
             password: password,
@@ -33,35 +47,43 @@ async function registerUser(event) {
             throw new Error(signUpError.message);
         }
 
-        const userId = signUpData.user.id;
-        console.log("User created in auth with ID:", userId);
+        console.log("Auth user created:", signUpData.user?.id);
 
-        // 2️⃣ Insert into users table - Use upsert to handle duplicates gracefully
-        const { error: insertError } = await client
-            .from("users")
-            .upsert({
-                id: userId,
-                full_name: name,
-                email: email,
-                created_at: new Date().toISOString()
-            }, {
-                onConflict: 'id',
-                ignoreDuplicates: false
-            });
+        // 3️⃣ Sign out immediately after registration to prevent auto-login
+        await client.auth.signOut();
+        
+        // Clear any existing session
+        localStorage.removeItem("supabaseSession");
+        localStorage.removeItem("userEmail");
 
-        if (insertError) {
-            console.log("Insert error details:", insertError);
-            
-            // If it's a duplicate, the user already exists - still success
-            if (insertError.code === '23505') {
-                console.log("User already exists in public.users table, but auth was created successfully");
-                // Continue to success message
-            } else {
-                throw new Error("Failed to create user profile: " + insertError.message);
+        // 4️⃣ Insert into users table - only if we have a user ID
+        if (signUpData.user?.id) {
+            try {
+                const { error: insertError } = await client
+                    .from("users")
+                    .upsert({
+                        id: signUpData.user.id,
+                        full_name: name,
+                        email: email,
+                        created_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'id',
+                        ignoreDuplicates: false
+                    });
+
+                if (insertError) {
+                    console.log("User profile insert error (non-critical):", insertError.message);
+                    // Continue anyway - the user can sync profile on first login
+                } else {
+                    console.log("User profile created successfully");
+                }
+            } catch (profileError) {
+                console.error("Profile creation error:", profileError);
+                // Non-critical - continue
             }
         }
 
-        alert("Registration successful! You can now login.");
+        alert("Registration successful! Please login with your new account.");
         window.location.href = "login.html";
         
     } catch (error) {
@@ -87,30 +109,38 @@ async function loginUser(event) {
     submitBtn.textContent = "Logging in...";
     submitBtn.disabled = true;
 
-    const { data, error } = await client.auth.signInWithPassword({
-        email: email,
-        password: password,
-    });
+    try {
+        const { data, error } = await client.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
 
-    if (error) {
-        alert(error.message);
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    } else {
+        if (error) {
+            throw new Error(error.message);
+        }
+
         // Store session
         localStorage.setItem("supabaseSession", JSON.stringify(data.session));
         localStorage.setItem("userEmail", email);
+        localStorage.setItem("userName", data.user.user_metadata?.full_name || "");
         
         // Ensure user exists in public.users table
         await syncUserProfile(data.user);
         
         window.location.href = "dashboard.html";
+        
+    } catch (error) {
+        alert(error.message);
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 }
 
 // Sync user profile to public.users table if missing
 async function syncUserProfile(user) {
     try {
+        console.log("Syncing profile for user:", user.id);
+        
         // Check if user exists in public.users
         const { data: existingUser, error: checkError } = await client
             .from("users")
@@ -120,20 +150,26 @@ async function syncUserProfile(user) {
 
         // If user doesn't exist in public.users, create it
         if (checkError || !existingUser) {
+            console.log("Creating missing profile for user:", user.id);
+            
             const { error: insertError } = await client
                 .from("users")
                 .upsert({
                     id: user.id,
                     full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
                     email: user.email,
-                    updated_at: new Date().toISOString()
+                    created_at: new Date().toISOString()
                 }, {
                     onConflict: 'id'
                 });
 
             if (insertError) {
                 console.error("Failed to sync user profile:", insertError);
+            } else {
+                console.log("Profile created successfully");
             }
+        } else {
+            console.log("Profile already exists");
         }
     } catch (error) {
         console.error("Error syncing user profile:", error);
@@ -150,23 +186,30 @@ async function checkUser() {
         return;
     }
 
-    // Verify session with Supabase
-    const { data, error } = await client.auth.getUser();
-    
-    if (error || !data.user) {
-        // Clear invalid session
-        localStorage.removeItem("supabaseSession");
-        localStorage.removeItem("userEmail");
-        window.location.href = "login.html";
-        return;
-    }
+    try {
+        // Verify session with Supabase
+        const { data, error } = await client.auth.getUser();
+        
+        if (error || !data.user) {
+            // Clear invalid session
+            localStorage.removeItem("supabaseSession");
+            localStorage.removeItem("userEmail");
+            localStorage.removeItem("userName");
+            window.location.href = "login.html";
+            return;
+        }
 
-    // Update UI with user info
-    if (data.user) {
-        const displayName = data.user.user_metadata?.full_name || 
-                           localStorage.getItem("userEmail") || 
-                           "User";
-        document.getElementById("username").innerText = displayName;
+        // Update UI with user info
+        if (data.user) {
+            const displayName = data.user.user_metadata?.full_name || 
+                               localStorage.getItem("userName") ||
+                               localStorage.getItem("userEmail") || 
+                               "User";
+            document.getElementById("username").innerText = displayName;
+        }
+    } catch (error) {
+        console.error("Error checking user:", error);
+        window.location.href = "login.html";
     }
 }
 
@@ -179,11 +222,16 @@ async function logout() {
         logoutBtn.disabled = true;
     }
     
-    await client.auth.signOut();
+    try {
+        await client.auth.signOut();
+    } catch (error) {
+        console.error("Logout error:", error);
+    }
     
     // Clear all localStorage
     localStorage.removeItem("supabaseSession");
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
     
     // Redirect to login
     window.location.href = "login.html";
@@ -196,9 +244,21 @@ function isLoggedIn() {
 
 // Initialize auth state on page load
 async function initAuth() {
-    const { data } = await client.auth.getSession();
-    if (data.session) {
-        // Update localStorage if needed
-        localStorage.setItem("supabaseSession", JSON.stringify(data.session));
+    try {
+        const { data } = await client.auth.getSession();
+        if (data.session) {
+            // Update localStorage if needed
+            localStorage.setItem("supabaseSession", JSON.stringify(data.session));
+        } else {
+            // Clear if no valid session
+            localStorage.removeItem("supabaseSession");
+        }
+    } catch (error) {
+        console.error("Error initializing auth:", error);
     }
+}
+
+// Call init on load if not in register page
+if (!window.location.pathname.includes('register.html')) {
+    document.addEventListener('DOMContentLoaded', initAuth);
 }
