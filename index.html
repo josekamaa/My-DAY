@@ -13,7 +13,11 @@
             --glass-border: rgba(255, 255, 255, 0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
         
         body {
             height: 100vh;
@@ -44,7 +48,9 @@
             transition: transform 12s cubic-bezier(0.1, 0, 0.1, 1);
             z-index: 0;
         }
-        body.loaded .bg-image { transform: scale(1); }
+        body.loaded .bg-image { 
+            transform: scale(1); 
+        }
 
         .cursor-glow {
             position: fixed;
@@ -57,8 +63,11 @@
             transform: translate(-50%, -50%);
             opacity: 0;
             transition: opacity 1.5s ease;
+            mix-blend-mode: screen;
         }
-        body.loaded .cursor-glow { opacity: 0.5; }
+        body.loaded .cursor-glow { 
+            opacity: 0.5; 
+        }
 
         /* --- MAIN CARD --- */
         .tilt-box {
@@ -81,8 +90,12 @@
             opacity: 0;
             transform: translateY(50px);
             transition: opacity 1.5s ease, transform 1.2s cubic-bezier(0.2, 1, 0.3, 1);
+            pointer-events: auto;
         }
-        body.loaded .card { opacity: 1; transform: translateY(0); }
+        body.loaded .card { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
 
         .logo {
             width: 110px;
@@ -123,12 +136,22 @@
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 15px 35px rgba(255, 107, 107, 0.3);
             overflow: hidden;
+            cursor: pointer !important;
+            z-index: 100;
+            border: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
         }
 
         .btn:hover {
             transform: translateZ(80px) translateY(-5px) scale(1.05);
             background: #ff5252;
             box-shadow: 0 25px 50px rgba(255, 107, 107, 0.5);
+        }
+
+        .btn:active {
+            transform: translateZ(80px) translateY(-2px) scale(0.98);
+            transition: transform 0.1s ease;
         }
 
         /* --- ADVANCED LOADER --- */
@@ -144,7 +167,10 @@
             transition: clip-path 1.2s cubic-bezier(0.8, 0, 0.2, 1);
             clip-path: circle(150% at 50% 50%);
         }
-        .loader.hidden { clip-path: circle(0% at 50% 50%); }
+        .loader.hidden { 
+            clip-path: circle(0% at 50% 50%); 
+            pointer-events: none;
+        }
 
         .progress-container {
             width: 250px;
@@ -179,14 +205,25 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translateZ(70px) translateY(0); }
-            50% { transform: translateZ(70px) translateY(-20px); }
+            0%, 100% { 
+                transform: translateZ(70px) translateY(0); 
+            }
+            50% { 
+                transform: translateZ(70px) translateY(-20px); 
+            }
         }
 
         @media (max-width: 600px) {
-            .card { padding: 4rem 1.5rem; }
-            h1 { font-size: 2.5rem; }
-            .btn { width: 100%; }
+            .card { 
+                padding: 4rem 1.5rem; 
+            }
+            h1 { 
+                font-size: 2.5rem; 
+            }
+            .btn { 
+                width: 100%; 
+                padding: 1.1rem 2rem;
+            }
         }
     </style>
 </head>
@@ -210,18 +247,21 @@
             <img src="lg.png" alt="Logo" class="logo">
             <h1>Capture Your Day.<br>Share Your Soul.</h1>
             <p>Your journey, beautifully told.</p>
-            <a href="register.html" class="btn">Get Started</a>
+            <a href="register.html" class="btn" id="startBtn">Get Started</a>
         </div>
     </div>
 
     <script>
+        // Elements
         const card = document.getElementById('card');
         const glow = document.getElementById('glow');
         const fill = document.getElementById('fill');
         const count = document.getElementById('count');
+        const startBtn = document.getElementById('startBtn');
+        const loader = document.getElementById('loader');
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-        // 1. Percentage Counter Logic
+        // 1. Loading Animation
         function startLoading() {
             let start = 0;
             const end = 100;
@@ -233,78 +273,172 @@
             const timer = setInterval(() => {
                 start++;
                 count.innerText = start;
-                if (start === end) clearInterval(timer);
+                if (start === end) {
+                    clearInterval(timer);
+                }
             }, stepTime);
         }
 
-        // 2. Mouse Interaction
-        if (!isTouch) {
-            document.addEventListener('mousemove', (e) => {
-                glow.style.left = e.clientX + 'px';
-                glow.style.top = e.clientY + 'px';
-
-                const x = (window.innerWidth / 2 - e.pageX) / 25;
-                const y = (window.innerHeight / 2 - e.pageY) / 25;
-                card.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
-            });
-
-            document.addEventListener('mouseleave', () => {
-                card.style.transition = 'all 0.8s ease';
-                card.style.transform = `rotateY(0deg) rotateX(0deg)`;
-            });
-
-            document.addEventListener('mouseenter', () => {
-                card.style.transition = 'none';
-            });
-        }
-
-        // 3. Background Particles
-        const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-
-        function initParticles() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            particles = [];
-            for(let i = 0; i < 80; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    r: Math.random() * 1.2 + 0.5,
-                    dx: (Math.random() - 0.5) * 0.4,
-                    dy: (Math.random() - 0.5) * 0.4,
-                    o: Math.random() * 0.4
+        // 2. Mouse/Touch Interaction
+        function initInteractions() {
+            if (isTouch) {
+                // Touch device - simplified interactions
+                startBtn.addEventListener('touchstart', (e) => {
+                    startBtn.style.transform = 'translateZ(80px) translateY(-2px) scale(0.98)';
+                });
+                
+                startBtn.addEventListener('touchend', (e) => {
+                    startBtn.style.transform = 'translateZ(80px) translateY(-5px) scale(1.05)';
+                });
+            } else {
+                // Desktop mouse interactions
+                let isCardTilting = true;
+                let mouseX = 0;
+                let mouseY = 0;
+                
+                // Mouse move for glow and tilt
+                document.addEventListener('mousemove', (e) => {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                    
+                    // Update glow position
+                    glow.style.left = `${mouseX}px`;
+                    glow.style.top = `${mouseY}px`;
+                    
+                    // Tilt effect only when not hovering button
+                    if (isCardTilting) {
+                        const x = (window.innerWidth / 2 - mouseX) / 25;
+                        const y = (window.innerHeight / 2 - mouseY) / 25;
+                        card.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
+                    }
+                });
+                
+                // Button hover effects
+                startBtn.addEventListener('mouseenter', () => {
+                    isCardTilting = false;
+                    card.style.transition = 'transform 0.4s ease';
+                    
+                    // Gentle tilt when button is hovered
+                    const x = (window.innerWidth / 2 - mouseX) / 50;
+                    const y = (window.innerHeight / 2 - mouseY) / 50;
+                    card.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
+                    
+                    startBtn.style.cursor = 'pointer';
+                });
+                
+                startBtn.addEventListener('mouseleave', () => {
+                    isCardTilting = true;
+                    card.style.transition = 'transform 0.8s ease';
+                    card.style.transform = 'rotateY(0deg) rotateX(0deg)';
+                });
+                
+                // Button click effects
+                startBtn.addEventListener('mousedown', () => {
+                    startBtn.style.transform = 'translateZ(80px) translateY(-2px) scale(0.98)';
+                });
+                
+                startBtn.addEventListener('mouseup', () => {
+                    startBtn.style.transform = 'translateZ(80px) translateY(-5px) scale(1.05)';
+                });
+                
+                // Reset card when mouse leaves window
+                document.addEventListener('mouseleave', () => {
+                    card.style.transition = 'transform 0.8s ease';
+                    card.style.transform = 'rotateY(0deg) rotateX(0deg)';
+                });
+                
+                // Remove transition when mouse enters window
+                document.addEventListener('mouseenter', () => {
+                    card.style.transition = 'none';
+                });
+                
+                // Ensure button click works
+                startBtn.addEventListener('click', function(e) {
+                    console.log('Button clicked, navigating to:', this.href);
+                    // Normal link behavior will follow
                 });
             }
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255,255,255,${p.o})`;
-                ctx.fill();
-                p.x += p.dx; p.y += p.dy;
-                if(p.x < 0 || p.x > canvas.width) p.dx *= -1;
-                if(p.y < 0 || p.y > canvas.height) p.dy *= -1;
-            });
-            requestAnimationFrame(draw);
+        // 3. Particles System
+        function initParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                particles = [];
+                
+                const particleCount = Math.min(80, Math.floor((window.innerWidth * window.innerHeight) / 10000));
+                
+                for(let i = 0; i < particleCount; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        r: Math.random() * 1.2 + 0.5,
+                        dx: (Math.random() - 0.5) * 0.4,
+                        dy: (Math.random() - 0.5) * 0.4,
+                        o: Math.random() * 0.4 + 0.1
+                    });
+                }
+            }
+            
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${p.o})`;
+                    ctx.fill();
+                    
+                    p.x += p.dx;
+                    p.y += p.dy;
+                    
+                    // Bounce off edges
+                    if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+                });
+                
+                requestAnimationFrame(draw);
+            }
+            
+            // Initialize
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            draw();
         }
 
-        window.addEventListener('resize', initParticles);
-        initParticles();
-        draw();
-
-        // 4. Initial Execution
-        window.addEventListener('load', () => {
+        // 4. Page Initialization
+        function initPage() {
+            // Start loading animation
             startLoading();
+            
+            // Initialize particles
+            initParticles();
+            
+            // Initialize interactions
+            initInteractions();
+            
+            // Remove loader and show content
             setTimeout(() => {
-                document.getElementById('loader').classList.add('hidden');
+                loader.classList.add('hidden');
                 document.body.classList.add('loaded');
+                
+                // Force a reflow to ensure transitions work
+                void card.offsetWidth;
             }, 2500);
-        });
+        }
+
+        // Start everything when page loads
+        window.addEventListener('load', initPage);
+
+        // Fallback in case load event already fired
+        if (document.readyState === 'complete') {
+            initPage();
+        }
     </script>
 </body>
 </html>
