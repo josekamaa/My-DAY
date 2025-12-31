@@ -90,7 +90,7 @@ async function ensureProfile() {
   }
 
   if (!data) {
-    const username = currentUser.email.split('@')[0];
+    const username = currentUser.email?.split('@')[0] || 'user' + Math.random().toString(36).substr(2, 5);
     const { error: insertError } = await sb.from('profiles').insert({
       id: currentUser.id,
       username: username,
@@ -156,11 +156,13 @@ function updateProfileUI() {
   el('followerCount').textContent = currentProfile?.followers_count || 0;
   
   // Update edit profile modal
-  el('editUsername').value = currentProfile?.username || '';
-  el('editBio').value = currentProfile?.bio || '';
-  el('editLocation').value = currentProfile?.location || '';
-  el('editAvatarInitial').textContent = initial;
-  updateCharCounts();
+  if (el('editUsername')) {
+    el('editUsername').value = currentProfile?.username || '';
+    el('editBio').value = currentProfile?.bio || '';
+    el('editLocation').value = currentProfile?.location || '';
+    el('editAvatarInitial').textContent = initial;
+    updateCharCounts();
+  }
 }
 
 /* ===========================================================
@@ -258,11 +260,15 @@ function setupEventListeners() {
   }
   
   // Edit profile character counters
-  el('editUsername').addEventListener('input', updateCharCounts);
-  el('editBio').addEventListener('input', updateCharCounts);
+  if (el('editUsername')) {
+    el('editUsername').addEventListener('input', updateCharCounts);
+    el('editBio').addEventListener('input', updateCharCounts);
+  }
   
   // Avatar upload
-  el('avatarUpload').addEventListener('change', handleAvatarUpload);
+  if (el('avatarUpload')) {
+    el('avatarUpload').addEventListener('change', handleAvatarUpload);
+  }
   
   // Chat input
   const chatInput = el('chatInput');
@@ -277,13 +283,19 @@ function setupEventListeners() {
   }
   
   // Post caption
-  el('postCaption')?.addEventListener('input', autoResizeTextarea);
+  if (el('postCaption')) {
+    el('postCaption').addEventListener('input', autoResizeTextarea);
+  }
   
   // Media input
-  el('mediaInput')?.addEventListener('change', handleMediaUpload);
+  if (el('mediaInput')) {
+    el('mediaInput').addEventListener('change', handleMediaUpload);
+  }
   
   // Search
-  el('globalSearch')?.addEventListener('input', debounce(searchContent, 300));
+  if (el('globalSearch')) {
+    el('globalSearch').addEventListener('input', debounce(searchContent, 300));
+  }
   
   // Feed tabs
   qsa('.feed-tab').forEach(tab => {
@@ -294,7 +306,9 @@ function setupEventListeners() {
   });
   
   // Logout
-  el('logoutBtn').addEventListener('click', handleLogout);
+  if (el('logoutBtn')) {
+    el('logoutBtn').addEventListener('click', handleLogout);
+  }
   
   // Close modals with ESC
   document.addEventListener('keydown', (e) => {
@@ -314,7 +328,9 @@ function toggleTheme() {
   
   // Update icon
   const icon = el('themeToggle').querySelector('i');
-  icon.className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+  if (icon) {
+    icon.className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+  }
   
   // Save preference
   localStorage.setItem('theme', newTheme);
@@ -323,8 +339,10 @@ function toggleTheme() {
 // Load saved theme
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.body.setAttribute('data-theme', savedTheme);
-const themeIcon = el('themeToggle').querySelector('i');
-themeIcon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+const themeIcon = el('themeToggle')?.querySelector('i');
+if (themeIcon) {
+  themeIcon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+}
 
 /* ===========================================================
    MOBILE MENU
@@ -359,6 +377,8 @@ function toggleUserMenuDropdown() {
 =========================================================== */
 async function loadFeed() {
   const container = el('postsContainer');
+  if (!container) return;
+  
   container.innerHTML = `
     <div class="skeleton skeleton-post"></div>
     <div class="skeleton skeleton-post"></div>
@@ -371,7 +391,7 @@ async function loadFeed() {
         *,
         profiles:user_id (username, avatar_url),
         post_likes!left (id),
-        post_comments!left (id)
+        comments!left (id)
       `)
       .order('created_at', { ascending: false })
       .limit(20);
@@ -417,9 +437,9 @@ function renderPost(post, isLiked = false) {
   div.id = `post-${post.id}`;
   
   const profile = post.profiles;
-  const avatarHtml = profile.avatar_url 
-    ? `<img src="${profile.avatar_url}" alt="${profile.username}">`
-    : `<span class="avatar-initial">${profile.username?.[0] || 'U'}</span>`;
+  const avatarHtml = profile?.avatar_url 
+    ? `<img src="${profile.avatar_url}" alt="${profile?.username || 'User'}">`
+    : `<span class="avatar-initial">${profile?.username?.[0] || 'U'}</span>`;
   
   const mediaHtml = post.image_url 
     ? `<div class="post-media">
@@ -428,7 +448,7 @@ function renderPost(post, isLiked = false) {
     : '';
     
   const likesCount = post.post_likes?.length || 0;
-  const commentsCount = post.post_comments?.length || 0;
+  const commentsCount = post.comments?.length || 0;
   
   div.innerHTML = `
     <div class="post-header">
@@ -437,7 +457,7 @@ function renderPost(post, isLiked = false) {
           ${avatarHtml}
         </div>
         <div class="post-user-details">
-          <div class="post-username">${profile.username}</div>
+          <div class="post-username">${profile?.username || 'User'}</div>
           <div class="post-time">${timeAgo(post.created_at)}</div>
         </div>
       </div>
@@ -516,7 +536,7 @@ async function likePost(postId) {
         await sb.from('notifications').insert({
           user_id: post.user_id,
           type: 'like',
-          content: `${currentProfile.username} liked your post`,
+          content: `${currentProfile?.username || 'Someone'} liked your post`,
           link: `/post/${postId}`
         });
       }
@@ -537,20 +557,24 @@ function togglePostMenu(postId) {
 
 function toggleComments(postId) {
   const commentsSection = el(`comments-${postId}`);
-  commentsSection.classList.toggle('active');
-  
-  if (commentsSection.classList.contains('active')) {
-    loadComments(postId);
+  if (commentsSection) {
+    commentsSection.classList.toggle('active');
+    
+    if (commentsSection.classList.contains('active')) {
+      loadComments(postId);
+    }
   }
 }
 
 async function loadComments(postId) {
   const commentsList = el(`comments-list-${postId}`);
+  if (!commentsList) return;
+  
   commentsList.innerHTML = '<p class="text-center p-3">Loading comments...</p>';
   
   try {
     const { data, error } = await sb
-      .from('post_comments')
+      .from('comments')
       .select(`
         *,
         profiles:user_id (username, avatar_url)
@@ -572,9 +596,9 @@ async function loadComments(postId) {
       commentEl.className = 'comment-item';
       
       const profile = comment.profiles;
-      const avatarHtml = profile.avatar_url 
+      const avatarHtml = profile?.avatar_url 
         ? `<img src="${profile.avatar_url}" alt="${profile.username}">`
-        : `<span class="avatar-initial">${profile.username?.[0] || 'U'}</span>`;
+        : `<span class="avatar-initial">${profile?.username?.[0] || 'U'}</span>`;
       
       commentEl.innerHTML = `
         <div class="comment-avatar">
@@ -582,7 +606,7 @@ async function loadComments(postId) {
         </div>
         <div class="comment-content">
           <div class="comment-header">
-            <span class="comment-username">${profile.username}</span>
+            <span class="comment-username">${profile?.username || 'User'}</span>
             <span class="comment-time">${timeAgo(comment.created_at)}</span>
           </div>
           <div class="comment-text">${comment.content}</div>
@@ -599,12 +623,14 @@ async function loadComments(postId) {
 
 async function addComment(postId) {
   const input = el(`comment-input-${postId}`);
+  if (!input) return;
+  
   const content = input.value.trim();
   
   if (!content) return;
   
   try {
-    await sb.from('post_comments').insert({
+    await sb.from('comments').insert({
       post_id: postId,
       user_id: currentUser.id,
       content: content
@@ -619,13 +645,14 @@ async function addComment(postId) {
       await sb.from('notifications').insert({
         user_id: post.user_id,
         type: 'comment',
-        content: `${currentProfile.username} commented on your post`,
+        content: `${currentProfile?.username || 'Someone'} commented on your post`,
         link: `/post/${postId}`
       });
     }
     
     // Reload comments
     await loadComments(postId);
+    await loadFeed(); // Update comment count
   } catch (error) {
     console.error('Error adding comment:', error);
     showToast('Error adding comment', 'error');
@@ -650,10 +677,10 @@ function openCreatePostModal() {
   document.body.style.overflow = 'hidden';
   
   // Reset form
-  el('postCaption').value = '';
-  el('postMediaPreview').style.display = 'none';
-  el('postFeeling').style.display = 'none';
-  el('mediaInput').value = '';
+  if (el('postCaption')) el('postCaption').value = '';
+  if (el('postMediaPreview')) el('postMediaPreview').style.display = 'none';
+  if (el('postFeeling')) el('postFeeling').style.display = 'none';
+  if (el('mediaInput')) el('mediaInput').value = '';
 }
 
 function closeCreatePostModal() {
@@ -662,7 +689,7 @@ function closeCreatePostModal() {
 }
 
 function openPhotoPickerModal() {
-  el('mediaInput').click();
+  if (el('mediaInput')) el('mediaInput').click();
 }
 
 async function handleMediaUpload(event) {
@@ -686,21 +713,22 @@ async function handleMediaUpload(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const preview = el('mediaPreview');
-    preview.src = e.target.result;
-    
-    if (file.type.startsWith('video/')) {
-      preview.alt = 'Video preview';
-      // For videos, we might want to show a different UI
+    if (preview) {
+      preview.src = e.target.result;
+      
+      if (file.type.startsWith('video/')) {
+        preview.alt = 'Video preview';
+      }
+      
+      el('postMediaPreview').style.display = 'block';
     }
-    
-    el('postMediaPreview').style.display = 'block';
   };
   reader.readAsDataURL(file);
 }
 
 function removeMedia() {
-  el('postMediaPreview').style.display = 'none';
-  el('mediaInput').value = '';
+  if (el('postMediaPreview')) el('postMediaPreview').style.display = 'none';
+  if (el('mediaInput')) el('mediaInput').value = '';
 }
 
 function openFeelingPickerModal() {
@@ -709,13 +737,13 @@ function openFeelingPickerModal() {
 }
 
 function removeFeeling() {
-  el('postFeeling').style.display = 'none';
+  if (el('postFeeling')) el('postFeeling').style.display = 'none';
 }
 
 async function submitPost() {
-  const caption = el('postCaption').value.trim();
-  const privacy = el('postPrivacy').value;
-  const mediaFile = el('mediaInput').files[0];
+  const caption = el('postCaption')?.value.trim() || '';
+  const privacy = el('postPrivacy')?.value || 'public';
+  const mediaFile = el('mediaInput')?.files?.[0];
   
   if (!caption && !mediaFile) {
     showToast('Please add some text or media to your post', 'warning');
@@ -723,6 +751,8 @@ async function submitPost() {
   }
   
   const submitBtn = el('submitPostBtn');
+  if (!submitBtn) return;
+  
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
   
@@ -760,7 +790,7 @@ async function submitPost() {
     
     // Update post count
     await sb.from('profiles')
-      .update({ posts_count: (currentProfile.posts_count || 0) + 1 })
+      .update({ posts_count: (currentProfile?.posts_count || 0) + 1 })
       .eq('id', currentUser.id);
     
     showToast('Post created successfully!', 'success');
@@ -792,11 +822,15 @@ function closeEditProfileModal() {
 }
 
 function updateCharCounts() {
-  const username = el('editUsername').value;
-  const bio = el('editBio').value;
+  const username = el('editUsername')?.value || '';
+  const bio = el('editBio')?.value || '';
   
-  el('usernameCharCount').textContent = `${username.length}/30`;
-  el('bioCharCount').textContent = `${bio.length}/150`;
+  if (el('usernameCharCount')) {
+    el('usernameCharCount').textContent = `${username.length}/30`;
+  }
+  if (el('bioCharCount')) {
+    el('bioCharCount').textContent = `${bio.length}/150`;
+  }
 }
 
 async function handleAvatarUpload(event) {
@@ -815,6 +849,8 @@ async function handleAvatarUpload(event) {
   }
   
   const saveBtn = el('saveProfileBtn');
+  if (!saveBtn) return;
+  
   saveBtn.disabled = true;
   saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
   
@@ -846,7 +882,9 @@ async function handleAvatarUpload(event) {
     if (updateError) throw updateError;
     
     // Update current profile
-    currentProfile.avatar_url = publicUrl;
+    if (currentProfile) {
+      currentProfile.avatar_url = publicUrl;
+    }
     updateProfileUI();
     
     showToast('Avatar updated successfully!', 'success');
@@ -860,9 +898,9 @@ async function handleAvatarUpload(event) {
 }
 
 async function saveProfile() {
-  const username = el('editUsername').value.trim();
-  const bio = el('editBio').value.trim();
-  const location = el('editLocation').value.trim();
+  const username = el('editUsername')?.value.trim() || '';
+  const bio = el('editBio')?.value.trim() || '';
+  const location = el('editLocation')?.value.trim() || '';
   
   if (!username) {
     showToast('Username is required', 'error');
@@ -870,6 +908,8 @@ async function saveProfile() {
   }
   
   const saveBtn = el('saveProfileBtn');
+  if (!saveBtn) return;
+  
   saveBtn.disabled = true;
   saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
   
@@ -886,9 +926,11 @@ async function saveProfile() {
     if (error) throw error;
     
     // Update current profile
-    currentProfile.username = username;
-    currentProfile.bio = bio;
-    currentProfile.location = location;
+    if (currentProfile) {
+      currentProfile.username = username;
+      currentProfile.bio = bio;
+      currentProfile.location = location;
+    }
     
     updateProfileUI();
     showToast('Profile updated successfully!', 'success');
@@ -1102,7 +1144,7 @@ async function loadOnlineUsers() {
   onlineList.innerHTML = '';
   
   // Take first 5 contacts as "online" for demo
-  const onlineContacts = contacts.slice(0, 5);
+  const onlineContacts = contacts.slice(0, Math.min(5, contacts.length));
   
   onlineContacts.forEach(user => {
     const item = document.createElement('div');
@@ -1359,8 +1401,7 @@ function startNewChat() {
 }
 
 function updateMessageBadges() {
-  // TODO: Update message badges
-  // This would be called when new messages arrive
+  loadChats();
 }
 
 /* ===========================================================
@@ -1384,9 +1425,12 @@ function debounce(func, wait) {
   };
 }
 
-function searchContent(query) {
-  // TODO: Implement search
-  showToast('Search feature coming soon', 'info');
+function searchContent() {
+  const query = el('globalSearch')?.value || '';
+  if (query.trim()) {
+    showToast(`Searching for "${query}"`, 'info');
+    // TODO: Implement actual search
+  }
 }
 
 function closeAllModals() {
@@ -1409,6 +1453,44 @@ async function handleLogout() {
   } catch (error) {
     console.error('Error logging out:', error);
     showToast('Error logging out', 'error');
+  }
+}
+
+/* ===========================================================
+   CONVERSATION HELPER
+=========================================================== */
+async function openConversation(user) {
+  // First check if conversation already exists
+  try {
+    const { data: existingConvo } = await sb
+      .from('conversations')
+      .select('*')
+      .or(`and(user_one.eq.${currentUser.id},user_two.eq.${user.id}),and(user_one.eq.${user.id},user_two.eq.${currentUser.id})`)
+      .single();
+    
+    if (existingConvo) {
+      // Open existing conversation
+      openMessenger();
+      setTimeout(() => selectConversation(existingConvo.id, user), 100);
+    } else {
+      // Create new conversation
+      const { data: newConvo, error } = await sb
+        .from('conversations')
+        .insert({
+          user_one: currentUser.id,
+          user_two: user.id
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      openMessenger();
+      setTimeout(() => selectConversation(newConvo.id, user), 100);
+    }
+  } catch (error) {
+    console.error('Error opening conversation:', error);
+    showToast('Error starting conversation', 'error');
   }
 }
 
