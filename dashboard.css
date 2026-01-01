@@ -121,3 +121,10 @@ body {
   color: #555;
   margin-bottom: 6px;
 }
+.like-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-top: 8px;
+  font-size: 16px;
+}
