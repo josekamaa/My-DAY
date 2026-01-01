@@ -7,6 +7,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 let currentProfile = null;
 let currentConversationId = null;
+let messageChannel = null;
 
 /* ================= INIT ================= */
 document.addEventListener("DOMContentLoaded", async () => {
@@ -17,10 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 /* ================= AUTH ================= */
 async function loadUser() {
   const { data } = await supabaseClient.auth.getUser();
-  if (!data.user) {
-    location.href = "login.html";
-    return;
-  }
+  if (!data.user) return (location.href = "login.html");
 
   currentUser = data.user;
 
@@ -35,132 +33,91 @@ async function loadUser() {
 }
 
 function updateProfileUI() {
-  const initial = currentProfile.username.charAt(0).toUpperCase();
-  document.getElementById("headerAvatar").textContent = initial;
-  document.getElementById("sidebarAvatar").textContent = initial;
-  document.getElementById("sidebarUsername").textContent = currentProfile.username;
+  const i = currentProfile.username[0].toUpperCase();
+  headerAvatar.textContent = i;
+  sidebarAvatar.textContent = i;
+  sidebarUsername.textContent = currentProfile.username;
 }
 
 /* ================= SIDEBAR ================= */
 function toggleSidebar() {
-  document.getElementById("sidebar").classList.add("active");
-  document.getElementById("sidebarOverlay").classList.add("active");
+  sidebar.classList.add("active");
+  sidebarOverlay.classList.add("active");
 }
-
 function closeSidebar() {
-  document.getElementById("sidebar").classList.remove("active");
-  document.getElementById("sidebarOverlay").classList.remove("active");
+  sidebar.classList.remove("active");
+  sidebarOverlay.classList.remove("active");
 }
 
 /* ================= NAV ================= */
+function hideAll() {
+  feedSection.classList.add("hidden");
+  contactsSection.classList.add("hidden");
+  inboxSection.classList.add("hidden");
+}
 function showFeed() {
   hideAll();
-  document.getElementById("feedSection").classList.remove("hidden");
+  feedSection.classList.remove("hidden");
   closeSidebar();
 }
-
 function showContacts() {
   hideAll();
-  document.getElementById("contactsSection").classList.remove("hidden");
+  contactsSection.classList.remove("hidden");
   closeSidebar();
   loadContacts();
 }
-
 function showInbox() {
   hideAll();
-  document.getElementById("inboxSection").classList.remove("hidden");
+  inboxSection.classList.remove("hidden");
   closeSidebar();
   loadConversations();
 }
 
-function hideAll() {
-  document.getElementById("feedSection").classList.add("hidden");
-  document.getElementById("contactsSection").classList.add("hidden");
-  document.getElementById("inboxSection").classList.add("hidden");
-}
-
 /* ================= POSTS ================= */
 async function createPost() {
-  const content = document.getElementById("postContent").value.trim();
+  const content = postContent.value.trim();
   if (!content) return;
 
   await supabaseClient.from("posts").insert({
     user_id: currentUser.id,
     content
   });
-
-  document.getElementById("postContent").value = "";
+  postContent.value = "";
   loadPosts();
 }
 
 async function loadPosts() {
   const { data } = await supabaseClient
     .from("posts")
-    .select(`
-      id, content, created_at,
-      profiles(username),
-      post_likes(user_id),
-      post_comments(id, content, profiles(username))
-    `)
+    .select("id,content,profiles(username)")
     .order("created_at", { ascending: false });
 
-  const container = document.getElementById("postsContainer");
-  container.innerHTML = "";
-
-  data.forEach(post => {
-    const liked = post.post_likes.some(l => l.user_id === currentUser.id);
-
+  postsContainer.innerHTML = "";
+  data.forEach(p => {
     const div = document.createElement("div");
     div.className = "post";
-    div.innerHTML = `
-      <strong>${post.profiles.username}</strong>
-      <p>${post.content}</p>
-      <button onclick="toggleLike(${post.id}, ${liked})">
-        ${liked ? "❤️" : "🤍"} ${post.post_likes.length}
-      </button>
-    `;
-    container.appendChild(div);
+    div.innerHTML = `<strong>${p.profiles.username}</strong><p>${p.content}</p>`;
+    postsContainer.appendChild(div);
   });
-}
-
-async function toggleLike(postId, liked) {
-  if (liked) {
-    await supabaseClient.from("post_likes").delete()
-      .eq("post_id", postId)
-      .eq("user_id", currentUser.id);
-  } else {
-    await supabaseClient.from("post_likes").insert({
-      post_id: postId,
-      user_id: currentUser.id
-    });
-  }
-  loadPosts();
 }
 
 /* ================= CONTACTS ================= */
 async function loadContacts() {
   const { data } = await supabaseClient
     .from("profiles")
-    .select("id, username")
+    .select("id,username")
     .neq("id", currentUser.id);
 
-  const list = document.getElementById("contactsList");
-  list.innerHTML = "";
-
-  if (!data || data.length === 0) {
-    list.innerHTML = "<p>No contacts</p>";
-    return;
-  }
-
-  data.forEach(user => {
+  contactsList.innerHTML = "";
+  data.forEach(u => {
     const div = document.createElement("div");
     div.className = "contact";
     div.innerHTML = `
-      <div class="avatar small">${user.username[0].toUpperCase()}</div>
-      <span>${user.username}</span>
-      <button onclick="openChat('${user.id}', '${user.username}')">Chat</button>
+      <div class="avatar small">${u.username[0].toUpperCase()}</div>
+      <span>${u.username}</span>
+      <button onclick="openChat('${u.id}','${u.username}')">Chat</button>
     `;
-    list.appendChild(div);
+    contactsList.appendChild(div);
   });
 }
 
@@ -175,48 +132,63 @@ async function openChat(userId, username) {
     )
     .single();
 
-  let conversation = data;
-
-  if (!conversation) {
-    const { data: created } = await supabaseClient
+  let convo = data;
+  if (!convo) {
+    const { data: c } = await supabaseClient
       .from("conversations")
-      .insert({
-        user1: currentUser.id,
-        user2: userId
-      })
+      .insert({ user1: currentUser.id, user2: userId })
       .select()
       .single();
-
-    conversation = created;
+    convo = c;
   }
 
-  currentConversationId = conversation.id;
   showInbox();
-  openConversation(conversation.id, username);
+  openConversation(convo.id, username);
 }
 
 async function loadConversations() {
-  const { data } = await supabaseClient.from("conversations").select("*");
-  const list = document.getElementById("conversationsList");
-  list.innerHTML = "";
+  const { data } = await supabaseClient
+    .from("conversations")
+    .select("id,user1,user2,messages(content,created_at)");
 
-  if (!data || data.length === 0) {
-    list.innerHTML = "<p>No conversations</p>";
-    return;
-  }
+  conversationsList.innerHTML = "";
+  for (const c of data) {
+    const other =
+      c.user1 === currentUser.id ? c.user2 : c.user1;
 
-  data.forEach(conv => {
+    const { data: p } = await supabaseClient
+      .from("profiles")
+      .select("username")
+      .eq("id", other)
+      .single();
+
+    const last = c.messages?.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    )[0];
+
     const div = document.createElement("div");
     div.className = "conversation";
-    div.textContent = "Conversation";
-    div.onclick = () => openConversation(conv.id);
-    list.appendChild(div);
-  });
+    div.innerHTML = `<strong>${p.username}</strong><p>${last?.content || ""}</p>`;
+    div.onclick = () => openConversation(c.id, p.username);
+    conversationsList.appendChild(div);
+  }
 }
 
-async function openConversation(id, username = "Chat") {
+async function openConversation(id, username) {
   currentConversationId = id;
-  document.getElementById("chatHeader").textContent = username;
+  chatHeader.textContent = username;
+
+  if (messageChannel) supabaseClient.removeChannel(messageChannel);
+
+  messageChannel = supabaseClient
+    .channel("msg-" + id)
+    .on(
+      "postgres_changes",
+      { event: "INSERT", table: "messages", filter: `conversation_id=eq.${id}` },
+      payload => renderMessage(payload.new)
+    )
+    .subscribe();
+
   loadMessages();
 }
 
@@ -227,35 +199,49 @@ async function loadMessages() {
     .eq("conversation_id", currentConversationId)
     .order("created_at");
 
-  const box = document.getElementById("messagesContainer");
-  box.innerHTML = "";
+  messagesContainer.innerHTML = "";
+  data.forEach(renderMessage);
+}
 
-  data.forEach(msg => {
-    const div = document.createElement("div");
-    div.className = msg.sender_id === currentUser.id ? "message me" : "message";
+function renderMessage(msg) {
+  const div = document.createElement("div");
+  div.className = msg.sender_id === currentUser.id ? "message me" : "message";
+
+  if (msg.content.startsWith("http")) {
+    div.innerHTML = `<img src="${msg.content}" class="chat-image">`;
+  } else {
     div.textContent = msg.content;
-    box.appendChild(div);
-  });
+  }
 
-  box.scrollTop = box.scrollHeight;
+  messagesContainer.appendChild(div);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 async function sendMessage() {
-  const input = document.getElementById("messageInput");
-  if (!input.value || !currentConversationId) return;
+  const text = messageInput.value.trim();
+  const file = imageInput.files[0];
+  let content = text;
+
+  if (file) {
+    const path = `${currentConversationId}/${Date.now()}-${file.name}`;
+    await supabaseClient.storage.from("chat-images").upload(path, file);
+    content = supabaseClient.storage.from("chat-images").getPublicUrl(path).data.publicUrl;
+  }
+
+  if (!content) return;
 
   await supabaseClient.from("messages").insert({
     conversation_id: currentConversationId,
     sender_id: currentUser.id,
-    content: input.value
+    content
   });
 
-  input.value = "";
-  loadMessages();
+  messageInput.value = "";
+  imageInput.value = "";
 }
 
 /* ================= LOGOUT ================= */
 async function logout() {
   await supabaseClient.auth.signOut();
   location.href = "login.html";
-                                       }
+      }
