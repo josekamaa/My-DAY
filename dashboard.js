@@ -1,20 +1,26 @@
+/* ================= SUPABASE ================= */
 const supabaseClient = supabase.createClient(
   "https://iklvlffqzkzpbhjeighn.supabase.co",
   "sb_publishable_OkvtrXKzaUP8D_zmw3XYNA_jZLP65va"
 );
 
-let currentUser, currentProfile;
+/* ================= GLOBAL ================= */
+let currentUser = null;
+let currentProfile = null;
+let currentConversationId = null;
+let messageChannel = null;
 
-/* INIT */
+/* ================= INIT ================= */
 document.addEventListener("DOMContentLoaded", async () => {
   await loadUser();
   loadPosts();
 });
 
-/* USER */
+/* ================= USER ================= */
 async function loadUser() {
   const { data } = await supabaseClient.auth.getUser();
   if (!data.user) return location.href = "login.html";
+
   currentUser = data.user;
 
   const { data: profile } = await supabaseClient
@@ -27,13 +33,63 @@ async function loadUser() {
   updateProfileUI();
 }
 
+function avatarFallback(name) {
+  return `https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=${name}`;
+}
+
 function updateProfileUI() {
-  headerAvatar.src = currentProfile.avatar_url || "default.png";
-  sidebarAvatar.src = currentProfile.avatar_url || "default.png";
+  const avatar = currentProfile.avatar_url || avatarFallback(currentProfile.username);
+  headerAvatar.src = avatar;
+  sidebarAvatar.src = avatar;
   sidebarUsername.textContent = currentProfile.username;
 }
 
-/* POSTS */
+/* ================= SIDEBAR ================= */
+function toggleSidebar() {
+  sidebar.classList.add("active");
+  sidebarOverlay.classList.add("active");
+}
+function closeSidebar() {
+  sidebar.classList.remove("active");
+  sidebarOverlay.classList.remove("active");
+}
+
+/* ================= NAV ================= */
+function hideAll() {
+  feedSection.classList.add("hidden");
+  contactsSection.classList.add("hidden");
+  inboxSection.classList.add("hidden");
+  profileSection.classList.add("hidden");
+}
+
+function showFeed() {
+  hideAll();
+  feedSection.classList.remove("hidden");
+  closeSidebar();
+}
+
+function showContacts() {
+  hideAll();
+  contactsSection.classList.remove("hidden");
+  closeSidebar();
+  loadContacts();
+}
+
+function showInbox() {
+  hideAll();
+  inboxSection.classList.remove("hidden");
+  closeSidebar();
+  loadConversations();
+}
+
+function showProfile() {
+  hideAll();
+  profileSection.classList.remove("hidden");
+  usernameInput.value = currentProfile.username;
+  closeSidebar();
+}
+
+/* ================= POSTS ================= */
 async function createPost() {
   const text = postContent.value.trim();
   const image = postImage.files[0];
@@ -71,12 +127,13 @@ async function loadPosts() {
   postsContainer.innerHTML = "";
 
   data.forEach(p => {
+    const avatar = p.profiles.avatar_url || avatarFallback(p.profiles.username);
+
     const div = document.createElement("div");
     div.className = "post";
-
     div.innerHTML = `
       <div class="post-header">
-        <img src="${p.profiles.avatar_url || 'default.png'}" class="avatar small">
+        <img src="${avatar}" class="avatar small">
         <strong>${p.profiles.username}</strong>
         <span>${new Date(p.created_at).toLocaleString()}</span>
       </div>
@@ -94,7 +151,7 @@ async function loadPosts() {
   });
 }
 
-/* COMMENTS */
+/* ================= COMMENTS ================= */
 async function toggleComments(postId) {
   const box = document.getElementById(`comments-${postId}`);
   box.classList.toggle("hidden");
@@ -115,7 +172,7 @@ async function toggleComments(postId) {
 
 async function addComment(postId) {
   const input = document.getElementById(`comment-${postId}`);
-  if (!input.value) return;
+  if (!input.value.trim()) return;
 
   await supabaseClient.from("post_comments").insert({
     post_id: postId,
@@ -123,18 +180,142 @@ async function addComment(postId) {
     content: input.value
   });
 
-  input.value = "";
-  toggleComments(postId);
+  document.getElementById(`comments-${postId}`).innerHTML = "";
   toggleComments(postId);
 }
 
-/* PROFILE */
-function openProfile() {
-  feedSection.classList.add("hidden");
-  profileSection.classList.remove("hidden");
-  usernameInput.value = currentProfile.username;
+/* ================= CONTACTS ================= */
+async function loadContacts() {
+  const { data } = await supabaseClient
+    .from("profiles")
+    .select("id, username")
+    .neq("id", currentUser.id);
+
+  contactsList.innerHTML = "";
+  data.forEach(u => {
+    const div = document.createElement("div");
+    div.className = "contact";
+    div.innerHTML = `
+      <img src="${u.avatar_url || avatarFallback(u.username)}" class="avatar small">
+      <span>${u.username}</span>
+      <button onclick="openChat('${u.id}','${u.username}')">Chat</button>
+    `;
+    contactsList.appendChild(div);
+  });
 }
 
+/* ================= INBOX ================= */
+async function openChat(userId, username) {
+  const { data } = await supabaseClient
+    .from("conversations")
+    .select("*")
+    .or(
+      `and(user1.eq.${currentUser.id},user2.eq.${userId}),
+       and(user1.eq.${userId},user2.eq.${currentUser.id})`
+    )
+    .single();
+
+  let convo = data;
+  if (!convo) {
+    const { data: c } = await supabaseClient
+      .from("conversations")
+      .insert({ user1: currentUser.id, user2: userId })
+      .select()
+      .single();
+    convo = c;
+  }
+
+  showInbox();
+  openConversation(convo.id, username);
+}
+
+async function loadConversations() {
+  const { data } = await supabaseClient
+    .from("conversations")
+    .select("id,user1,user2,messages(content,created_at)");
+
+  conversationsList.innerHTML = "";
+
+  for (const c of data) {
+    const other = c.user1 === currentUser.id ? c.user2 : c.user1;
+    const { data: p } = await supabaseClient.from("profiles").select("username").eq("id", other).single();
+    const last = c.messages?.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+
+    const div = document.createElement("div");
+    div.className = "conversation";
+    div.innerHTML = `<strong>${p.username}</strong><p>${last?.content || ""}</p>`;
+    div.onclick = () => openConversation(c.id, p.username);
+    conversationsList.appendChild(div);
+  }
+}
+
+async function openConversation(id, username) {
+  currentConversationId = id;
+  chatHeader.textContent = username;
+
+  if (messageChannel) supabaseClient.removeChannel(messageChannel);
+
+  messageChannel = supabaseClient
+    .channel("messages-" + id)
+    .on(
+      "postgres_changes",
+      { event: "INSERT", table: "messages", filter: `conversation_id=eq.${id}` },
+      payload => renderMessage(payload.new)
+    )
+    .subscribe();
+
+  loadMessages();
+}
+
+async function loadMessages() {
+  const { data } = await supabaseClient
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", currentConversationId)
+    .order("created_at");
+
+  messagesContainer.innerHTML = "";
+  data.forEach(renderMessage);
+}
+
+function renderMessage(msg) {
+  const div = document.createElement("div");
+  div.className = msg.sender_id === currentUser.id ? "message me" : "message";
+
+  if (msg.content.startsWith("http")) {
+    div.innerHTML = `<img src="${msg.content}" class="chat-image">`;
+  } else {
+    div.textContent = msg.content;
+  }
+
+  messagesContainer.appendChild(div);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+async function sendMessage() {
+  const text = messageInput.value.trim();
+  const file = imageInput.files[0];
+  let content = text;
+
+  if (file) {
+    const path = `${currentConversationId}/${Date.now()}-${file.name}`;
+    await supabaseClient.storage.from("chat-images").upload(path, file);
+    content = supabaseClient.storage.from("chat-images").getPublicUrl(path).data.publicUrl;
+  }
+
+  if (!content) return;
+
+  await supabaseClient.from("messages").insert({
+    conversation_id: currentConversationId,
+    sender_id: currentUser.id,
+    content
+  });
+
+  messageInput.value = "";
+  imageInput.value = "";
+}
+
+/* ================= PROFILE ================= */
 async function saveProfile() {
   let avatarUrl = currentProfile.avatar_url;
   const avatar = avatarInput.files[0];
@@ -151,12 +332,11 @@ async function saveProfile() {
   }).eq("id", currentUser.id);
 
   await loadUser();
-  profileSection.classList.add("hidden");
-  feedSection.classList.remove("hidden");
+  showFeed();
 }
 
-/* LOGOUT */
+/* ================= LOGOUT ================= */
 async function logout() {
   await supabaseClient.auth.signOut();
   location.href = "login.html";
-}
+      }
