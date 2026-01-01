@@ -5,84 +5,51 @@
   <title>Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Styles -->
   <link rel="stylesheet" href="dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="header">
-  <button class="menu-btn" onclick="toggleSidebar()">
-    <i class="fas fa-bars"></i>
-  </button>
+  <button onclick="toggleSidebar()">☰</button>
   <h2>My-Day</h2>
-  <div class="avatar" id="headerAvatar">U</div>
+  <img id="headerAvatar" class="avatar" />
 </header>
 
-<!-- SIDEBAR -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-profile">
-    <div class="avatar big" id="sidebarAvatar">U</div>
-    <p id="sidebarUsername">Username</p>
-  </div>
+<aside id="sidebar">
+  <img id="sidebarAvatar" class="avatar big" />
+  <p id="sidebarUsername"></p>
 
-  <nav>
-    <button onclick="showFeed()">🏠 Feed</button>
-    <button onclick="showContacts()">📇 Contacts</button>
-    <button onclick="showInbox()">💬 Inbox</button>
-    <button onclick="logout()">🚪 Logout</button>
-  </nav>
+  <button onclick="showFeed()">Feed</button>
+  <button onclick="showContacts()">Contacts</button>
+  <button onclick="showInbox()">Inbox</button>
+  <button onclick="openProfile()">Edit Profile</button>
+  <button onclick="logout()">Logout</button>
 </aside>
 
-<!-- MAIN -->
-<main class="main">
+<main>
 
-  <!-- FEED -->
-  <section id="feedSection">
-    <div class="create-post">
-      <textarea id="postContent" placeholder="What's on your mind?"></textarea>
-      <button onclick="createPost()">Post</button>
-    </div>
-    <div id="postsContainer"></div>
-  </section>
+<!-- FEED -->
+<section id="feedSection">
 
-  <!-- CONTACTS -->
-  <section id="contactsSection" class="contacts hidden">
-    <h3>Contacts</h3>
-    <div id="contactsList"></div>
-  </section>
+  <div class="create-post">
+    <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+    <input type="file" id="postImage" accept="image/*" />
+    <button onclick="createPost()">Post</button>
+  </div>
 
-  <!-- INBOX -->
-  <section id="inboxSection" class="inbox hidden">
-    <div class="inbox-container">
+  <div id="postsContainer"></div>
+</section>
 
-      <div class="conversations">
-        <h3>Inbox</h3>
-        <div id="conversationsList"></div>
-      </div>
-
-      <div class="chat">
-        <div class="chat-header" id="chatHeader">Select a chat</div>
-
-        <div class="chat-messages" id="messagesContainer"></div>
-
-        <div class="chat-input">
-          <input type="file" id="imageInput" accept="image/*" />
-          <input type="text" id="messageInput" placeholder="Type a message..." />
-          <button onclick="sendMessage()">Send</button>
-        </div>
-      </div>
-
-    </div>
-  </section>
+<!-- PROFILE -->
+<section id="profileSection" class="hidden">
+  <h3>Edit Profile</h3>
+  <input id="usernameInput" placeholder="Username" />
+  <input type="file" id="avatarInput" accept="image/*" />
+  <button onclick="saveProfile()">Save</button>
+</section>
 
 </main>
 
