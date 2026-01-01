@@ -75,7 +75,6 @@ async function createPost() {
     loadPosts();
   }
 }
-
 async function loadPosts() {
   const { data, error } = await supabaseClient
     .from("posts")
@@ -84,7 +83,13 @@ async function loadPosts() {
       content,
       created_at,
       profiles ( username ),
-      post_likes ( user_id )
+      post_likes ( user_id ),
+      post_comments (
+        id,
+        content,
+        created_at,
+        profiles ( username )
+      )
     `)
     .order("created_at", { ascending: false });
 
@@ -110,11 +115,43 @@ async function loadPosts() {
       <button class="like-btn" onclick="toggleLike(${post.id}, ${likedByMe})">
         ${likedByMe ? "❤️" : "🤍"} ${post.post_likes.length}
       </button>
+
+      <div class="comments">
+        ${post.post_comments.map(c => `
+          <div class="comment">
+            <strong>${c.profiles.username}</strong>: ${c.content}
+          </div>
+        `).join("")}
+
+        <div class="add-comment">
+          <input 
+            type="text" 
+            placeholder="Write a comment..."
+            id="comment-${post.id}"
+          />
+          <button onclick="addComment(${post.id})">Post</button>
+        </div>
+      </div>
     `;
 
     container.appendChild(div);
   });
+           }
+async function addComment(postId) {
+  const input = document.getElementById(`comment-${postId}`);
+  const content = input.value.trim();
+  if (!content) return;
+
+  await supabaseClient.from("post_comments").insert({
+    post_id: postId,
+    user_id: currentUser.id,
+    content
+  });
+
+  input.value = "";
+  loadPosts();
 }
+
 async function toggleLike(postId, liked) {
   if (liked) {
     await supabaseClient
