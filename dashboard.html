@@ -6,12 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  />
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <link rel="stylesheet" href="dashboard.css">
+  <!-- Styles -->
+  <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
 
@@ -36,34 +40,38 @@
   </div>
 
   <nav>
-  <button onclick="showFeed()">🏠 Feed</button>
-  <button onclick="showContacts()">📇 Contacts</button>
-  <button disabled>💬 Inbox (next)</button>
-  <button onclick="logout()">🚪 Logout</button>
+    <button onclick="showFeed()">🏠 Feed</button>
+    <button onclick="showContacts()">📇 Contacts</button>
+    <button disabled>💬 Inbox (next)</button>
+    <button onclick="logout()">🚪 Logout</button>
   </nav>
 </aside>
 
 <!-- ================= MAIN ================= -->
-<main class="main" id="feedSection">
-  
+<main class="main">
 
-  <!-- CREATE POST -->
-  <div class="create-post">
-    <textarea id="postContent" placeholder="What's on your mind?"></textarea>
-    <button onclick="createPost()">Post</button>
-  </div>
+  <!-- ===== FEED ===== -->
+  <section id="feedSection">
+    <div class="create-post">
+      <textarea
+        id="postContent"
+        placeholder="What's on your mind?"
+      ></textarea>
+      <button onclick="createPost()">Post</button>
+    </div>
 
-  <!-- POSTS -->
-  <div id="postsContainer"></div>
-  
-  <!-- ================= CONTACTS ================= -->
-<section class="contacts hidden" id="contactsSection">
-  <h3>Contacts</h3>
-  <div id="contactsList"></div>
-</section>
+    <div id="postsContainer"></div>
+  </section>
+
+  <!-- ===== CONTACTS ===== -->
+  <section id="contactsSection" class="contacts hidden">
+    <h3>Contacts</h3>
+    <div id="contactsList"></div>
+  </section>
 
 </main>
 
+<!-- ================= SCRIPT ================= -->
 <script src="dashboard.js"></script>
 </body>
 </html>
