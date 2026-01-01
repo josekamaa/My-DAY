@@ -36,14 +36,21 @@
   </div>
 
   <nav>
-    <button onclick="showFeed()">🏠 Feed</button>
-    <button disabled>💬 Inbox (coming)</button>
-    <button onclick="logout()">🚪 Logout</button>
+  <button onclick="showFeed()">🏠 Feed</button>
+  <button onclick="showContacts()">📇 Contacts</button>
+  <button disabled>💬 Inbox (next)</button>
+  <button onclick="logout()">🚪 Logout</button>
   </nav>
 </aside>
 
 <!-- ================= MAIN ================= -->
 <main class="main" id="feedSection">
+  
+  <!-- ================= CONTACTS ================= -->
+<section class="contacts hidden" id="contactsSection">
+  <h3>Contacts</h3>
+  <div id="contactsList"></div>
+</section>
 
   <!-- CREATE POST -->
   <div class="create-post">
