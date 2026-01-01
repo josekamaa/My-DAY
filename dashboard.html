@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard</title>
+  <title>My-Day</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <link rel="stylesheet" href="dashboard.css" />
@@ -10,46 +10,76 @@
 </head>
 <body>
 
+<!-- HEADER -->
 <header class="header">
-  <button onclick="toggleSidebar()">☰</button>
+  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
   <h2>My-Day</h2>
   <img id="headerAvatar" class="avatar" />
 </header>
 
-<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+<!-- SIDEBAR -->
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
-<aside id="sidebar">
+<aside id="sidebar" class="sidebar">
   <img id="sidebarAvatar" class="avatar big" />
   <p id="sidebarUsername"></p>
 
   <button onclick="showFeed()">Feed</button>
   <button onclick="showContacts()">Contacts</button>
   <button onclick="showInbox()">Inbox</button>
-  <button onclick="openProfile()">Edit Profile</button>
+  <button onclick="showProfile()">Edit Profile</button>
   <button onclick="logout()">Logout</button>
 </aside>
 
-<main>
+<!-- MAIN -->
+<main class="main">
 
-<!-- FEED -->
-<section id="feedSection">
+  <!-- FEED -->
+  <section id="feedSection">
+    <div class="create-post">
+      <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+      <input type="file" id="postImage" accept="image/*" />
+      <button onclick="createPost()">Post</button>
+    </div>
+    <div id="postsContainer"></div>
+  </section>
 
-  <div class="create-post">
-    <textarea id="postContent" placeholder="What's on your mind?"></textarea>
-    <input type="file" id="postImage" accept="image/*" />
-    <button onclick="createPost()">Post</button>
-  </div>
+  <!-- CONTACTS -->
+  <section id="contactsSection" class="hidden">
+    <h3>Contacts</h3>
+    <div id="contactsList"></div>
+  </section>
 
-  <div id="postsContainer"></div>
-</section>
+  <!-- INBOX -->
+  <section id="inboxSection" class="hidden inbox">
+    <div class="inbox-container">
 
-<!-- PROFILE -->
-<section id="profileSection" class="hidden">
-  <h3>Edit Profile</h3>
-  <input id="usernameInput" placeholder="Username" />
-  <input type="file" id="avatarInput" accept="image/*" />
-  <button onclick="saveProfile()">Save</button>
-</section>
+      <div class="conversations">
+        <h3>Inbox</h3>
+        <div id="conversationsList"></div>
+      </div>
+
+      <div class="chat">
+        <div id="chatHeader" class="chat-header">Select a chat</div>
+        <div id="messagesContainer" class="chat-messages"></div>
+
+        <div class="chat-input">
+          <input type="file" id="imageInput" accept="image/*" />
+          <input type="text" id="messageInput" placeholder="Type a message..." />
+          <button onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="profileSection" class="hidden">
+    <h3>Edit Profile</h3>
+    <input id="usernameInput" placeholder="Username" />
+    <input type="file" id="avatarInput" accept="image/*" />
+    <button onclick="saveProfile()">Save</button>
+  </section>
 
 </main>
 
