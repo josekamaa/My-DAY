@@ -83,9 +83,8 @@ async function loadPosts() {
       id,
       content,
       created_at,
-      profiles (
-        username
-      )
+      profiles ( username ),
+      post_likes ( user_id )
     `)
     .order("created_at", { ascending: false });
 
@@ -93,17 +92,46 @@ async function loadPosts() {
   container.innerHTML = "";
 
   data.forEach(post => {
+    const likedByMe = post.post_likes.some(
+      like => like.user_id === currentUser.id
+    );
+
     const div = document.createElement("div");
     div.className = "post";
+
     div.innerHTML = `
       <div class="post-header">
         <strong>${post.profiles.username}</strong>
         <span>${new Date(post.created_at).toLocaleString()}</span>
       </div>
+
       <p>${post.content}</p>
+
+      <button class="like-btn" onclick="toggleLike(${post.id}, ${likedByMe})">
+        ${likedByMe ? "❤️" : "🤍"} ${post.post_likes.length}
+      </button>
     `;
+
     container.appendChild(div);
   });
+}
+async function toggleLike(postId, liked) {
+  if (liked) {
+    await supabaseClient
+      .from("post_likes")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", currentUser.id);
+  } else {
+    await supabaseClient
+      .from("post_likes")
+      .insert({
+        post_id: postId,
+        user_id: currentUser.id
+      });
+  }
+
+  loadPosts();
 }
 
 /* ================= LOGOUT ================= */
