@@ -59,6 +59,18 @@ function closeSidebar() {
 function showFeed() {
   closeSidebar();
 }
+function showContacts() {
+  document.getElementById("feedSection").style.display = "none";
+  document.getElementById("contactsSection").style.display = "block";
+  closeSidebar();
+  loadContacts();
+}
+
+function showFeed() {
+  document.getElementById("feedSection").style.display = "block";
+  document.getElementById("contactsSection").style.display = "none";
+  closeSidebar();
+}
 
 /* ================= POSTS ================= */
 async function createPost() {
@@ -171,6 +183,32 @@ async function toggleLike(postId, liked) {
   loadPosts();
 }
 
+async function loadContacts() {
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("id, username")
+    .neq("id", currentUser.id)
+    .order("username");
+
+  const container = document.getElementById("contactsList");
+  container.innerHTML = "";
+
+  data.forEach(user => {
+    const div = document.createElement("div");
+    div.className = "contact";
+    div.innerHTML = `
+      <div class="avatar small">${user.username.charAt(0).toUpperCase()}</div>
+      <span>${user.username}</span>
+      <button onclick="openChat('${user.id}', '${user.username}')">Chat</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+
+function openChat(userId, username) {
+  alert(`Chat with ${username} coming next 😄`);
+}
 /* ================= LOGOUT ================= */
 async function logout() {
   await supabaseClient.auth.signOut();
