@@ -1,6 +1,6 @@
 /* ================= SUPABASE ================= */
 const SUPABASE_URL = "https://iklvlffqzkzpbhjeighn.supabase.co";
-const SUPABASE_KEY = "sb_publishable_OkvtrXKzaUP8D_zmw3XYNA_jZLP65va"; // keep same as before
+const SUPABASE_KEY = "sb_publishable_OkvtrXKzaUP8D_zmw3XYNA_jZLP65va";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ================= GLOBAL ================= */
@@ -19,7 +19,8 @@ async function init() {
 
 /* ================= AUTH ================= */
 async function loadUser() {
-  const { data, error } = await supabaseClient.auth.getUser();
+  const { data } = await supabaseClient.auth.getUser();
+
   if (!data.user) {
     location.href = "login.html";
     return;
@@ -27,11 +28,16 @@ async function loadUser() {
 
   currentUser = data.user;
 
-  const { data: profile } = await supabaseClient
+  const { data: profile, error } = await supabaseClient
     .from("profiles")
     .select("*")
     .eq("id", currentUser.id)
     .single();
+
+  if (error) {
+    console.error("Profile error:", error);
+    return;
+  }
 
   currentProfile = profile;
   updateProfileUI();
@@ -42,10 +48,11 @@ function updateProfileUI() {
 
   document.getElementById("headerAvatar").textContent = initial;
   document.getElementById("sidebarAvatar").textContent = initial;
-  document.getElementById("sidebarUsername").textContent = currentProfile.username;
+  document.getElementById("sidebarUsername").textContent =
+    currentProfile.username;
 }
 
-/* ================= SIDEBAR ================= */
+/* ================= SIDEBAR / NAV ================= */
 function toggleSidebar() {
   document.getElementById("sidebar").classList.add("active");
   document.getElementById("sidebarOverlay").classList.add("active");
@@ -57,19 +64,16 @@ function closeSidebar() {
 }
 
 function showFeed() {
+  document.getElementById("contactsSection").classList.add("hidden");
+  document.getElementById("feedSection").classList.remove("hidden");
   closeSidebar();
-}
-function showContacts() {
-  document.getElementById("feedSection").style.display = "none";
-  document.getElementById("contactsSection").style.display = "block";
-  closeSidebar();
-  loadContacts();
 }
 
-function showFeed() {
-  document.getElementById("feedSection").style.display = "block";
-  document.getElementById("contactsSection").style.display = "none";
+function showContacts() {
+  document.getElementById("feedSection").classList.add("hidden");
+  document.getElementById("contactsSection").classList.remove("hidden");
   closeSidebar();
+  loadContacts();
 }
 
 /* ================= POSTS ================= */
@@ -79,14 +83,18 @@ async function createPost() {
 
   const { error } = await supabaseClient.from("posts").insert({
     user_id: currentUser.id,
-    content: content
+    content
   });
 
-  if (!error) {
-    document.getElementById("postContent").value = "";
-    loadPosts();
+  if (error) {
+    console.error("Post error:", error);
+    return;
   }
+
+  document.getElementById("postContent").value = "";
+  loadPosts();
 }
+
 async function loadPosts() {
   const { data, error } = await supabaseClient
     .from("posts")
@@ -104,6 +112,11 @@ async function loadPosts() {
       )
     `)
     .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Load posts error:", error);
+    return;
+  }
 
   const container = document.getElementById("postsContainer");
   container.innerHTML = "";
@@ -129,15 +142,19 @@ async function loadPosts() {
       </button>
 
       <div class="comments">
-        ${post.post_comments.map(c => `
+        ${post.post_comments
+          .map(
+            c => `
           <div class="comment">
             <strong>${c.profiles.username}</strong>: ${c.content}
           </div>
-        `).join("")}
+        `
+          )
+          .join("")}
 
         <div class="add-comment">
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Write a comment..."
             id="comment-${post.id}"
           />
@@ -148,7 +165,27 @@ async function loadPosts() {
 
     container.appendChild(div);
   });
-           }
+}
+
+/* ================= LIKES ================= */
+async function toggleLike(postId, liked) {
+  if (liked) {
+    await supabaseClient
+      .from("post_likes")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", currentUser.id);
+  } else {
+    await supabaseClient.from("post_likes").insert({
+      post_id: postId,
+      user_id: currentUser.id
+    });
+  }
+
+  loadPosts();
+}
+
+/* ================= COMMENTS ================= */
 async function addComment(postId) {
   const input = document.getElementById(`comment-${postId}`);
   const content = input.value.trim();
@@ -164,25 +201,7 @@ async function addComment(postId) {
   loadPosts();
 }
 
-async function toggleLike(postId, liked) {
-  if (liked) {
-    await supabaseClient
-      .from("post_likes")
-      .delete()
-      .eq("post_id", postId)
-      .eq("user_id", currentUser.id);
-  } else {
-    await supabaseClient
-      .from("post_likes")
-      .insert({
-        post_id: postId,
-        user_id: currentUser.id
-      });
-  }
-
-  loadPosts();
-}
-
+/* ================= CONTACTS ================= */
 async function loadContacts() {
   const { data, error } = await supabaseClient
     .from("profiles")
@@ -193,11 +212,22 @@ async function loadContacts() {
   const container = document.getElementById("contactsList");
   container.innerHTML = "";
 
+  if (error) {
+    console.error("Contacts error:", error);
+    container.innerHTML = "<p>Error loading contacts</p>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p>No contacts yet.</p>";
+    return;
+  }
+
   data.forEach(user => {
     const div = document.createElement("div");
     div.className = "contact";
     div.innerHTML = `
-      <div class="avatar small">${user.username.charAt(0).toUpperCase()}</div>
+      <div class="avatar small">${user.username[0].toUpperCase()}</div>
       <span>${user.username}</span>
       <button onclick="openChat('${user.id}', '${user.username}')">Chat</button>
     `;
@@ -205,12 +235,12 @@ async function loadContacts() {
   });
 }
 
-
 function openChat(userId, username) {
   alert(`Chat with ${username} coming next 😄`);
 }
+
 /* ================= LOGOUT ================= */
 async function logout() {
   await supabaseClient.auth.signOut();
   location.href = "login.html";
-}
+    }
