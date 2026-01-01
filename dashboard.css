@@ -1,4 +1,4 @@
-* {
+just* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -157,4 +157,37 @@ body {
   background: #333;
   color: #fff;
   border-radius: 4px;
+}
+.hidden {
+  display: none;
+}
+
+/* ================= CONTACTS ================= */
+.contacts {
+  padding: 16px;
+}
+
+.contact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.avatar.small {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.contact button {
+  margin-left: auto;
+  padding: 6px 10px;
+  border: none;
+  background: #333;
+  color: #fff;
+  border-radius: 6px;
 }
