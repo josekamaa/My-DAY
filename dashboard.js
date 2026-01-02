@@ -10,18 +10,45 @@ let currentProfile = null;
 let activeConversationId = null;
 let messageSubscription = null;
 
-/* ================= INIT ================= */
-document.addEventListener("DOMContentLoaded", async () => {
-  await checkSession();
-  loadPosts();
-});
-
-// Helper for broken images
+/* ================= HELPER FUNCTIONS ================= */
 function imgError(image) {
   image.onerror = null;
   image.src = "https://placehold.co/400x300?text=No+Image";
   return true;
 }
+
+function timeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+  
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + "y ago";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + "mo ago";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + "d ago";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + "h ago";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + "m ago";
+  return "Just now";
+}
+
+/* ================= INIT ================= */
+document.addEventListener("DOMContentLoaded", async () => {
+  await checkSession();
+  loadPosts();
+
+  // REAL-TIME POSTS SUBSCRIPTION
+  supabaseClient
+    .channel('public:posts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, (payload) => {
+      // Reload posts when someone creates a new one
+      loadPosts(); 
+    })
+    .subscribe();
+});
 
 /* ================= AUTH & USER ================= */
 async function checkSession() {
@@ -60,7 +87,7 @@ function logout() {
   supabaseClient.auth.signOut().then(() => window.location.href = "login.html");
 }
 
-/* ================= NAVIGATION ================= */
+/* ================= NAVIGATION & SEARCH ================= */
 function toggleSidebar() {
   document.getElementById("sidebar").classList.add("active");
   document.getElementById("sidebarOverlay").classList.add("active");
@@ -71,22 +98,45 @@ function closeSidebar() {
 }
 
 function showSection(sectionName) {
-  // Hide all sections
   ["feedSection", "contactsSection", "inboxSection", "profileSection"].forEach(id => {
     document.getElementById(id).classList.add("hidden");
   });
   
-  // Update sidebar active states
   const btns = document.querySelectorAll('.sidebar button');
   btns.forEach(b => b.classList.remove('active'));
 
-  // Show target
   document.getElementById(sectionName + "Section").classList.remove("hidden");
   closeSidebar();
 
-  // Load data if needed
+  // Reset search
+  document.getElementById("globalSearch").value = "";
+  handleSearch("");
+
   if (sectionName === "contacts") loadContacts();
   if (sectionName === "inbox") loadInbox();
+}
+
+// SEARCH FUNCTIONALITY
+function handleSearch(query) {
+  query = query.toLowerCase();
+  
+  // Search Posts
+  if (!document.getElementById("feedSection").classList.contains("hidden")) {
+    const posts = document.querySelectorAll(".post");
+    posts.forEach(post => {
+      const text = post.innerText.toLowerCase();
+      post.style.display = text.includes(query) ? "block" : "none";
+    });
+  }
+  
+  // Search Contacts
+  if (!document.getElementById("contactsSection").classList.contains("hidden")) {
+    const cards = document.querySelectorAll(".contact-card");
+    cards.forEach(card => {
+      const text = card.innerText.toLowerCase();
+      card.style.display = text.includes(query) ? "flex" : "none";
+    });
+  }
 }
 
 /* ================= FEED (POSTS) ================= */
@@ -112,7 +162,7 @@ async function createPost() {
 
   document.getElementById("postContent").value = "";
   document.getElementById("postImage").value = "";
-  loadPosts();
+  // Note: Real-time subscription will trigger loadPosts automatically
 }
 
 async function loadPosts() {
@@ -147,7 +197,7 @@ async function loadPosts() {
           <img src="${avatar}" class="avatar small" onerror="this.src='https://ui-avatars.com/api/?name=?'">
           <div style="flex:1">
             <strong>${post.profiles.username}</strong>
-            <span>${new Date(post.created_at).toLocaleDateString()}</span>
+            <span>${timeAgo(post.created_at)}</span>
           </div>
           ${deleteBtnHtml}
         </div>
@@ -156,7 +206,7 @@ async function loadPosts() {
           ${post.content || ""}
         </div>
         
-        ${post.image_url ? `<img src="${post.image_url}" class="post-image" onerror="imgError(this)">` : ""}
+        ${post.image_url ? `<img src="${post.image_url}" class="post-image" ondblclick="toggleLike(${post.id})" onerror="imgError(this)">` : ""}
 
         <div class="post-stats" style="padding: 10px 15px; color:#6b7280; font-size:0.85rem; border-bottom:1px solid #f3f4f6;">
           <span>${post.post_likes.length} Likes</span> • 
@@ -177,19 +227,19 @@ async function loadPosts() {
     `;
     container.innerHTML += html;
   });
+  
+  // Re-run search in case user was filtering
+  handleSearch(document.getElementById("globalSearch").value);
 }
 
-// NEW: Delete Post Function
 async function deletePost(postId) {
   if(!confirm("Are you sure you want to delete this post?")) return;
   
-  // Note: Depending on your DB settings, you might need to delete likes/comments manually first
-  // or set up "On Delete Cascade" in Supabase.
   const { error } = await supabaseClient.from('posts').delete().eq('id', postId);
   
   if(error) {
     console.error(error);
-    alert("Error deleting post. Make sure you have permission.");
+    alert("Error deleting post.");
   } else {
     loadPosts();
   }
@@ -294,9 +344,7 @@ async function openChat(convoId, username, otherId, avatarUrl) {
   document.getElementById("chatView").classList.add("active");
   document.getElementById("chatInputArea").style.visibility = "visible";
 
-  // Highlight active
   document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
-  // (In a real app we would add ID to the list items to highlight specifically)
 
   if (messageSubscription) supabaseClient.removeChannel(messageSubscription);
   
@@ -383,6 +431,7 @@ async function loadContacts() {
     `;
     container.appendChild(div);
   });
+  handleSearch(document.getElementById("globalSearch").value);
 }
 
 async function startNewChat(targetUserId) {
@@ -393,7 +442,6 @@ async function startNewChat(targetUserId) {
 
   if (existing) {
     showSection("inbox");
-    // Ideally we would trigger openChat here automatically
   } else {
     await supabaseClient.from("conversations").insert({ user1: currentUser.id, user2: targetUserId });
     showSection("inbox");
@@ -416,4 +464,5 @@ async function saveProfile() {
   await supabaseClient.from("profiles").update({ username: newName, avatar_url: avatarUrl }).eq("id", currentUser.id);
   alert("Profile Saved!");
   location.reload();
-}
+               }
+           
