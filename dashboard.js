@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Helper for broken images
 function imgError(image) {
   image.onerror = null;
-  image.src = "https://placehold.co/400x300?text=Image+Unavailable";
+  image.src = "https://placehold.co/400x300?text=No+Image";
   return true;
 }
 
@@ -44,9 +44,8 @@ async function loadUserProfile() {
 
 function updateGlobalUI() {
   const name = currentProfile.username || "User";
-  const avatar = currentProfile.avatar_url || `https://ui-avatars.com/api/?name=${name}&background=0D8ABC&color=fff`;
+  const avatar = currentProfile.avatar_url || `https://ui-avatars.com/api/?name=${name}&background=2563eb&color=fff`;
   
-  // Update all avatar instances safely
   const els = ["headerAvatar", "sidebarAvatar", "editProfilePreview"];
   els.forEach(id => {
     const el = document.getElementById(id);
@@ -77,6 +76,10 @@ function showSection(sectionName) {
     document.getElementById(id).classList.add("hidden");
   });
   
+  // Update sidebar active states
+  const btns = document.querySelectorAll('.sidebar button');
+  btns.forEach(b => b.classList.remove('active'));
+
   // Show target
   document.getElementById(sectionName + "Section").classList.remove("hidden");
   closeSidebar();
@@ -131,15 +134,22 @@ async function loadPosts() {
     const likeClass = isLiked ? "liked" : "";
     const likeIcon = isLiked ? "fas fa-heart" : "far fa-heart";
     const avatar = post.profiles.avatar_url || `https://ui-avatars.com/api/?name=${post.profiles.username}`;
+    
+    // Check if current user owns the post for delete button
+    const isMyPost = post.user_id === currentUser.id;
+    const deleteBtnHtml = isMyPost 
+      ? `<button class="delete-btn" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i></button>` 
+      : ``;
 
     const html = `
       <div class="post">
         <div class="post-header">
           <img src="${avatar}" class="avatar small" onerror="this.src='https://ui-avatars.com/api/?name=?'">
-          <div>
+          <div style="flex:1">
             <strong>${post.profiles.username}</strong>
             <span>${new Date(post.created_at).toLocaleDateString()}</span>
           </div>
+          ${deleteBtnHtml}
         </div>
 
         <div class="post-content">
@@ -148,8 +158,8 @@ async function loadPosts() {
         
         ${post.image_url ? `<img src="${post.image_url}" class="post-image" onerror="imgError(this)">` : ""}
 
-        <div class="post-stats">
-          <span>${post.post_likes.length} Likes</span>
+        <div class="post-stats" style="padding: 10px 15px; color:#6b7280; font-size:0.85rem; border-bottom:1px solid #f3f4f6;">
+          <span>${post.post_likes.length} Likes</span> • 
           <span>${post.post_comments.length} Comments</span>
         </div>
 
@@ -162,12 +172,27 @@ async function loadPosts() {
           </button>
         </div>
 
-        <div id="comments-${post.id}" class="comments-section">
-          </div>
+        <div id="comments-${post.id}" class="comments-section"></div>
       </div>
     `;
     container.innerHTML += html;
   });
+}
+
+// NEW: Delete Post Function
+async function deletePost(postId) {
+  if(!confirm("Are you sure you want to delete this post?")) return;
+  
+  // Note: Depending on your DB settings, you might need to delete likes/comments manually first
+  // or set up "On Delete Cascade" in Supabase.
+  const { error } = await supabaseClient.from('posts').delete().eq('id', postId);
+  
+  if(error) {
+    console.error(error);
+    alert("Error deleting post. Make sure you have permission.");
+  } else {
+    loadPosts();
+  }
 }
 
 /* ================= LIKES & COMMENTS ================= */
@@ -183,7 +208,7 @@ async function toggleLike(postId) {
   } else {
     await supabaseClient.from("post_likes").insert({ post_id: postId, user_id: currentUser.id });
   }
-  loadPosts(); // Reload to update UI
+  loadPosts();
 }
 
 async function toggleComments(postId) {
@@ -194,7 +219,6 @@ async function toggleComments(postId) {
     return;
   }
 
-  // Load comments
   const { data } = await supabaseClient
     .from("post_comments")
     .select("content, profiles(username)")
@@ -207,7 +231,7 @@ async function toggleComments(postId) {
   html += `</div>
     <div class="comment-input-group">
       <input type="text" id="input-${postId}" placeholder="Write a comment..." />
-      <button class="btn-blue" onclick="sendComment(${postId})">Post</button>
+      <button class="btn-primary" onclick="sendComment(${postId})" style="padding:8px 15px; border-radius:20px;">Send</button>
     </div>`;
   
   div.innerHTML = html;
@@ -224,7 +248,6 @@ async function sendComment(postId) {
     content: input.value
   });
   
-  // Refresh comments view
   div = document.getElementById(`comments-${postId}`);
   div.classList.remove("open"); 
   toggleComments(postId); 
@@ -241,7 +264,6 @@ async function loadInbox() {
 
   for (let convo of data) {
     const otherId = convo.user1 === currentUser.id ? convo.user2 : convo.user1;
-    // Get other user details
     const { data: otherUser } = await supabaseClient
       .from("profiles").select("username, avatar_url").eq("id", otherId).single();
 
@@ -249,7 +271,7 @@ async function loadInbox() {
 
     const div = document.createElement("div");
     div.className = "conversation-item";
-    div.onclick = () => openChat(convo.id, otherUser.username, otherId);
+    div.onclick = () => openChat(convo.id, otherUser.username, otherId, otherUser.avatar_url);
     div.innerHTML = `
       <img src="${otherUser.avatar_url || 'https://ui-avatars.com/api/?name='+otherUser.username}" class="avatar small">
       <div class="conversation-info">
@@ -261,15 +283,21 @@ async function loadInbox() {
   }
 }
 
-async function openChat(convoId, username) {
+async function openChat(convoId, username, otherId, avatarUrl) {
   activeConversationId = convoId;
   document.getElementById("chatUserDisplayName").textContent = username;
   
-  // Mobile UI Transition
+  const headerAvatar = document.getElementById("chatHeaderAvatar");
+  headerAvatar.src = avatarUrl || `https://ui-avatars.com/api/?name=${username}`;
+  headerAvatar.classList.remove("hidden");
+  
   document.getElementById("chatView").classList.add("active");
   document.getElementById("chatInputArea").style.visibility = "visible";
 
-  // Realtime Setup
+  // Highlight active
+  document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
+  // (In a real app we would add ID to the list items to highlight specifically)
+
   if (messageSubscription) supabaseClient.removeChannel(messageSubscription);
   
   messageSubscription = supabaseClient.channel(`chat-${convoId}`)
@@ -277,7 +305,6 @@ async function openChat(convoId, username) {
     payload => appendMessage(payload.new))
     .subscribe();
 
-  // Load existing messages
   const { data } = await supabaseClient
     .from("messages")
     .select("*")
@@ -285,7 +312,7 @@ async function openChat(convoId, username) {
     .order("created_at", { ascending: true });
 
   const container = document.getElementById("messagesContainer");
-  container.innerHTML = ""; // Clear placeholder
+  container.innerHTML = ""; 
   data.forEach(appendMessage);
 }
 
@@ -303,7 +330,7 @@ function appendMessage(msg) {
   }
   
   container.appendChild(div);
-  container.scrollTop = container.scrollHeight; // Auto scroll to bottom
+  container.scrollTop = container.scrollHeight; 
 }
 
 function closeChat() {
@@ -352,14 +379,13 @@ async function loadContacts() {
         <img src="${user.avatar_url || 'https://ui-avatars.com/api/?name='+user.username}" class="avatar small">
         <strong>${user.username}</strong>
       </div>
-      <button class="btn-blue" onclick="startNewChat('${user.id}')">Message</button>
+      <button class="btn-primary" style="font-size:0.8rem; padding:6px 15px;" onclick="startNewChat('${user.id}')">Message</button>
     `;
     container.appendChild(div);
   });
 }
 
 async function startNewChat(targetUserId) {
-  // Check if chat exists
   const { data: existing } = await supabaseClient.from("conversations")
     .select("id")
     .or(`and(user1.eq.${currentUser.id},user2.eq.${targetUserId}),and(user1.eq.${targetUserId},user2.eq.${currentUser.id})`)
@@ -367,7 +393,7 @@ async function startNewChat(targetUserId) {
 
   if (existing) {
     showSection("inbox");
-    // We need to fetch username to open chat correctly, but lazy load handles it in inbox
+    // Ideally we would trigger openChat here automatically
   } else {
     await supabaseClient.from("conversations").insert({ user1: currentUser.id, user2: targetUserId });
     showSection("inbox");
@@ -391,4 +417,3 @@ async function saveProfile() {
   alert("Profile Saved!");
   location.reload();
 }
-  
