@@ -1,87 +1,300 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>My-Day</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>My-Day</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="dashboard.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+/* =====================
+   THEME VARIABLES
+===================== */
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --surface: #f1f5f9;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e5e7eb;
+  --accent: #2563eb;
+  --radius: 14px;
+}
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --card: #020617;
+  --surface: #020617;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --border: #1e293b;
+}
+
+/* =====================
+   BASE
+===================== */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  display: flex;
+  overflow: hidden;
+}
+
+/* =====================
+   SIDEBAR
+===================== */
+aside {
+  width: 280px;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.profile {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#3b82f6,#2563eb);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.contacts {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.contact {
+  padding: 12px;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.contact.active,
+.contact:hover {
+  background: var(--surface);
+}
+
+.unread {
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+/* =====================
+   MAIN
+===================== */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: var(--card);
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle {
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* =====================
+   CONTENT
+===================== */
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* FEED */
+.feed {
+  flex: 2;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.post {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.post img {
+  width: 100%;
+  border-radius: var(--radius);
+  margin-top: 8px;
+}
+
+/* CHAT */
+.chat {
+  width: 360px;
+  border-left: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+}
+
+.messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.msg {
+  max-width: 75%;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: var(--radius);
+  position: relative;
+}
+
+.sent {
+  background: var(--accent);
+  color: white;
+  margin-left: auto;
+}
+
+.received {
+  background: var(--surface);
+}
+
+.reactions {
+  font-size: 12px;
+  margin-top: 4px;
+  opacity: .7;
+}
+
+/* Typing indicator */
+.typing {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 6px 12px;
+}
+
+/* Input */
+.input {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.input input {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+}
+
+.input button {
+  border: none;
+  padding: 0 18px;
+  background: var(--accent);
+  color: white;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+  aside, .chat { display:none }
+}
+</style>
 </head>
-<body>
 
-<!-- HEADER -->
-<header class="header">
-  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-  <h2>My-Day</h2>
-  <img id="headerAvatar" class="avatar" />
-</header>
+<body data-theme="light">
 
 <!-- SIDEBAR -->
-<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+<aside>
+  <div class="profile">
+    <div class="avatar">U</div>
+    <strong id="username">User</strong>
+  </div>
 
-<aside id="sidebar" class="sidebar">
-  <img id="sidebarAvatar" class="avatar big" />
-  <p id="sidebarUsername"></p>
-
-  <button onclick="showFeed()">Feed</button>
-  <button onclick="showContacts()">Contacts</button>
-  <button onclick="showInbox()">Inbox</button>
-  <button onclick="showProfile()">Edit Profile</button>
-  <button onclick="logout()">Logout</button>
+  <div class="contacts" id="contactsList">
+    <div class="contact active">
+      <span>John Doe</span>
+      <span class="unread">2</span>
+    </div>
+  </div>
 </aside>
 
 <!-- MAIN -->
-<main class="main">
+<main>
+<header>
+  <span>My-Day</span>
+  <span class="toggle" onclick="toggleTheme()">🌙</span>
+</header>
+
+<div class="content">
 
   <!-- FEED -->
-  <section id="feedSection">
-    <div class="create-post">
-      <textarea id="postContent" placeholder="What's on your mind?"></textarea>
-      <input type="file" id="postImage" accept="image/*" />
-      <button onclick="createPost()">Post</button>
-    </div>
-    <div id="postsContainer"></div>
-  </section>
-
-  <!-- CONTACTS -->
-  <section id="contactsSection" class="hidden">
-    <h3>Contacts</h3>
-    <div id="contactsList"></div>
-  </section>
-
-  <!-- INBOX -->
-  <section id="inboxSection" class="hidden inbox">
-    <div class="inbox-container">
-
-      <div class="conversations">
-        <h3>Inbox</h3>
-        <div id="conversationsList"></div>
-      </div>
-
-      <div class="chat">
-        <div id="chatHeader" class="chat-header">Select a chat</div>
-        <div id="messagesContainer" class="chat-messages"></div>
-
-        <div class="chat-input">
-          <input type="file" id="imageInput" accept="image/*" />
-          <input type="text" id="messageInput" placeholder="Type a message..." />
-          <button onclick="sendMessage()">Send</button>
-        </div>
-      </div>
-
+  <section class="feed" id="postsContainer">
+    <div class="post">
+      <strong>Jane</strong>
+      <p>Hello world 👋</p>
+      <div class="muted">2m ago</div>
     </div>
   </section>
 
-  <!-- PROFILE -->
-  <section id="profileSection" class="hidden">
-    <h3>Edit Profile</h3>
-    <input id="usernameInput" placeholder="Username" />
-    <input type="file" id="avatarInput" accept="image/*" />
-    <button onclick="saveProfile()">Save</button>
+  <!-- CHAT -->
+  <section class="chat">
+    <div class="messages" id="chatMessages">
+      <div class="msg received">
+        Hi 👋
+        <div class="reactions">❤️ 2</div>
+      </div>
+      <div class="msg sent">Hello!</div>
+      <div class="typing">typing…</div>
+    </div>
+
+    <div class="input">
+      <input placeholder="Message…" />
+      <button>Send</button>
+    </div>
   </section>
 
+</div>
 </main>
+
+<script>
+function toggleTheme(){
+  document.body.dataset.theme =
+    document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+}
+</script>
 
 <script src="dashboard.js"></script>
 </body>
