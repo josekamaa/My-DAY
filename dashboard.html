@@ -5,298 +5,84 @@
   <title>My-Day</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <!-- Supabase -->
+  <link rel="stylesheet" href="dashboard.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- =========================
-       MODERN SOCIAL APP CSS
-  ========================== -->
-  <style>
-    :root {
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --surface: #f1f5f9;
-
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e5e7eb;
-
-      --accent: #2563eb;
-      --accent-soft: #dbeafe;
-
-      --radius-sm: 10px;
-      --radius-md: 14px;
-      --radius-lg: 18px;
-
-      --shadow-sm: 0 2px 8px rgba(0,0,0,.04);
-      --shadow-md: 0 10px 32px rgba(0,0,0,.08);
-
-      --sidebar-width: 280px;
-    }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      height: 100%;
-      font-family: Inter, system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    body {
-      display: flex;
-      overflow: hidden;
-    }
-
-    /* ---------------- SIDEBAR ---------------- */
-    aside {
-      width: var(--sidebar-width);
-      background: var(--card);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .profile {
-      padding: 18px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #60a5fa, #2563eb);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      overflow: hidden;
-    }
-
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* Inbox */
-    .contacts {
-      flex: 1;
-      padding: 8px;
-      overflow-y: auto;
-    }
-
-    .contact {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      transition: background .2s;
-    }
-
-    .contact:hover {
-      background: var(--surface);
-    }
-
-    .contact span {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    /* ---------------- MAIN ---------------- */
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      background: var(--card);
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .content {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-    }
-
-    /* ---------------- FEED ---------------- */
-    .feed {
-      flex: 2;
-      padding: 20px;
-      overflow-y: auto;
-    }
-
-    .post-card {
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      padding: 14px;
-      margin-bottom: 20px;
-    }
-
-    .post-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .post-time {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .post-body {
-      margin-top: 10px;
-    }
-
-    .post-body img {
-      width: 100%;
-      border-radius: var(--radius-md);
-      margin-top: 10px;
-    }
-
-    .post-actions {
-      display: flex;
-      gap: 14px;
-      margin-top: 10px;
-    }
-
-    .post-actions button {
-      background: none;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    /* ---------------- CHAT ---------------- */
-    .chat {
-      width: 360px;
-      border-left: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      background: var(--card);
-    }
-
-    .chat-messages {
-      flex: 1;
-      padding: 16px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .sent, .received {
-      max-width: 75%;
-      padding: 10px 14px;
-      border-radius: var(--radius-lg);
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
-    .sent {
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: #fff;
-      margin-left: auto;
-    }
-
-    .received {
-      background: var(--surface);
-    }
-
-    .chat-input {
-      display: flex;
-      border-top: 1px solid var(--border);
-    }
-
-    .chat-input input {
-      flex: 1;
-      padding: 14px;
-      border: none;
-      outline: none;
-      font-size: 14px;
-    }
-
-    .chat-input button {
-      padding: 0 18px;
-      border: none;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    /* ---------------- MOBILE ---------------- */
-    @media (max-width: 900px) {
-      aside, .chat {
-        display: none;
-      }
-
-      .feed {
-        flex: 1;
-        padding-bottom: 80px;
-      }
-    }
-  </style>
 </head>
-
 <body>
 
-  <!-- SIDEBAR -->
-  <aside>
-    <div class="profile">
-      <div class="avatar">
-        <span class="avatar-initial">U</span>
-        <img hidden />
-      </div>
-      <strong id="username">User</strong>
+<!-- HEADER -->
+<header class="header">
+  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <h2>My-Day</h2>
+  <img id="headerAvatar" class="avatar" />
+</header>
+
+<!-- SIDEBAR -->
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<aside id="sidebar" class="sidebar">
+  <img id="sidebarAvatar" class="avatar big" />
+  <p id="sidebarUsername"></p>
+
+  <button onclick="showFeed()">Feed</button>
+  <button onclick="showContacts()">Contacts</button>
+  <button onclick="showInbox()">Inbox</button>
+  <button onclick="showProfile()">Edit Profile</button>
+  <button onclick="logout()">Logout</button>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- FEED -->
+  <section id="feedSection">
+    <div class="create-post">
+      <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+      <input type="file" id="postImage" accept="image/*" />
+      <button onclick="createPost()">Post</button>
     </div>
+    <div id="postsContainer"></div>
+  </section>
 
-    <div class="contacts" id="contactsList">
-      <!-- Inbox items injected by JS -->
-    </div>
-  </aside>
+  <!-- CONTACTS -->
+  <section id="contactsSection" class="hidden">
+    <h3>Contacts</h3>
+    <div id="contactsList"></div>
+  </section>
 
-  <!-- MAIN -->
-  <main>
-    <header>My-Day</header>
+  <!-- INBOX -->
+  <section id="inboxSection" class="hidden inbox">
+    <div class="inbox-container">
 
-    <div class="content">
-      <!-- FEED -->
-      <div class="feed" id="postsContainer">
-        <!-- Posts injected by JS -->
+      <div class="conversations">
+        <h3>Inbox</h3>
+        <div id="conversationsList"></div>
       </div>
 
-      <!-- CHAT -->
       <div class="chat">
-        <div class="chat-messages" id="chatMessages"></div>
+        <div id="chatHeader" class="chat-header">Select a chat</div>
+        <div id="messagesContainer" class="chat-messages"></div>
 
         <div class="chat-input">
-          <input id="chatInput" placeholder="Type a message…" />
-          <button id="sendMessageBtn">Send</button>
+          <input type="file" id="imageInput" accept="image/*" />
+          <input type="text" id="messageInput" placeholder="Type a message..." />
+          <button onclick="sendMessage()">Send</button>
         </div>
       </div>
-    </div>
-  </main>
 
-  <!-- LOGIC -->
-  <script src="dashboard.js"></script>
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="profileSection" class="hidden">
+    <h3>Edit Profile</h3>
+    <input id="usernameInput" placeholder="Username" />
+    <input type="file" id="avatarInput" accept="image/*" />
+    <button onclick="saveProfile()">Save</button>
+  </section>
+
+</main>
+
+<script src="dashboard.js"></script>
 </body>
 </html>
