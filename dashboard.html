@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>My-Day</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* --- THEME VARIABLES --- */
+    /* --- VARIABLES & THEME --- */
     :root {
       --primary: #2563eb;
       --primary-soft: #dbeafe;
@@ -17,87 +18,100 @@
       --text-main: #1f2937;
       --text-muted: #6b7280;
       --border: #e5e7eb;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     /* Dark Mode Overrides */
     body.dark-mode {
+      --primary-soft: #1e3a8a;
       --bg-body: #111827;
       --bg-card: #1f2937;
       --text-main: #f9fafb;
       --text-muted: #9ca3af;
       --border: #374151;
-      --primary-soft: #1e3a8a; 
+      --shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    
     body { background-color: var(--bg-body); color: var(--text-main); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; transition: background 0.3s; }
-    button { cursor: pointer; border: none; outline: none; background: none; font-family: inherit; color: inherit; }
+    
+    button { cursor: pointer; border: none; outline: none; background: none; font-family: inherit; color: var(--text-main); }
     input, textarea { font-family: inherit; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); }
     .hidden { display: none !important; }
 
-    /* --- LAYOUT --- */
-    .avatar { background-color: #e5e7eb; object-fit: cover; border-radius: 50%; border: 2px solid var(--bg-card); }
+    /* --- LAYOUT & HEADER --- */
+    .header { background: var(--bg-card); height: 60px; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); z-index: 50; }
+    .header h2 { color: var(--primary); font-weight: 800; font-size: 1.4rem; }
+    .avatar { object-fit: cover; border-radius: 50%; border: 2px solid var(--bg-card); background: #eee; }
     .avatar.small { width: 40px; height: 40px; }
-    .avatar.medium { width: 50px; height: 50px; }
     .avatar.big { width: 80px; height: 80px; margin-bottom: 10px; }
+
+    /* --- SIDEBAR --- */
+    .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display: none; }
+    .sidebar-overlay.active { display: block; }
     
-    /* STATUS / STORIES BAR */
-    .status-bar { display: flex; gap: 15px; overflow-x: auto; padding: 15px; background: var(--bg-card); margin-bottom: 20px; border-radius: 16px; border: 1px solid var(--border); white-space: nowrap; }
-    .status-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 60px; }
-    .status-ring { padding: 3px; border-radius: 50%; border: 2px solid var(--primary); }
-    .status-ring.empty { border-color: var(--border); border-style: dashed; }
-    .status-name { font-size: 0.75rem; margin-top: 5px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; }
-
-    /* HEADER */
-    .header { background: var(--bg-card); height: 65px; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); z-index: 50; }
-    .header h2 { color: var(--primary); font-weight: 800; }
-    .menu-btn { font-size: 1.3rem; padding: 8px; }
-
-    /* SIDEBAR */
-    .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display:none; }
-    .sidebar-overlay.active { display:block; }
-    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: var(--bg-card); z-index: 100; transform: translateX(-100%); transition: transform 0.3s; padding: 25px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: var(--bg-card); z-index: 100; transform: translateX(-100%); transition: transform 0.3s; padding: 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
     .sidebar.active { transform: translateX(0); }
     
-    .nav-btn { width: 100%; text-align: left; padding: 14px; margin: 4px 0; border-radius: 12px; display: flex; align-items: center; gap: 12px; position: relative; }
+    .nav-btn { width: 100%; text-align: left; padding: 14px; margin: 5px 0; border-radius: 10px; display: flex; align-items: center; gap: 12px; font-weight: 500; }
     .nav-btn:hover, .nav-btn.active { background-color: var(--primary-soft); color: var(--primary); }
-    .badge { background: #ef4444; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; position: absolute; right: 15px; }
+    .badge { background: #ef4444; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; margin-left: auto; }
 
-    /* MAIN */
-    .main { flex: 1; overflow-y: auto; padding: 20px 15px; max-width: 700px; margin: 0 auto; width: 100%; }
+    /* --- MAIN AREA --- */
+    .main { flex: 1; overflow-y: auto; padding: 15px; max-width: 700px; margin: 0 auto; width: 100%; }
 
-    /* POSTS */
-    .post { background: var(--bg-card); border-radius: 16px; margin-bottom: 25px; border: 1px solid var(--border); overflow: hidden; }
-    .post-header { padding: 15px; display: flex; align-items: center; gap: 12px; }
-    .post-content { padding: 0 15px 15px; line-height: 1.5; }
-    .post-image { width: 100%; display: block; background: #000; max-height: 500px; object-fit: contain; }
-    .post-actions { display: flex; border-top: 1px solid var(--border); }
-    .action-btn { flex: 1; padding: 12px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .action-btn.liked { color: #ef4444; }
+    /* --- STATUS / STORIES BAR --- */
+    .status-bar { display: flex; gap: 12px; overflow-x: auto; padding: 10px; margin-bottom: 20px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); }
+    .status-item { display: flex; flex-direction: column; align-items: center; min-width: 65px; cursor: pointer; }
+    .status-ring { padding: 3px; border-radius: 50%; border: 2px solid var(--primary); }
+    .status-ring.add { border-color: var(--text-muted); border-style: dashed; }
+    .status-name { font-size: 0.75rem; margin-top: 5px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    /* INBOX */
-    .inbox-wrapper { height: calc(100dvh - 120px); background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); display: flex; overflow: hidden; }
-    .conversation-list { width: 100%; overflow-y: auto; border-right: 1px solid var(--border); }
-    .chat-view { flex: 1; display: none; flex-direction: column; background: var(--bg-card); }
-    .chat-view.active { display: flex; position: absolute; inset: 0; z-index: 60; }
+    /* --- POSTS --- */
+    .create-post { background: var(--bg-card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
+    .btn-primary { background: var(--primary); color: white; padding: 8px 20px; border-radius: 20px; font-weight: 600; }
+
+    .post { background: var(--bg-card); border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+    .post-header { padding: 12px 15px; display: flex; align-items: center; gap: 10px; }
+    .post-content { padding: 0 15px 15px; line-height: 1.5; font-size: 0.95rem; }
+    .post-image { width: 100%; display: block; max-height: 500px; object-fit: cover; background: #eee; }
     
+    /* FIX: Action Buttons Visibility */
+    .post-actions { display: flex; border-top: 1px solid var(--border); padding: 5px; background: var(--bg-card); }
+    .action-btn { flex: 1; padding: 12px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+    .action-btn:hover { background: var(--bg-body); color: var(--text-main); }
+    .action-btn.liked { color: #ef4444; } /* Red heart */
+    
+    /* --- COMMENTS --- */
+    .comments-section { background: var(--bg-body); padding: 10px; display: none; border-top: 1px solid var(--border); }
+    .comments-section.open { display: block; }
+    .comment-row { background: var(--bg-card); padding: 8px; border-radius: 8px; margin-bottom: 5px; font-size: 0.9rem; border: 1px solid var(--border); }
+
+    /* --- INBOX --- */
+    .inbox-wrapper { height: calc(100dvh - 120px); background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); display: flex; overflow: hidden; position: relative; }
+    .conversation-list { width: 100%; overflow-y: auto; background: var(--bg-card); }
     .conversation-item { padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
     .conversation-item:hover { background: var(--bg-body); }
     
-    .message { max-width: 75%; padding: 10px 15px; border-radius: 18px; margin: 5px 15px; font-size: 0.95rem; }
-    .message.me { align-self: flex-end; background: var(--primary); color: white; }
-    .message.them { align-self: flex-start; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); }
+    /* Chat View */
+    .chat-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-card); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s; z-index: 20; }
+    .chat-view.active { transform: translateX(0); }
+    
+    .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: var(--bg-body); }
+    .message { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; word-wrap: break-word; }
+    .message.me { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+    .message.them { align-self: flex-start; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .chat-img { max-width: 200px; border-radius: 10px; margin-top: 5px; display: block; }
 
-    /* UTILS */
-    .btn-primary { background: var(--primary); color: white; padding: 8px 20px; border-radius: 99px; font-weight: 600; }
-    .fab { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 40; }
-
+    /* --- RESPONSIVE --- */
     @media (min-width: 768px) {
-      .menu-btn { display: none; }
-      .sidebar { transform: translateX(0); width: 260px; box-shadow: none; border: none; border-right: 1px solid var(--border); padding-top: 80px; }
-      .main { margin-left: 260px; }
-      .chat-view { position: static; display: flex; }
-      .conversation-list { width: 350px; }
+      .header .menu-btn { display: none; }
+      .sidebar { transform: translateX(0); width: 260px; box-shadow: none; padding-top: 80px; }
+      .main { margin-left: 260px; padding-top: 20px; }
+      .conversation-list { width: 35%; border-right: 1px solid var(--border); }
+      .chat-view { position: static; width: 65%; transform: none; display: flex; }
+      .chat-back-btn { display: none; }
     }
   </style>
 </head>
@@ -105,50 +119,50 @@
 
 <header class="header">
   <div style="display:flex; align-items:center; gap:10px;">
-    <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars fa-lg"></i></button>
     <h2>My-Day</h2>
   </div>
-  <button onclick="toggleDarkMode()" style="font-size:1.2rem;"><i class="fas fa-moon"></i></button>
+  <button onclick="toggleTheme()" style="font-size:1.2rem; width:40px; height:40px;"><i class="fas fa-moon"></i></button>
 </header>
 
 <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 <aside id="sidebar" class="sidebar">
-  <div style="text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border);">
-    <img id="sidebarAvatar" class="avatar big" src="" />
-    <h3 id="sidebarUsername">Loading...</h3>
+  <div style="text-align: center; padding-bottom: 20px; margin-bottom: 10px; border-bottom: 1px solid var(--border);">
+    <img id="sidebarAvatar" class="avatar big" src="" onerror="this.src='https://ui-avatars.com/api/?name=User'" />
+    <h3 id="sidebarUsername" style="margin-top:10px;">User</h3>
   </div>
   
-  <nav>
+  <nav style="flex:1;">
     <button onclick="showSection('feed')" class="nav-btn active"><i class="fas fa-home"></i> Feed</button>
-    <button onclick="showSection('contacts')" class="nav-btn"><i class="fas fa-users"></i> People</button>
+    <button onclick="showSection('contacts')" class="nav-btn"><i class="fas fa-user-friends"></i> Find People</button>
     <button onclick="showSection('inbox')" class="nav-btn">
       <i class="fas fa-comment-dots"></i> Messages 
       <span id="msgBadge" class="badge hidden">0</span>
     </button>
     <button onclick="showSection('profile')" class="nav-btn"><i class="fas fa-cog"></i> Settings</button>
   </nav>
-  
-  <button onclick="logout()" style="color:#ef4444; margin-top:auto; padding:15px; text-align:left; font-weight:600;">
-    <i class="fas fa-sign-out-alt"></i> Logout
-  </button>
+
+  <button onclick="logout()" style="color:#ef4444; margin-top:auto;"><i class="fas fa-sign-out-alt"></i> Logout</button>
 </aside>
 
 <main class="main">
-  
+
   <section id="feedSection">
     <div class="status-bar" id="statusBar">
-      <div class="status-item" onclick="uploadStatus()">
-        <div class="status-ring empty"><i class="fas fa-plus"></i></div>
+      <div class="status-item" onclick="document.getElementById('statusInput').click()">
+        <div class="status-ring add"><i class="fas fa-plus"></i></div>
         <span class="status-name">Add Story</span>
       </div>
-      <input type="file" id="statusInput" accept="image/*" hidden onchange="handleStatusUpload(this)">
+      <input type="file" id="statusInput" accept="image/*" class="hidden" onchange="uploadStatus(this)">
       </div>
 
-    <div class="post" style="padding:15px;">
-      <textarea id="postContent" rows="3" placeholder="What's on your mind?" style="width:100%; border:none; resize:none; background:transparent; outline:none;"></textarea>
-      <div style="display:flex; justify-content:space-between; margin-top:10px;">
-        <label for="postImage" style="cursor:pointer; color:var(--primary);"><i class="fas fa-image"></i> Photo</label>
-        <input type="file" id="postImage" hidden>
+    <div class="create-post">
+      <textarea id="postContent" rows="3" placeholder="What's happening?" style="width:100%; border:none; resize:none; outline:none; background:transparent;"></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <label for="postImage" style="cursor:pointer; color:var(--primary); font-weight:600;">
+          <i class="fas fa-image fa-lg"></i> Photo
+        </label>
+        <input type="file" id="postImage" accept="image/*" class="hidden" />
         <button class="btn-primary" onclick="createPost()">Post</button>
       </div>
     </div>
@@ -157,43 +171,57 @@
   </section>
 
   <section id="contactsSection" class="hidden">
-    <h3 style="margin-bottom:15px;">Find People</h3>
-    <input type="text" placeholder="Search users..." onkeyup="handleSearch(this.value)" style="width:100%; padding:10px; border-radius:8px; margin-bottom:15px;">
+    <h3 style="margin-bottom:15px;">Suggested People</h3>
+    <input type="text" placeholder="Search..." onkeyup="handleSearch(this.value)" style="width:100%; padding:10px; border-radius:10px; margin-bottom:15px;">
     <div id="contactsList"></div>
   </section>
 
   <section id="inboxSection" class="hidden">
     <div class="inbox-wrapper">
       <div class="conversation-list">
-        <div style="padding:15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
-          <b>Messages</b>
-          <button onclick="createGroup()" style="color:var(--primary); font-size:0.9rem;"><i class="fas fa-users-medical"></i> New Group</button>
+        <div style="padding:15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+          <b>Chats</b>
+          <button onclick="createGroup()" style="color:var(--primary); font-size:0.8rem;"><i class="fas fa-plus"></i> New Group</button>
         </div>
         <div id="conversationsList"></div>
       </div>
 
       <div class="chat-view" id="chatView">
-        <div class="header" style="background:var(--bg-card); border-bottom:1px solid var(--border);">
-          <button onclick="closeChat()" class="menu-btn"><i class="fas fa-arrow-left"></i></button>
-          <strong id="chatName">Select a chat</strong>
+        <div class="header" style="background:var(--bg-card); border-bottom:1px solid var(--border); height:60px;">
+          <button class="chat-back-btn" onclick="closeChat()" style="font-size:1.2rem; margin-right:10px;"><i class="fas fa-arrow-left"></i></button>
+          <div style="display:flex; align-items:center; gap:10px;">
+             <img id="chatHeaderAvatar" class="avatar small hidden" src="" />
+             <strong id="chatUserDisplayName">Select a chat</strong>
+          </div>
         </div>
         
-        <div id="messagesContainer" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column;"></div>
-        
-        <div style="padding:15px; border-top:1px solid var(--border); display:flex; gap:10px;">
-          <input type="text" id="chatInput" placeholder="Type a message..." style="flex:1; padding:10px 15px; border-radius:25px; outline:none;">
-          <button onclick="sendMessage()" class="btn-primary" style="border-radius:50%; width:40px; height:40px; padding:0;"><i class="fas fa-paper-plane"></i></button>
+        <div class="chat-messages" id="messagesContainer">
+          <p style="text-align:center; color:var(--text-muted); margin-top:50px;">Select a conversation</p>
+        </div>
+
+        <div style="padding:10px; border-top:1px solid var(--border); background:var(--bg-card); display:flex; gap:10px; align-items:center;">
+          <label for="chatImgInput" style="cursor:pointer; color:var(--primary); font-size:1.2rem;"><i class="fas fa-image"></i></label>
+          <input type="file" id="chatImgInput" accept="image/*" class="hidden" />
+          <input type="text" id="chatTextInput" placeholder="Message..." style="flex:1; padding:10px 15px; border-radius:20px; outline:none;" autocomplete="off"/>
+          <button onclick="sendMessage()" style="color:var(--primary); font-size:1.2rem;"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </div>
   </section>
 
   <section id="profileSection" class="hidden">
-    <div class="post" style="padding:30px; text-align:center;">
-      <img id="editProfilePreview" class="avatar big" src="" />
+    <div class="create-post" style="text-align:center; padding:30px;">
       <h3 style="margin-bottom:20px;">Edit Profile</h3>
-      <input id="newUsername" type="text" placeholder="Username" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px;">
-      <input id="newBio" type="text" placeholder="Bio / Status" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px;">
+      <div style="position:relative; display:inline-block;">
+        <img id="editProfilePreview" class="avatar big" src="" />
+        <label for="newAvatar" style="position:absolute; bottom:0; right:0; background:var(--primary); color:white; width:25px; height:25px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <i class="fas fa-camera" style="font-size:0.7rem;"></i>
+        </label>
+      </div>
+      <input type="file" id="newAvatar" class="hidden" />
+      <br><br>
+      <input id="newUsername" type="text" placeholder="Username" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px;" />
+      <input id="newBio" type="text" placeholder="Bio / Status" style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px;" />
       <button class="btn-primary" onclick="saveProfile()" style="width:100%;">Save Changes</button>
     </div>
   </section>
@@ -202,4 +230,5 @@
 
 <script src="dashboard.js"></script>
 </body>
-</html>
+            </html>
+            
