@@ -20,10 +20,9 @@
       --border-color: #e5e7eb;
       --danger: #ef4444;
       --radius: 16px;
-      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
 
-    /* --- DARK MODE VARIABLES --- */
+    /* --- DARK MODE --- */
     body.dark-mode {
       --bg-body: #111827;
       --bg-card: #1f2937;
@@ -66,7 +65,7 @@
     .sidebar button { width: 100%; text-align: left; padding: 14px 16px; margin: 4px 0; border-radius: 12px; font-weight: 500; display: flex; align-items: center; gap: 12px; }
     .sidebar button:hover, .sidebar button.active { background-color: var(--primary-soft); color: var(--primary); }
 
-    /* --- STORIES / STATUS --- */
+    /* --- STORIES --- */
     .stories-container { display: flex; gap: 15px; overflow-x: auto; padding: 10px 0 20px 0; scrollbar-width: none; }
     .stories-container::-webkit-scrollbar { display: none; }
     .story-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 70px; }
@@ -78,19 +77,28 @@
 
     .create-post { background: var(--bg-card); padding: 15px; border-radius: var(--radius); border: 1px solid var(--border-color); margin-bottom: 25px; }
     .create-post textarea { width: 100%; border: none; resize: none; font-size: 1.1rem; outline: none; margin-bottom: 10px; }
-    
     .btn-primary { background: var(--primary); color: #fff; padding: 8px 24px; border-radius: 99px; font-weight: 600; }
 
     /* --- POSTS --- */
     .post { background: var(--bg-card); border-radius: var(--radius); margin-bottom: 25px; border: 1px solid var(--border-color); overflow: hidden; }
     .post-header { padding: 15px; display: flex; align-items: center; gap: 12px; }
+    .delete-btn { margin-left: auto; color: var(--text-muted); padding: 8px; border-radius: 50%; }
+    .delete-btn:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+    
     .post-content { padding: 0 15px 15px; line-height: 1.5; }
-    .post-image { width: 100%; max-height: 500px; object-fit: cover; background: var(--bg-body); }
+    .post-image { width: 100%; max-height: 500px; object-fit: cover; background: var(--bg-body); cursor: pointer; }
     
     .post-actions { display: flex; border-top: 1px solid var(--border-color); }
     .action-btn { flex: 1; padding: 12px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .action-btn:hover { background: var(--primary-soft); color: var(--primary); }
     .action-btn.liked { color: var(--danger); }
+
+    /* --- COMMENTS --- */
+    .comments-section { background: var(--bg-body); padding: 15px; display: none; border-top: 1px solid var(--border-color); }
+    .comments-section.open { display: block; }
+    .comment-row { margin-bottom: 10px; font-size: 0.9rem; padding: 8px 12px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); }
+    .comment-input-group { display: flex; gap: 8px; margin-top: 15px; }
+    .comment-input-group input { flex: 1; padding: 10px 15px; border-radius: 25px; border: 1px solid var(--border-color); background: var(--bg-card); }
 
     /* --- INBOX & CHAT --- */
     .inbox-wrapper { display: flex; height: calc(100dvh - 100px); background: var(--bg-card); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border-color); position: relative; }
@@ -204,9 +212,9 @@
       </div>
 
       <div class="chat-view" id="chatView">
-        <div class="header" style="height:60px; background:rgba(255,255,255,0.8);">
+        <div class="header" style="height:60px; background:var(--bg-card); border-bottom:1px solid var(--border-color);">
           <button class="back-btn" onclick="closeChat()"><i class="fas fa-arrow-left"></i></button>
-          <strong id="chatUserDisplayName">Chat</strong>
+          <strong id="chatUserDisplayName" style="margin-left:10px;">Chat</strong>
         </div>
         <div class="chat-messages" id="messagesContainer"></div>
         <div class="chat-input-area" id="chatInputArea">
