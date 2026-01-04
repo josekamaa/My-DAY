@@ -179,7 +179,7 @@ async function createPost() {
 async function loadPosts() {
   const { data } = await supabaseClient
     .from("posts")
-    .select(`*, profiles(username, avatar_url), post_likes(user_id)`)
+    .select(`*, profiles(username, avatar_url), post_likes(user_id), post_comments(id)`)
     .order("created_at", { ascending: false });
 
   const container = document.getElementById("postsContainer");
@@ -188,20 +188,28 @@ async function loadPosts() {
   data.forEach(post => {
     const isLiked = post.post_likes.some(l => l.user_id === currentUser.id);
     const avatar = post.profiles.avatar_url || `https://ui-avatars.com/api/?name=${post.profiles.username}`;
+    const isMyPost = post.user_id === currentUser.id;
     
-    // Download and Share buttons added below
+    const deleteBtn = isMyPost 
+      ? `<button class="delete-btn" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i></button>`
+      : ``;
+
     const html = `
       <div class="post">
         <div class="post-header">
           <img src="${avatar}" class="avatar small">
-          <div><strong>${post.profiles.username}</strong><span>${timeAgo(post.created_at)}</span></div>
+          <div style="flex:1;"><strong>${post.profiles.username}</strong><span>${timeAgo(post.created_at)}</span></div>
+          ${deleteBtn}
         </div>
         <div class="post-content">${post.content || ""}</div>
-        ${post.image_url ? `<img src="${post.image_url}" class="post-image" onerror="imgError(this)">` : ""}
+        ${post.image_url ? `<img src="${post.image_url}" class="post-image" ondblclick="toggleLike(${post.id})" onerror="imgError(this)">` : ""}
         
         <div class="post-actions">
           <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike(${post.id})">
             <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i> ${post.post_likes.length}
+          </button>
+          <button class="action-btn" onclick="toggleComments(${post.id})">
+             <i class="far fa-comment-alt"></i> ${post.post_comments.length}
           </button>
           <button class="action-btn" onclick="downloadImage('${post.image_url}')" ${!post.image_url ? 'disabled' : ''}>
             <i class="fas fa-download"></i>
@@ -210,10 +218,18 @@ async function loadPosts() {
             <i class="fas fa-share-alt"></i>
           </button>
         </div>
+        <div id="comments-${post.id}" class="comments-section"></div>
       </div>
     `;
     container.innerHTML += html;
   });
+}
+
+async function deletePost(postId) {
+  if(!confirm("Delete this post?")) return;
+  const { error } = await supabaseClient.from('posts').delete().eq('id', postId);
+  if(error) alert("Error deleting post");
+  else loadPosts();
 }
 
 async function toggleLike(postId) {
@@ -221,6 +237,32 @@ async function toggleLike(postId) {
   if (existing) await supabaseClient.from("post_likes").delete().eq("id", existing.id);
   else await supabaseClient.from("post_likes").insert({ post_id: postId, user_id: currentUser.id });
   loadPosts();
+}
+
+async function toggleComments(postId) {
+  const div = document.getElementById(`comments-${postId}`);
+  if (div.classList.contains("open")) { div.classList.remove("open"); return; }
+
+  const { data } = await supabaseClient.from("post_comments").select("content, profiles(username)").eq("post_id", postId);
+  
+  let html = `<div class="comment-list">`;
+  data.forEach(c => html += `<div class="comment-row"><b>${c.profiles.username}:</b> ${c.content}</div>`);
+  html += `</div><div class="comment-input-group">
+      <input type="text" id="input-${postId}" placeholder="Write a comment..." />
+      <button class="btn-primary" onclick="sendComment(${postId})" style="padding:8px 15px; border-radius:20px;">Send</button>
+    </div>`;
+  
+  div.innerHTML = html;
+  div.classList.add("open");
+}
+
+async function sendComment(postId) {
+  const input = document.getElementById(`input-${postId}`);
+  if (!input.value) return;
+  await supabaseClient.from("post_comments").insert({ post_id: postId, user_id: currentUser.id, content: input.value });
+  div = document.getElementById(`comments-${postId}`);
+  div.classList.remove("open");
+  toggleComments(postId);
 }
 
 async function downloadImage(url) {
@@ -275,43 +317,26 @@ async function loadContacts() {
 
 async function toggleFollow(targetId, btn) {
   const { data: exists } = await supabaseClient.from("follows").select("id").match({ follower_id: currentUser.id, following_id: targetId }).maybeSingle();
-  
   if (exists) {
     await supabaseClient.from("follows").delete().eq("id", exists.id);
-    btn.textContent = "Follow";
-    btn.style.background = "var(--primary)";
+    btn.textContent = "Follow"; btn.style.background = "var(--primary)";
   } else {
     await supabaseClient.from("follows").insert({ follower_id: currentUser.id, following_id: targetId });
-    btn.textContent = "Unfollow";
-    btn.style.background = "#ef4444";
+    btn.textContent = "Unfollow"; btn.style.background = "#ef4444";
   }
 }
 
 /* ================= INBOX & GROUPS ================= */
 async function loadInbox() {
-  // 1. Get conversations where I am a member
-  const { data: memberships } = await supabaseClient
-    .from("conversation_members")
-    .select("conversation_id")
-    .eq("user_id", currentUser.id);
-
+  const { data: memberships } = await supabaseClient.from("conversation_members").select("conversation_id").eq("user_id", currentUser.id);
   const convoIds = memberships.map(m => m.conversation_id);
   
-  // 2. Add legacy 1-on-1 conversations (checking old method for backward compatibility)
-  const { data: legacy } = await supabaseClient
-    .from("conversations")
-    .select("id")
-    .or(`user1.eq.${currentUser.id},user2.eq.${currentUser.id}`);
-  
+  const { data: legacy } = await supabaseClient.from("conversations").select("id").or(`user1.eq.${currentUser.id},user2.eq.${currentUser.id}`);
   const allIds = [...new Set([...convoIds, ...legacy.map(c => c.id)])];
 
   if(allIds.length === 0) return;
 
-  const { data: convos } = await supabaseClient
-    .from("conversations")
-    .select("*")
-    .in("id", allIds);
-
+  const { data: convos } = await supabaseClient.from("conversations").select("*").in("id", allIds);
   const list = document.getElementById("conversationsList");
   list.innerHTML = "";
 
@@ -320,13 +345,10 @@ async function loadInbox() {
     let avatar = "";
     
     if (c.is_group) {
-      name = c.group_name;
+      name = c.group_name || "Group Chat";
       avatar = `https://ui-avatars.com/api/?name=${name}&background=random`;
     } else {
-      // Logic for 1-on-1 naming
       const otherId = c.user1 === currentUser.id ? c.user2 : c.user1;
-      // If legacy table has nulls, we might need to fetch members
-      // Simplifying assumption: if user1/2 are present use them
       if(otherId) {
         const { data: u } = await supabaseClient.from("profiles").select("username, avatar_url").eq("id", otherId).single();
         if(u) { name = u.username; avatar = u.avatar_url || `https://ui-avatars.com/api/?name=${name}`; }
@@ -348,7 +370,6 @@ async function loadInbox() {
 }
 
 async function startNewChat(targetId) {
-  // Simple 1-on-1 creation
   const { data: existing } = await supabaseClient.from("conversations")
     .select("id")
     .or(`and(user1.eq.${currentUser.id},user2.eq.${targetId}),and(user1.eq.${targetId},user2.eq.${currentUser.id})`)
@@ -358,7 +379,6 @@ async function startNewChat(targetId) {
     showSection("inbox");
   } else {
     const { data: newConvo } = await supabaseClient.from("conversations").insert({ user1: currentUser.id, user2: targetId }).select().single();
-    // Also add to members table for future proofing
     await supabaseClient.from("conversation_members").insert([
       { conversation_id: newConvo.id, user_id: currentUser.id },
       { conversation_id: newConvo.id, user_id: targetId }
@@ -378,10 +398,7 @@ async function openGroupModal() {
   data.forEach(user => {
     const div = document.createElement("div");
     div.className = "user-select-item";
-    div.innerHTML = `
-      <span>${user.username}</span>
-      <input type="checkbox" onchange="toggleGroupUser('${user.id}', this.checked)">
-    `;
+    div.innerHTML = `<span>${user.username}</span><input type="checkbox" onchange="toggleGroupUser('${user.id}', this.checked)">`;
     list.appendChild(div);
   });
 }
@@ -395,17 +412,34 @@ async function createGroupChat() {
   const name = document.getElementById("groupName").value;
   if(!name || selectedGroupUsers.length === 0) return alert("Enter name and select members");
 
-  const { data: convo } = await supabaseClient
+  // Create conversation. We set user1 to currentUser.id to satisfy potential NOT NULL constraints on legacy columns
+  const { data: convo, error } = await supabaseClient
     .from("conversations")
-    .insert({ is_group: true, group_name: name })
+    .insert({ 
+        is_group: true, 
+        group_name: name,
+        user1: currentUser.id, // Fallback for schema constraint
+        user2: currentUser.id  // Fallback for schema constraint
+    })
     .select().single();
+
+  if (error) {
+      console.error(error);
+      return alert("Error creating group: " + error.message);
+  }
 
   const members = [{ conversation_id: convo.id, user_id: currentUser.id }];
   selectedGroupUsers.forEach(uid => members.push({ conversation_id: convo.id, user_id: uid }));
   
-  await supabaseClient.from("conversation_members").insert(members);
+  const { error: memberError } = await supabaseClient.from("conversation_members").insert(members);
   
+  if (memberError) {
+      console.error(memberError);
+      return alert("Error adding members");
+  }
+
   document.getElementById("groupModal").classList.remove("active");
+  showSection("inbox");
   loadInbox();
 }
 
@@ -431,7 +465,6 @@ async function openChat(convoId, name, avatar) {
 function appendMessage(msg) {
   const container = document.getElementById("messagesContainer");
   const isMe = msg.sender_id === currentUser.id;
-  
   const div = document.createElement("div");
   div.className = `message ${isMe ? 'me' : 'them'}`;
   
@@ -499,5 +532,4 @@ async function saveProfile() {
   await supabaseClient.from("profiles").update({ username: newName, avatar_url: avatarUrl }).eq("id", currentUser.id);
   alert("Profile Saved!");
   location.reload();
-  }
-  
+}
